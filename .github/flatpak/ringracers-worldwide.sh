@@ -29,4 +29,24 @@ if [ -z "${RINGRACERSWADDIR}" ]; then
 	echo "holding the 2.4 data and allow this app to read it (flatpak override)." >&2
 fi
 
+# WORLDWIDE's title graphics, worldwide.pk3, come with this app. The game reads
+# them from data/ in its data folder, which here is the official Flatpak's,
+# read only. So it is given a folder of its own, made again at each start:
+# links to every file of that data, and worldwide.pk3 in its data/. A data
+# folder that has its own worldwide.pk3 is used as it is.
+WWPK3=/app/share/ringracers-worldwide/worldwide.pk3
+if [ -n "${RINGRACERSWADDIR}" ] && [ -f "$WWPK3" ] && [ ! -e "${RINGRACERSWADDIR}/data/worldwide.pk3" ]; then
+	merged="${XDG_DATA_HOME:-$HOME/.local/share}/ringracers-data"
+	rm -rf "$merged"
+	mkdir -p "$merged/data"
+	for f in "$RINGRACERSWADDIR"/*; do
+		[ -e "$f" ] && [ "$(basename "$f")" != data ] && ln -s "$f" "$merged/"
+	done
+	for f in "$RINGRACERSWADDIR"/data/*; do
+		[ -e "$f" ] && ln -s "$f" "$merged/data/"
+	done
+	ln -s "$WWPK3" "$merged/data/worldwide.pk3"
+	export RINGRACERSWADDIR="$merged"
+fi
+
 exec ringracers "$@"

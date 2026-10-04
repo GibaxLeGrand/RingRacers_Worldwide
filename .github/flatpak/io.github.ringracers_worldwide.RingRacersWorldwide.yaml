@@ -5,7 +5,8 @@
 # same runtime, same modules, same compile flags -- with three differences:
 #   - the source is this checkout, not an upstream tarball;
 #   - the game's data is not bundled: the launcher reads it from the official
-#     Flatpak, when installed, or from RINGRACERSWADDIR (ringracers-worldwide.sh);
+#     Flatpak, when installed, or from RINGRACERSWADDIR (ringracers-worldwide.sh),
+#     and adds WORLDWIDE's title graphics (assets/worldwide.pk3) to it;
 #   - its own app id, so it installs next to the official one, with its own
 #     home (~/.var/app/<this id>/.ringracers), never sharing a config with it.
 #
@@ -74,6 +75,7 @@ modules:
       - mkdir -p $FLATPAK_DEST/bin
       - mv $FLATPAK_DEST/ringracers $FLATPAK_DEST/bin/ringracers
       - install -Dm 755 ../.github/flatpak/ringracers-worldwide.sh -t $FLATPAK_DEST/bin
+      - install -Dm 644 ../assets/worldwide.pk3 -t $FLATPAK_DEST/share/ringracers-worldwide
       - install -Dm 644 ../.github/flatpak/$FLATPAK_ID.desktop -t $FLATPAK_DEST/share/applications
       - install -Dm 644 ../srb2.png $FLATPAK_DEST/share/icons/hicolor/256x256/apps/$FLATPAK_ID.png
 

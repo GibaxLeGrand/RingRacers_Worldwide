@@ -3643,6 +3643,9 @@ static struct rollbackkart_t g_keepkart[ROLLBACK_TICS][MAXPLAYERS];   // the kar
 static dboolean g_keepkartok[ROLLBACK_TICS][MAXPLAYERS];              // in a correction's terms
 static uint32_t g_keepcorrnoop;             // corrections due that changed nothing
 static tic_t g_soundhorizon;                // the first tic this machine has not run yet
+static uint32_t g_soundsplayed;             // a level's sounds with the speculation kept, played
+static uint32_t g_soundsheld;               // ... and held back, their tic run already
+static dboolean g_soundreset = true;        // rollback_soundreset: the horizon to the server's clock at a join
 
 enum
 {
@@ -4577,6 +4580,12 @@ static void Command_RollbackKeepSpec_f(void)
 		"written already, %u written by a rerun, no run having written them (8.136)\n",
 		g_chatheld, g_chatlate);
 
+	// A level's sounds, against the horizon: none played was a join on a
+	// server whose clock was behind this machine's (8.141).
+	CONS_Printf("rollback_keepspec: %u sounds a level started were played, %u held back as "
+		"their tic's rerun; the horizon at tic %u, gametic %u (8.141)\n",
+		g_soundsplayed, g_soundsheld, (unsigned)g_soundhorizon, (unsigned)gametic);
+
 	for (r = 1; r < KEEP_NUMREASONS; r++)
 	{
 		if (g_keepcount[r] > 0)
@@ -5139,6 +5148,40 @@ dboolean K_RollbackSoundsSilenced(void)
 		return (g_intic && gametic < g_soundhorizon);
 
 	return g_speculating;
+}
+
+dboolean K_RollbackSoundHeld(void)
+{
+	const dboolean held = K_RollbackSoundsSilenced();
+
+	if (g_keepspec && g_twoclock > 0 && gamestate == GS_LEVEL)
+	{
+		if (held)
+			g_soundsheld++;
+		else
+			g_soundsplayed++;
+	}
+
+	return held;
+}
+
+void K_RollbackNewTimeline(void)
+{
+	// The horizon only moves on, so it stayed where this machine's earlier
+	// tics took it -- offline, on another server -- and a server whose clock
+	// was behind it had every tic of its level silenced, until its clock
+	// caught up: a race with music and no sound (WORLDWIDE.md 8.141).
+	if (g_soundhorizon > gametic)
+	{
+		CONS_Printf("rollback: the server's clock at tic %u, %u behind the horizon this "
+			"machine left at %u -- %s (8.141)\n",
+			(unsigned)gametic, (unsigned)(g_soundhorizon - gametic), (unsigned)g_soundhorizon,
+			g_soundreset ? "its sounds start again from there"
+				: "left there, rollback_soundreset 0: its level is silent until it catches up");
+	}
+
+	if (g_soundreset)
+		g_soundhorizon = gametic;
 }
 
 static uint32_t g_chatheld;     // chat lines held back as a rerun's (declared above)
@@ -9572,6 +9615,23 @@ static void Command_RollbackOnTime_f(void)
 			: "off -- one sample a NetUpdate, as before"), g_ontimesamples);
 }
 
+/** Console command: rollback_soundreset [0/1]
+  *
+  * Client side. On, the default: at a join, the sound horizon goes to the
+  * server's clock. Off: it stays where this machine's earlier tics took it,
+  * as before 8.141 -- a server whose clock is behind it has its level
+  * silenced until it catches up. For a control. */
+static void Command_RollbackSoundReset_f(void)
+{
+	if (COM_Argc() > 1)
+		g_soundreset = (atoi(COM_Argv(1)) != 0);
+
+	CONS_Printf("rollback_soundreset: %s -- %u sounds a level started played, %u held back\n",
+		(g_soundreset ? "on -- a join takes the sound horizon to the server's clock"
+			: "off -- the horizon stays where this machine's earlier tics took it"),
+		g_soundsplayed, g_soundsheld);
+}
+
 /** Console command: rollback_rebuildbudget [ms]
   *
   * Client side. A speculation stops once it has run this many milliseconds,
@@ -9706,6 +9766,7 @@ void K_RegisterRollbackStuff(void)
 	COM_AddDebugCommand("rollback_histreal", Command_RollbackHistReal_f);
 	COM_AddDebugCommand("rollback_stall", Command_RollbackStall_f);
 	COM_AddDebugCommand("rollback_ontime", Command_RollbackOnTime_f);
+	COM_AddDebugCommand("rollback_soundreset", Command_RollbackSoundReset_f);
 	COM_AddDebugCommand("rollback_rebuildbudget", Command_RollbackRebuildBudget_f);
 	COM_AddDebugCommand("rollback_slowtic", Command_RollbackSlowTic_f);
 	COM_AddDebugCommand("rollback_cascadelog", Command_RollbackCascadeLog_f);

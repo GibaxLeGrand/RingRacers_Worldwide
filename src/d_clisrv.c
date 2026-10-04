@@ -5105,6 +5105,7 @@ static void HandlePacketFromAwayNode(SINT8 node)
 			if (client)
 			{
 				maketic = gametic = neededtic = (tic_t)LONG(netbuffer->u.servercfg.gametic);
+				K_RollbackNewTimeline(); // the sound horizon to the server's clock (WORLDWIDE.md 8.141)
 
 				G_SetGametype(netbuffer->u.servercfg.gametype);
 

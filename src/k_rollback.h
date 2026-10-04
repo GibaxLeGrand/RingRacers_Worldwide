@@ -252,6 +252,16 @@ dboolean K_RollbackOffTimeline(void);
   * (WORLDWIDE.md 8.73, 8.108). Outside a tic -- a menu, the console -- never. */
 dboolean K_RollbackSoundsSilenced(void);
 
+/** S_StartSoundAtVolume's question: K_RollbackSoundsSilenced, counted -- with
+  * the speculation kept, in a level -- for rollback_keepspec's report
+  * (WORLDWIDE.md 8.141). */
+dboolean K_RollbackSoundHeld(void);
+
+/** A client has just taken the server's clock at its join: its tics are the
+  * server's from there, behind or ahead of the ones it ran before. The sound
+  * horizon goes to it (WORLDWIDE.md 8.141). */
+void K_RollbackNewTimeline(void);
+
 /** The tic loop runs G_Ticker between these: what a tic starts is judged by
   * K_RollbackSoundsSilenced, what the menus start between tics is not. */
 void K_RollbackTicRunning(dboolean running);

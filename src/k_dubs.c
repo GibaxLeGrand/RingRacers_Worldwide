@@ -7,12 +7,19 @@
 // See the 'LICENSE' file for more details.
 //-----------------------------------------------------------------------------
 /// \file  k_dubs.c
-/// \brief Character voice dubs, chosen by the one listening (WORLDWIDE.md 8.142)
+/// \brief Character voice dubs, chosen by each pilot (WORLDWIDE.md 8.142, 9.7)
 
 #include "doomdef.h"
 #include "k_dubs.h"
+#include "byteptr.h"
 #include "command.h"
 #include "console.h"
+#include "d_clisrv.h"
+#include "d_netcmd.h"
+#include "doomstat.h"
+#include "g_game.h"
+#include "k_profiles.h"
+#include "k_rollback.h" // K_WorldwideServer
 #include "i_system.h"
 #include "r_skins.h"
 #include "sounds.h"
@@ -32,6 +39,19 @@ typedef struct
 
 static dub_t g_dubs[MAXDUBS];
 static INT32 g_numdubs;
+
+// What each remote pilot's machine said its kart speaks with (XD_PILOTDUB),
+// by player slot -- for a character, so that a choice never reaches another
+// character the slot picks later.
+typedef struct
+{
+	char skin[SKINNAMESIZE+1];
+	char name[DUBNAMESIZE+1]; // "": no choice, the listener's voicelanguage
+} pilotdub_t;
+
+static pilotdub_t g_heard[MAXPLAYERS];
+
+static void Got_PilotDub(const UINT8 **cp, INT32 playernum);
 
 // "Default", then each dub name once, in the order loaded: the menu's list.
 // Its strings are the dubs' own, which live as long as the game.
@@ -142,7 +162,7 @@ static void K_ParseDubDef(UINT16 wadnum, UINT16 lump)
 			for (c = name; *c != '\0'; c++)
 			{
 				if (*c == ',')
-					*c = '_'; // voicedubs keeps "skin=Name" pairs between commas
+					*c = '_'; // pilotdubs keeps "PROFILE/skin=Name" entries between commas
 			}
 		}
 		else if ((slot = K_DubSlot(stoken, &base)) != -1)
@@ -224,7 +244,8 @@ void K_LoadDubDefs(UINT16 wadnum)
 /** Console command: dublist
   *
   * The dubs loaded, by name and character, with how many voice lines each
-  * has; and the one chosen (voicelanguage). */
+  * has; the one chosen (voicelanguage); each profile's (pilotdubs), and
+  * what the other pilots' machines said (XD_PILOTDUB). */
 static void Command_DubList_f(void)
 {
 	INT32 i, slot, given;
@@ -238,6 +259,17 @@ static void Command_DubList_f(void)
 
 		CONS_Printf("  %s: %s, %d of %d voice lines\n", g_dubs[i].name, g_dubs[i].skin, given, NUMSKINSOUNDS);
 	}
+
+	CONS_Printf("pilotdubs: %s\n", cv_pilotdubs.string);
+
+	for (i = 0; i < MAXPLAYERS; i++)
+	{
+		if (playeringame[i] && g_heard[i].skin[0] != '\0')
+		{
+			CONS_Printf("  heard from %s: %s=%s\n", player_names[i], g_heard[i].skin,
+				(g_heard[i].name[0] != '\0') ? g_heard[i].name : "(no choice)");
+		}
+	}
 }
 
 void K_InitDubDefs(void)
@@ -245,31 +277,35 @@ void K_InitDubDefs(void)
 	UINT16 i;
 
 	COM_AddCommand("dublist", Command_DubList_f);
+	RegisterNetXCmd(XD_PILOTDUB, Got_PilotDub);
 
 	for (i = 0; i < numwadfiles; i++)
 		K_LoadDubDefs(i);
 }
 
-/** A character's own choice in voicedubs ("skin=Name,skin=Name"), into
-  * out; false if it has none. */
-static boolean K_DubChoiceOf(const char *skinname, char *out, size_t outlen)
+/** A profile's choice for a character in pilotdubs ("GIBAX/sonic=Japanese,
+  * ..."), into out; false if it has none. */
+static boolean K_PilotChoiceOf(const char *profile, const char *skinname, char *out, size_t outlen)
 {
-	const char *s = cv_voicedubs.string;
-	const size_t len = strlen(skinname);
+	const char *s = cv_pilotdubs.string;
+	const size_t plen = strlen(profile);
+	const size_t slen = strlen(skinname);
 
 	while (s != NULL && *s != '\0')
 	{
 		const char *comma = strchr(s, ',');
 		const char *end = (comma != NULL) ? comma : s + strlen(s);
-		const char *eq = strchr(s, '=');
 
-		if (eq != NULL && eq < end && (size_t)(eq - s) == len && !strnicmp(s, skinname, len))
+		if ((size_t)(end - s) > plen + slen + 2
+			&& s[plen] == '/' && !strnicmp(s, profile, plen)
+			&& s[plen + 1 + slen] == '=' && !strnicmp(s + plen + 1, skinname, slen))
 		{
-			size_t n = (size_t)(end - (eq + 1));
+			const char *value = s + plen + slen + 2;
+			size_t n = (size_t)(end - value);
 
 			if (n >= outlen)
 				n = outlen - 1;
-			memcpy(out, eq + 1, n);
+			memcpy(out, value, n);
 			out[n] = '\0';
 			return true;
 		}
@@ -293,16 +329,33 @@ static const dub_t *K_DubFind(const char *skinname, const char *name)
 	return NULL;
 }
 
-/** The name a character speaks with: its own choice, else voicelanguage. */
-static const char *K_DubNameFor(const skin_t *skin, char *buf, size_t buflen)
+/** The name a kart speaks with: its pilot's choice -- this machine's profile
+  * for one of its own pilots, what its machine said for another -- else the
+  * listener's voicelanguage. */
+static const char *K_DubNameOf(const player_t *player, const skin_t *skin, char *buf, size_t buflen)
 {
-	if (K_DubChoiceOf(skin->name, buf, buflen))
-		return buf;
+	if (player != NULL && player >= players && player < players + MAXPLAYERS && !player->bot)
+	{
+		profile_t *pr = PR_GetPlayerProfile((player_t *)player); // NULL for a replay
+
+		if (pr != NULL)
+		{
+			if (K_PilotChoiceOf(pr->profilename, skin->name, buf, buflen))
+				return buf;
+		}
+		else if (netgame)
+		{
+			const pilotdub_t *heard = &g_heard[player - players];
+
+			if (heard->name[0] != '\0' && !stricmp(heard->skin, skin->name))
+				return heard->name;
+		}
+	}
 
 	return cv_voicelanguage.string;
 }
 
-sfxenum_t K_DubSkinSound(const skin_t *skin, INT32 skinsound)
+sfxenum_t K_DubPilotSound(const player_t *player, const skin_t *skin, INT32 skinsound)
 {
 	char buf[DUBNAMESIZE+1];
 	const char *name;
@@ -311,7 +364,7 @@ sfxenum_t K_DubSkinSound(const skin_t *skin, INT32 skinsound)
 	if (g_numdubs == 0)
 		return skin->soundsid[skinsound];
 
-	name = K_DubNameFor(skin, buf, sizeof buf);
+	name = K_DubNameOf(player, skin, buf, sizeof buf);
 	if (name == NULL || !stricmp(name, "Default"))
 		return skin->soundsid[skinsound];
 
@@ -320,6 +373,11 @@ sfxenum_t K_DubSkinSound(const skin_t *skin, INT32 skinsound)
 		return dub->sound[skinsound];
 
 	return skin->soundsid[skinsound];
+}
+
+sfxenum_t K_DubSkinSound(const skin_t *skin, INT32 skinsound)
+{
+	return K_DubPilotSound(NULL, skin, skinsound);
 }
 
 INT32 K_DubCount(const skin_t *skin)
@@ -355,10 +413,10 @@ const char *K_DubName(const skin_t *skin, INT32 n)
 	return (dub != NULL) ? dub->name : "Default";
 }
 
-INT32 K_DubChosen(const skin_t *skin)
+INT32 K_DubChosenBy(const char *profile, const skin_t *skin)
 {
 	char buf[DUBNAMESIZE+1];
-	const char *name = K_DubNameFor(skin, buf, sizeof buf);
+	const char *name = K_PilotChoiceOf(profile, skin->name, buf, sizeof buf) ? buf : cv_voicelanguage.string;
 	const INT32 count = K_DubCount(skin);
 	INT32 n;
 
@@ -371,19 +429,23 @@ INT32 K_DubChosen(const skin_t *skin)
 	return 0;
 }
 
-void K_DubChoose(const skin_t *skin, INT32 n)
+void K_DubChooseFor(const char *profile, const skin_t *skin, INT32 n)
 {
-	char out[1024] = "";
-	const char *s = cv_voicedubs.string;
-	const size_t len = strlen(skin->name);
+	char key[PROFILENAMELEN + SKINNAMESIZE + 3];
+	char out[2048] = "";
+	const char *s = cv_pilotdubs.string;
+	size_t klen;
 
-	// The others' choices kept, this one's replaced.
+	snprintf(key, sizeof key, "%s/%s=", profile, skin->name);
+	klen = strlen(key);
+
+	// The other choices kept, this profile's for this character replaced.
 	while (s != NULL && *s != '\0')
 	{
 		const char *comma = strchr(s, ',');
 		const size_t entry = (comma != NULL) ? (size_t)(comma - s) : strlen(s);
 
-		if (!(entry > len && s[len] == '=' && !strnicmp(s, skin->name, len))
+		if (!(entry >= klen && !strnicmp(s, key, klen))
 			&& strlen(out) + entry + 2 < sizeof out)
 		{
 			if (out[0] != '\0')
@@ -394,14 +456,15 @@ void K_DubChoose(const skin_t *skin, INT32 n)
 		s = (comma != NULL) ? comma + 1 : NULL;
 	}
 
-	if (strlen(out) + len + DUBNAMESIZE + 3 < sizeof out)
+	if (strlen(out) + klen + DUBNAMESIZE + 2 < sizeof out)
 	{
 		if (out[0] != '\0')
 			strlcat(out, ",", sizeof out);
-		strlcat(out, va("%s=%s", skin->name, K_DubName(skin, n)), sizeof out);
+		strlcat(out, key, sizeof out);
+		strlcat(out, K_DubName(skin, n), sizeof out);
 	}
 
-	CV_Set(&cv_voicedubs, out);
+	CV_Set(&cv_pilotdubs, out);
 }
 
 sfxenum_t K_DubPreview(const skin_t *skin, INT32 n, INT32 skinsound)
@@ -434,4 +497,114 @@ void K_DubMenuSync(void)
 void K_DubMenuChanged(void)
 {
 	CV_Set(&cv_voicelanguage, cv_dummyvoicelanguage.string);
+}
+
+// ----------------------------------------------------------------------------
+// Pilots' dubs over the network, WORLDWIDE mode only (WORLDWIDE.md 9.7)
+// ----------------------------------------------------------------------------
+//
+// A pilot's machine knows their choice from their profile; the others learn it
+// from XD_PILOTDUB: the character and the dub's name, "" for no choice. Only a
+// server in WORLDWIDE mode, and its clients, ever see one -- a stock server
+// would kick the sender over a net command it does not know, which is also why
+// WORLDWIDE_PROTOCOL went up with it. It never touches the game: a name, kept
+// by player slot.
+//
+// Sent once a frame, outside the tics, so that a tic the prediction runs again
+// sends nothing: when a pilot's character or choice changes, and again for
+// every pilot of this machine when anybody joins -- the newcomer has heard
+// nothing, and a late join brings no history of net commands.
+
+static pilotdub_t g_said[MAXSPLITSCREENPLAYERS]; // this machine's pilots, as last sent
+static boolean g_saidonce[MAXSPLITSCREENPLAYERS];
+static boolean g_ingame[MAXPLAYERS];              // playeringame, as last seen
+static boolean g_serverww;                        // the server joined runs WORLDWIDE mode
+
+void K_DubServerWorldwide(boolean yes)
+{
+	g_serverww = yes;
+}
+
+static boolean K_DubsOnline(void)
+{
+	if (!netgame || dedicated)
+		return false;
+
+	if (server)
+		return K_WorldwideServer();
+
+	return (g_serverww && addedtogame);
+}
+
+static void Got_PilotDub(const UINT8 **cp, INT32 playernum)
+{
+	char skin[SKINNAMESIZE+1];
+	char name[DUBNAMESIZE+1];
+
+	READSTRINGN(*cp, skin, SKINNAMESIZE);
+	READSTRINGN(*cp, name, DUBNAMESIZE);
+
+	if (playernum < 0 || playernum >= MAXPLAYERS)
+		return;
+
+	strlcpy(g_heard[playernum].skin, skin, sizeof g_heard[playernum].skin);
+	strlcpy(g_heard[playernum].name, name, sizeof g_heard[playernum].name);
+}
+
+void K_DubNetUpdate(void)
+{
+	boolean joined = false;
+	INT32 i;
+
+	// A slot left: what it said goes with it. A slot filled: say ours again.
+	for (i = 0; i < MAXPLAYERS; i++)
+	{
+		if (playeringame[i] == g_ingame[i])
+			continue;
+
+		if (playeringame[i])
+			joined = true;
+		else
+			memset(&g_heard[i], 0, sizeof g_heard[i]);
+
+		g_ingame[i] = playeringame[i];
+	}
+
+	if (!K_DubsOnline())
+	{
+		memset(g_saidonce, 0, sizeof g_saidonce);
+		if (!netgame)
+			memset(g_heard, 0, sizeof g_heard);
+		return;
+	}
+
+	for (i = 0; i <= splitscreen; i++)
+	{
+		const INT32 pnum = g_localplayers[i];
+		const profile_t *pr = PR_GetLocalPlayerProfile(i);
+		const skin_t *skin;
+		char name[DUBNAMESIZE+1] = "";
+		UINT8 buf[SKINNAMESIZE + DUBNAMESIZE + 2];
+		UINT8 *p = buf;
+
+		if (pnum < 0 || pnum >= MAXPLAYERS || !playeringame[pnum] || players[pnum].skin >= numskins)
+			continue;
+
+		skin = skins[players[pnum].skin];
+
+		if (pr == NULL || !K_PilotChoiceOf(pr->profilename, skin->name, name, sizeof name))
+			name[0] = '\0';
+
+		if (g_saidonce[i] && !joined
+			&& !stricmp(g_said[i].skin, skin->name) && !strcmp(g_said[i].name, name))
+			continue;
+
+		WRITESTRINGN(p, skin->name, SKINNAMESIZE);
+		WRITESTRINGN(p, name, DUBNAMESIZE);
+		SendNetXCmdForPlayer(i, XD_PILOTDUB, buf, p - buf);
+
+		strlcpy(g_said[i].skin, skin->name, sizeof g_said[i].skin);
+		strlcpy(g_said[i].name, name, sizeof g_said[i].name);
+		g_saidonce[i] = true;
+	}
 }

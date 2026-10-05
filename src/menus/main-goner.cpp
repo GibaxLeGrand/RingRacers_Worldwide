@@ -14,6 +14,7 @@
 #include "../m_cond.h"
 #include "../r_skins.h"
 #include "../s_sound.h"
+#include "../k_dubs.h" // K_DubSkinSound
 #include "../f_finale.h"
 #include "../music.h"
 #include "../p_local.h" // P_AutoPause
@@ -257,8 +258,7 @@ public:
 		if (!ValidID())
 			return sfx_ktalk;
 
-		return skins[ skinID ]
-			->soundsid[ S_sfx[sfx_ktalk].skinsound ];
+		return K_DubSkinSound(skins[ skinID ], S_sfx[sfx_ktalk].skinsound);
 	};
 
 	int GetSkinID(void)

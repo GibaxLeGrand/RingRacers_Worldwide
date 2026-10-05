@@ -15,6 +15,7 @@
 #include "../i_time.h"
 #include "../k_menu.h"
 #include "../r_skins.h"
+#include "../k_dubs.h" // WORLDWIDE.md 8.142
 #include "../s_sound.h"
 #include "../k_grandprix.h" // K_CanChangeRules
 #include "../m_cond.h" // Condition Sets
@@ -737,7 +738,7 @@ boolean M_CharacterSelectForceInAction(void)
 	return (cv_forceskin.value != -1);
 }
 
-static void M_HandleBackToChars(setup_player_t *p)
+static void M_HandleBackToGrid(setup_player_t *p)
 {
 	boolean forceskin = M_CharacterSelectForceInAction();
 
@@ -750,6 +751,26 @@ static void M_HandleBackToChars(setup_player_t *p)
 	{
 		p->mdepth = CSSTEP_ALTS;
 	}
+}
+
+// WORLDWIDE: a character with dubs has its voice step between it and the
+// colors (WORLDWIDE.md 8.142).
+static boolean M_HandleBeginningDubs(setup_player_t *p)
+{
+	if (p->skin < 0 || K_DubCount(skins[p->skin]) == 0)
+		return false;
+
+	p->mdepth = CSSTEP_DUBS;
+	p->dubn = (UINT8)K_DubChosen(skins[p->skin]);
+	p->dubn_slide.dist = 0;
+	p->dubn_slide.start = 0;
+	return true;
+}
+
+static void M_HandleBackToChars(setup_player_t *p)
+{
+	if (!M_HandleBeginningDubs(p))
+		M_HandleBackToGrid(p);
 }
 
 static boolean M_HandleBeginningColors(setup_player_t *p)
@@ -791,14 +812,22 @@ static void M_HandleBeginningFollowers(setup_player_t *p)
 	}
 }
 
-static void M_HandleBeginningColorsOrFollowers(setup_player_t *p)
+static void M_HandleAfterDubs(setup_player_t *p)
 {
-	if (p->skin != -1)
-		S_StartSound(NULL, skins[p->skin]->soundsid[S_sfx[sfx_kattk1].skinsound]);
 	if (M_HandleBeginningColors(p))
 		S_StartSound(NULL, sfx_s3k63);
 	else
 		M_HandleBeginningFollowers(p);
+}
+
+static void M_HandleBeginningColorsOrFollowers(setup_player_t *p)
+{
+	if (p->skin != -1) // in the voice chosen for it (WORLDWIDE.md 8.142)
+		S_StartSound(NULL, K_DubSkinSound(skins[p->skin], S_sfx[sfx_kattk1].skinsound));
+	if (M_HandleBeginningDubs(p))
+		S_StartSound(NULL, sfx_s3k63);
+	else
+		M_HandleAfterDubs(p);
 }
 
 static boolean M_HandleCharacterGrid(setup_player_t *p, UINT8 num)
@@ -979,6 +1008,44 @@ static void M_HandleCharRotate(setup_player_t *p, UINT8 num)
 		p->rotate = CSROTATETICS;
 		p->hitlag = true;
 		S_StartSound(NULL, sfx_s3k7b); //sfx_s3kc3s
+		M_SetMenuDelay(num);
+	}
+}
+
+// WORLDWIDE: the character's voice, chosen as a profile is (WORLDWIDE.md 8.142).
+// Each one heard as it comes up; the choice is this machine's, for that
+// character, wherever it races.
+static void M_HandleDubSelect(setup_player_t *p, UINT8 num)
+{
+	const UINT8 last = (UINT8)K_DubCount(skins[p->skin]);
+
+	if (cv_splitdevice.value)
+		num = 0;
+
+	if (menucmd[num].dpad_ud != 0)
+	{
+		const UINT8 oldn = p->dubn;
+
+		if (menucmd[num].dpad_ud > 0)
+			p->dubn = (p->dubn >= last) ? 0 : p->dubn + 1;
+		else
+			p->dubn = (p->dubn == 0) ? last : p->dubn - 1;
+
+		p->dubn_slide.dist = p->dubn - oldn;
+		p->dubn_slide.start = I_GetTime();
+		S_StartSound(NULL, K_DubPreview(skins[p->skin], p->dubn, S_sfx[sfx_kattk1].skinsound));
+		M_SetMenuDelay(num);
+	}
+	else if (M_MenuConfirmPressed(num))
+	{
+		K_DubChoose(skins[p->skin], p->dubn);
+		M_HandleAfterDubs(p);
+		M_SetMenuDelay(num);
+	}
+	else if (M_MenuBackPressed(num))
+	{
+		M_HandleBackToGrid(p);
+		S_StartSound(NULL, sfx_s3k5b);
 		M_SetMenuDelay(num);
 	}
 }
@@ -1324,6 +1391,9 @@ boolean M_CharacterSelectHandler(INT32 choice)
 					break;
 				case CSSTEP_ALTS: // Select clone
 					M_HandleCharRotate(p, i);
+					break;
+				case CSSTEP_DUBS: // Select voice (WORLDWIDE.md 8.142)
+					M_HandleDubSelect(p, i);
 					break;
 				case CSSTEP_COLORS: // Select color
 					M_HandleColorRotate(p, i);

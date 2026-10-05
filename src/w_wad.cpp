@@ -2508,6 +2508,7 @@ int W_VerifyNMUSlumps(const char *filename, FILE *handle, boolean exit_on_error)
 		{"MKFNT", 5}, // Kart font changes
 		{"K_", 2}, // Kart graphic changes
 		{"MUSICDEF", 8}, // Kart song definitions
+		{"DUBDEF", 6}, // WORLDWIDE: character dubs (k_dubs.c, WORLDWIDE.md 8.142)
 		{"RVFXANIM", 8}, // Photosensitivity texture animation changes
 
 		{"TLG_", 4}, // Generic button legends

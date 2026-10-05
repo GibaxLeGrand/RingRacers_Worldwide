@@ -980,6 +980,13 @@ void Dummygpdifficulty_OnChange(void);
 consvar_t cv_dummygpdifficulty = MenuDummy("dummygpdifficulty", "Intense").values(gpdifficulty_cons_t).onchange(Dummygpdifficulty_OnChange);
 consvar_t cv_dummygpencore = MenuDummy("dummygpencore", "Off").on_off();
 
+// WORLDWIDE: character dubs, chosen by the one listening (k_dubs.c, WORLDWIDE.md 8.142).
+consvar_t cv_voicelanguage = Player("voicelanguage", "Default");
+consvar_t cv_voicedubs = Player("voicedubs", "");
+extern CV_PossibleValue_t dublanguage_cons_t[];
+void K_DubMenuChanged(void);
+consvar_t cv_dummyvoicelanguage = MenuDummy("dummyvoicelanguage", "Default").values(dublanguage_cons_t).onchange_noinit(K_DubMenuChanged);
+
 consvar_t cv_dummyip = MenuDummy("dummyip", "");
 consvar_t cv_dummyipselect = MenuDummy("dummyipselect", "0").min_max(0, 2);
 

@@ -58,6 +58,7 @@
 #include "k_kart.h"
 #include "k_hud.h"
 #include "k_follower.h"
+#include "k_dubs.h" // WORLDWIDE.md 8.142
 #include "d_player.h" // KITEM_ constants
 #include "doomstat.h" // MAXSPLITSCREENPLAYERS
 #include "k_grandprix.h" // K_CanChangeRules
@@ -1949,7 +1950,7 @@ static void M_DrawCharSelectSprite(UINT8 num, INT16 x, INT16 y, boolean charflip
 	colormap = R_GetTranslationColormap(p->skin, color, GTC_MENUCACHE);
 
 	M_DrawCharacterSprite(x, y, p->skin, SPR2_STIN, (charflip ? 1 : 7), ((p->mdepth == CSSTEP_READY) ? setup_animcounter : 0),
-		p->mdepth == CSSTEP_ASKCHANGES ? V_TRANSLUCENT : 0, colormap);
+		(p->mdepth == CSSTEP_ASKCHANGES || p->mdepth == CSSTEP_DUBS) ? V_TRANSLUCENT : 0, colormap);
 }
 
 static void M_DrawCharSelectPreview(UINT8 num)
@@ -2084,6 +2085,65 @@ static void M_DrawCharSelectPreview(UINT8 num)
 						FRACUNIT,
 						notSelectable,
 						i == p->profilen ? R_GetTranslationColormap(TC_RAINBOW, SKINCOLOR_SAPPHIRE, GTC_CACHE) : NULL,
+						FILE_FONT,
+						txt
+					);
+				}
+			}
+			py += 12;
+		}
+
+		V_ClearClipRect();
+	}
+	// WORLDWIDE: the character's voices, listed as the profiles are
+	// (WORLDWIDE.md 8.142).
+	else if (p->mdepth == CSSTEP_DUBS && p->skin >= 0)
+	{
+		const skin_t *skin = skins[p->skin];
+		const INT32 last = K_DubCount(skin);
+		INT16 px = x+12;
+		INT16 py = y+48 - p->dubn*12 +
+			Easing_OutSine(
+				M_DueFrac(p->dubn_slide.start, 5),
+				p->dubn_slide.dist*12,
+				0
+			);
+		INT32 i;
+
+		V_SetClipRect(0, (y+25)*FRACUNIT, BASEVIDWIDTH*FRACUNIT, (5*12)*FRACUNIT, 0);
+
+		for (i = 0; i <= last; i++)
+		{
+			const INT32 dist = abs(p->dubn - i);
+			const char *txt = K_DubName(skin, i);
+
+			if (dist > 3)
+			{
+				py += 12;
+				continue;
+			}
+
+			if (dist > 1)
+			{
+				V_DrawCenteredFileString(px+26, py, 0, txt);
+				V_DrawScaledPatch(px, py, V_TRANSLUCENT, W_CachePatchName("FILEBACK", PU_CACHE));
+			}
+			else
+			{
+				V_DrawScaledPatch(px, py, 0, W_CachePatchName("FILEBACK", PU_CACHE));
+
+				if (i != p->dubn || ((setup_animcounter/10) & 1))
+				{
+					fixed_t w = V_StringScaledWidth(FRACUNIT, FRACUNIT, FRACUNIT, 0, FILE_FONT, txt);
+
+					V_DrawStringScaled(
+						((px+26) * FRACUNIT) - (w/2),
+						py * FRACUNIT,
+						FRACUNIT,
+						FRACUNIT,
+						FRACUNIT,
+						0,
+						i == p->dubn ? R_GetTranslationColormap(TC_RAINBOW, SKINCOLOR_SAPPHIRE, GTC_CACHE) : NULL,
 						FILE_FONT,
 						txt
 					);

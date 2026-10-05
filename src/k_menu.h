@@ -395,6 +395,7 @@ typedef enum
 	sopt_preferences,
 	sopt_chatnotifs,
 	sopt_charvoices,
+	sopt_voicelanguage, // WORLDWIDE.md 8.142
 	sopt_followhorns,
 	sopt_attackmusic,
 	sopt_spacer2,
@@ -812,6 +813,7 @@ typedef enum
 	CSSTEP_ASKCHANGES,
 	CSSTEP_CHARS,
 	CSSTEP_ALTS,
+	CSSTEP_DUBS, // WORLDWIDE: the character's voice (WORLDWIDE.md 8.142)
 	CSSTEP_COLORS,
 	CSSTEP_FOLLOWERCATEGORY,
 	CSSTEP_FOLLOWER,
@@ -831,6 +833,8 @@ struct setup_player_t
 	SINT8 gridx, gridy;
 	UINT8 profilen;
 	menu_anim_t profilen_slide;
+	UINT8 dubn; // WORLDWIDE: the voice chosen, as K_DubName's n (WORLDWIDE.md 8.142)
+	menu_anim_t dubn_slide;
 	INT16 skin;
 	SINT8 clonenum;
 	SINT8 rotate;

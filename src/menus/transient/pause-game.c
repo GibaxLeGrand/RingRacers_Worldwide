@@ -14,7 +14,7 @@
 #include "../../byteptr.h"
 #include "../../d_netcmd.h"
 #include "../../i_time.h"
-#include "../../k_photo.h" // WORLDWIDE.md 8.145
+#include "../../k_photo.h" // WORLDWIDE.md section 9
 #include "../../k_menu.h"
 #include "../../hu_stuff.h"
 #include "../../k_grandprix.h" // K_CanChangeRules
@@ -67,7 +67,7 @@ menuitem_t PAUSE_Main[] =
 	{IT_STRING | IT_CALL, "RESUME GAME", "M_ICOUNP",
 		NULL, {.routine = M_QuitPauseMenu}, 0, 0},
 
-	// WORLDWIDE: photo mode (k_photo.c, WORLDWIDE.md 8.145).
+	// WORLDWIDE: photo mode (k_photo.c, WORLDWIDE.md section 9).
 	{IT_STRING | IT_CALL, "PHOTO MODE", "M_ICOSPC",
 		NULL, {.routine = M_PhotoMode}, 0, 0},
 
@@ -261,7 +261,7 @@ void M_OpenPauseMenu(void)
 		PAUSE_Main[mpause_cheats].status = IT_STRING | IT_SUBMENU;
 	}
 
-	// WORLDWIDE: photo mode, offline (WORLDWIDE.md 8.145).
+	// WORLDWIDE: photo mode, offline (WORLDWIDE.md section 9).
 	if (K_PhotoModeActive() || K_PhotoModeAvailable())
 	{
 		PAUSE_Main[mpause_photomode].status = IT_STRING | IT_CALL;
@@ -271,7 +271,7 @@ void M_OpenPauseMenu(void)
 	G_ResetAllDeviceRumbles();
 }
 
-// WORLDWIDE: photo mode, in or out (k_photo.c, WORLDWIDE.md 8.145). In, the
+// WORLDWIDE: photo mode, in or out (k_photo.c, WORLDWIDE.md section 9). In, the
 // menu closes on the camera let go; the button that toggles the free
 // camera leaves it too.
 void M_PhotoMode(INT32 choice)

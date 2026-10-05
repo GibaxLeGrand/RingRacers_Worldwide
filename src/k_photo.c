@@ -7,7 +7,7 @@
 // See the 'LICENSE' file for more details.
 //-----------------------------------------------------------------------------
 /// \file  k_photo.c
-/// \brief Photo mode (WORLDWIDE.md 8.145)
+/// \brief Photo mode (WORLDWIDE.md section 9)
 
 #include "doomdef.h"
 #include "k_photo.h"

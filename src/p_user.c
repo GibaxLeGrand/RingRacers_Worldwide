@@ -52,7 +52,7 @@
 #include "m_cond.h" // M_UpdateUnlockablesAndExtraEmblems
 #include "k_kart.h"
 #include "k_rollback.h" // K_RollbackTraceSkip
-#include "k_photo.h" // K_PhotoModeActive (WORLDWIDE.md 8.145)
+#include "k_photo.h" // K_PhotoModeActive (WORLDWIDE.md section 9)
 #include "console.h" // CON_LogMessage
 #include "k_respawn.h"
 #include "k_bot.h"
@@ -175,7 +175,7 @@ fixed_t P_ReturnThrustY(mobj_t *mo, angle_t angle, fixed_t move)
 boolean P_AutoPause(void)
 {
 	// WORLDWIDE: photo mode holds the game, offline, as the pause menu does
-	// -- in record attack too (k_photo.c, WORLDWIDE.md 8.145).
+	// -- in record attack too (k_photo.c, WORLDWIDE.md section 9).
 	if (K_PhotoModeActive() && !netgame)
 		return true;
 

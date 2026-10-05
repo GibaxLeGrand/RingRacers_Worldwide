@@ -7,7 +7,7 @@
 // See the 'LICENSE' file for more details.
 //-----------------------------------------------------------------------------
 /// \file  k_photo.h
-/// \brief Photo mode (WORLDWIDE.md 8.145)
+/// \brief Photo mode (WORLDWIDE.md section 9)
 ///
 /// Offline, from the pause menu: the game held where it is, the HUD hidden,
 /// and the camera let go -- the free camera replays and spectators have,

@@ -2033,7 +2033,10 @@ void HU_DrawSongCredits(void)
 	}
 	else
 	{
-		y = (r_splitscreen ? (BASEVIDHEIGHT/2)-4 : 40) * FRACUNIT;
+		// Side by side, the middle of the screen is both views': at the
+		// top, as 1P (Gibax: "mets la en haut, meme endroit que en
+		// single player").
+		y = ((r_splitscreen && !r_splitvertical) ? (BASEVIDHEIGHT/2)-4 : 40) * FRACUNIT;
 	}
 
 	INT32 bgt = (NUMTRANSMAPS/2) + (cursongcredit.trans / 2);

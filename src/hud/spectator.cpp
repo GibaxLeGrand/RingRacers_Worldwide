@@ -91,25 +91,25 @@ struct List
 			col = col.x(field.width());
 		}
 
-		//row_ = row_.y(r_splitscreen ? -13 : -17);
+		//row_ = row_.y(K_HudSplits() ? -13 : -17);
 		row_ = row_.y(-13);
 	}
 
 private:
-	bool left_ = r_splitscreen > 1 && R_GetViewNumber() & 1;
+	bool left_ = K_HudSplits() > 1 && R_GetViewNumber() & 1;
 	Draw row_;
 
 	static Draw split_draw(int x, int y, bool left)
 	{
 		return Draw(
-			left ? x : (BASEVIDWIDTH / (r_splitscreen > 1 ? 2 : 1)) - x,
-			(BASEVIDHEIGHT / (r_splitscreen ? 2 : 1)) - y
+			left ? x : (BASEVIDWIDTH / (K_HudSplits() > 1 ? 2 : 1)) - x,
+			(BASEVIDHEIGHT / (K_HudSplits() ? 2 : 1)) - y
 		)
 			.align(Draw::Align::kLeft)
 			.flags(
 				V_SNAPTOBOTTOM |
 				(left ? V_SNAPTOLEFT : V_SNAPTORIGHT) |
-				(r_splitscreen > 1 ? V_HUDTRANS : V_SLIDEIN) |
+				(K_HudSplits() > 1 ? V_HUDTRANS : V_SLIDEIN) |
 				V_SPLITSCREEN
 			);
 	}
@@ -150,7 +150,7 @@ void K_drawSpectatorHUD(boolean director)
 
 	List list = [director]
 	{
-		switch (r_splitscreen)
+		switch (K_HudSplits())
 		{
 		case 0:
 			return List(director ? 20 : 20, 34);

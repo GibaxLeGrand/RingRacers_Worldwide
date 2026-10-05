@@ -129,7 +129,7 @@ struct TargetTracking
 
 		Graphics gfx = graphics();
 		Graphics::SplitscreenPair& pair = useNear || !gfx.far ? gfx.near : *gfx.far;
-		Animation& anim = r_splitscreen <= 1 || !pair.p4 ? pair.p1 : *pair.p4;
+		Animation& anim = K_HudSplits() <= 1 || !pair.p4 ? pair.p1 : *pair.p4;
 
 		return anim;
 	}
@@ -433,7 +433,7 @@ std::optional<TargetTracking::Tooltip> object_tooltip(const mobj_t* mobj)
 
 	auto conditional = [](bool val, auto&& f) { return val ? std::optional<Tooltip> {f()} : std::nullopt; };
 
-	Draw::Font splitfont = (r_splitscreen > 1) ? Draw::Font::kThin : Draw::Font::kMedium;
+	Draw::Font splitfont = (K_HudSplits() > 1) ? Draw::Font::kThin : Draw::Font::kMedium;
 
 	switch (mobj->type)
 	{
@@ -648,14 +648,14 @@ void K_DrawTargetTracking(const TargetTracking& target)
 		screenSize.x = vid.width / vid.dupx;
 		screenSize.y = vid.height / vid.dupy;
 
-		if (r_splitscreen >= 2)
+		if (r_splitscreen >= 2 || r_splitvertical)
 		{
 			// Half-wide screens
 			screenSize.x >>= 1;
 			borderSize >>= 1;
 		}
 
-		if (r_splitscreen >= 1)
+		if (r_splitscreen >= 1 && !r_splitvertical)
 		{
 			// Half-tall screens
 			screenSize.y >>= 1;
@@ -749,6 +749,13 @@ void K_DrawTargetTracking(const TargetTracking& target)
 
 		arrowPos.x = std::clamp(arrowPos.x, borderSize, borderWin.x) * FRACUNIT;
 		arrowPos.y = std::clamp(arrowPos.y, borderSize, borderWin.y) * FRACUNIT;
+
+		if (r_splitvertical)
+		{
+			// Side by side, the HUD's frame is half this view's height and
+			// sits a quarter of it lower (V_AdjustXYWithSnap): back up.
+			arrowPos.y -= (BASEVIDHEIGHT/4) * FRACUNIT;
+		}
 
 		if (targetPatch)
 		{

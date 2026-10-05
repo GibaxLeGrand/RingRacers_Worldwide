@@ -24,6 +24,7 @@
 #include "i_system.h"
 #include "i_video.h"
 #include "d_net.h"
+#include "k_dubs.h" // K_DubServerWorldwide
 #include "k_rollback.h" // K_RollbackNoteArrival
 #include "d_netfil.h" // fileneedednum
 #include "d_main.h"
@@ -2036,6 +2037,7 @@ static boolean CL_ServerConnectionSearchTicker(tic_t *asksent)
 			// The server decides: prediction against a server in WORLDWIDE mode,
 			// the stock netcode against any other (K_WorldwideJoin).
 			K_WorldwideJoin((serverlist[i].info.kartvars & SV_WORLDWIDE) != 0);
+			K_DubServerWorldwide((serverlist[i].info.kartvars & SV_WORLDWIDE) != 0); // WORLDWIDE.md 9.7
 
 #ifdef DEVELOP
 			// Commits do not match? Do not connect!
@@ -2850,6 +2852,7 @@ void CL_Reset(void)
 
 	// Whatever the last server's WORLDWIDE mode switched on here.
 	K_WorldwideLeave();
+	K_DubServerWorldwide(false);
 
 #ifdef HAVE_CURL
 	curl_failedwebdownload = false;

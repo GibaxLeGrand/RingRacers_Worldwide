@@ -2406,8 +2406,8 @@ static void R_ProjectSprite(mobj_t *thing)
 
 			// Krangle contrast in 3P/4P because scalelight
 			// scales differently depending on the screen
-			// width (which is halved in 3P/4P).
-			if (r_splitscreen > 1)
+			// width (which is halved in 3P/4P, and side by side).
+			if (r_splitscreen > 1 || r_splitvertical)
 			{
 				extralight *= 2;
 			}

@@ -26,6 +26,7 @@
 #include "m_easing.h"
 #include "r_skins.h"
 #include "s_sound.h"
+#include "k_dubs.h" // K_DubSkinSound
 #include "z_zone.h"
 #include "k_hud.h"
 #include "p_tick.h" // P_LevelIsFrozen
@@ -208,7 +209,7 @@ void Dialogue::SetSpeaker(srb2::String skinName, int portraitID)
 
 		speaker = skin->realname;
 
-		typewriter.voiceSfx = skin->soundsid[ S_sfx[sfx_ktalk].skinsound ];
+		typewriter.voiceSfx = K_DubSkinSound(skin, S_sfx[sfx_ktalk].skinsound);
 	}
 	else
 	{

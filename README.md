@@ -1,17 +1,22 @@
 # Ring Racers Worldwide
 
-**A client-side prediction netcode for [Dr. Robotnik's Ring Racers](https://www.kartkrew.org).**
-An unofficial fork, maintained by Gibax, on the branch `rollback-netcode`.
+**Client-side prediction netcode for [Dr. Robotnik's Ring Racers](https://www.kartkrew.org).**
+An unofficial fork, maintained by Gibax.
 
 <p align="center">
   <img src="docs/RRW_logo.png" width="238" alt="Ring Racers Worldwide logo">
 </p>
 
-> **Experimental, not ready for public play.** Every feature below sits behind
-> a switch that is off by default, most measurements come from one driver on
-> one machine, and the known limits are listed under
-> [Where it stands](#where-it-stands). This fork is not affiliated with or
-> endorsed by Kart Krew Dev: please do not report its bugs to them.
+> **Experimental: there is no release yet.** The prediction runs only on a
+> server that hosts in WORLDWIDE mode, most measurements so far come from one
+> driver on one machine, and what is known to be missing is listed under
+> [Where it stands](#where-it-stands).
+>
+> **This project is AI-assisted.** How, and why, is explained under
+> [About AI](#about-ai).
+>
+> This fork is not affiliated with or endorsed by Kart Krew Dev: please report
+> its bugs [here](#reporting-a-problem), never to them.
 
 ## Why
 
@@ -23,198 +28,245 @@ tic, the world you see is a prediction a few tics ahead of what the server has
 confirmed, and the server's word corrects it.
 
 It is **client-side prediction with server reconciliation**, not GGPO-style
-peer-to-peer rollback: the game has an authoritative server and a consistency
-check, and this design keeps both.
+peer-to-peer rollback: the game keeps its authoritative server and its
+consistency check.
 
-The goal is a community one: letting players race on servers far from them
--- a European on an American server, for a start -- in a game as demanding as
+The goal is a community one: letting people race on servers far from them --
+a European on an American server, for a start -- in a game as demanding as
 Ring Racers.
 
 ## How it works
 
 - **Two clocks.** The confirmed world (`gametic`) runs only the tics the
   server has confirmed, in the stock lockstep, untouched. On top of it, a
-  *speculation* runs a few tics ahead from a snapshot of the confirmed world,
-  with your own inputs applied at once and everyone else's guessed. The
-  speculation is what you see.
-- **Snapshots and restores.** The confirmed world is saved to an in-memory
-  ring of snapshots and restored before each confirmed tic, so the
+  *speculation* runs ahead from a snapshot of the confirmed world, with your
+  own inputs applied at once. The speculation is what you see.
+- **Snapshots.** The confirmed world is saved as a raw copy of the level's
+  object pools in memory and restored before each confirmed tic, so the
   speculation never leaks into it. A large part of the work has been finding
   and fixing every piece of state a restore did not put back exactly.
+- **Keeping what was right.** When the server confirms the inputs a
+  speculation ran, it is kept and extended by a tic instead of rebuilt. Your
+  inputs still in flight are replayed on the tics the server will give them.
 - **Guessing the others.** Bots are recomputed from the local world, which is
   exact; a remote person's last input is repeated until the real one arrives.
 - **A light correction channel.** Instead of the stock full-state resend
   (hundreds of KB and a visible hitch when a client parts from the server),
   the server sends each client a small packet with every kart's state a few
   times a second.
-- **One server switch.** A server started with `worldwide On` advertises the
+- **The server decides.** A server hosting with `worldwide On` advertises the
   mode, runs the correction channel, and accepts WORLDWIDE clients only. A
-  WORLDWIDE client switches its prediction on or off by what the server it
-  joins advertises: against a stock server it plays the stock netcode.
-
-## What this fork adds
-
-| Feature | Console switch | State |
-|---|---|---|
-| Two-clock prediction, own input applied at once | `rollback_twoclock` | measured, off by default |
-| Speculation that never writes over tics already received | `rollback_cleancmds` | measured, **on** by default |
-| Light state-correction channel in place of full resends | `rollback_correct` (server) | measured |
-| Karts already where the server has them left alone | -- | measured |
-| Replaying your inputs still in flight across the speculation | `rollback_history` | measured, off by default |
-| Keeping the speculation when the server confirms it | `rollback_keepspec` | measured, off by default |
-| No fixed input delay for the host or clients while predicting | -- | measured |
-| WORLDWIDE mode: one server switch, clients follow, stock clients refused | `worldwide` (server) | built, not yet run |
-| Raw snapshots of the level's object pools (track B2) | `rollback_poolcopy` | in progress |
-| Restore fixes: item roulette, polyobjects, dynamic slopes, unlock progress, ACS references, sounds kept across restores, and more | -- | measured on seven maps |
-| Diagnostics: snapshot round-trip and leak soaks, drift and blame logs, per-step cost of a pass and of a save | `rollback_test`, `rollback_soak`, `rollback_drift`, ... | in use |
-
-The full list, with what each switch does, is in
-[docs/COMMANDS.md](docs/COMMANDS.md).
+  WORLDWIDE client turns its prediction on when it joins such a server, and
+  plays the stock netcode, as a stock client, everywhere else.
 
 ## Where it stands
 
-Measured so far, on a two-instance setup with a simulated 171 ms of latency,
-one human driver and bots:
+Measured on two instances on one machine (a Ryzen 5 5600X) with simulated
+latency, one human driver and bots, unless said otherwise:
 
-- **Input lag is gone** from the client's seat.
-- **The confirmed world stays exact**: 0.000 units of drift on every kart
-  sample of three 1000-tic windows, on two maps (Skyscraper Leaps and
-  Opulence), and **no full-state resend** with the correction channel on.
-- **Snapshots hold**: restore-and-replay soaks pass on seven maps covering
-  water, polyobjects, linedef executors, ACS and dynamic slopes, after the
-  fixes they found.
-- **Cost is the open problem.** On a light map a pass costs a few
-  milliseconds; on a heavy one (Opulence, about 3700 objects) the driven race
-  runs at 54 to 65 frames a second, and every rebuild of the speculation is a
-  hitch. Most of a pass is saving snapshots and re-running the map's
-  decorations.
+- **Input lag is gone** from the client's seat, at every latency tried from
+  0 to 428 ms.
+- **The confirmed world stays exact**: 0.000 units of drift on every kart in
+  every driven race since the end of September, and no full-state resend.
+- **The picture is smooth**: your kart is drawn in even steps, as without
+  prediction.
+- **It fits a full grid**: sixteen karts on Opulence, a heavy map, to the end
+  of the race, at 6 to 7 ms of prediction work per tic -- under a quarter of
+  a tic.
+- **It lives next to stock 2.4**: a stock client is refused by a WORLDWIDE
+  server with a message saying why; a WORLDWIDE build joins stock servers and
+  hosts stock clients as a stock 2.4 would.
+- **First race from a second machine**: a Steam Machine running the Flatpak
+  build joined a WORLDWIDE server over a LAN and raced to the finish.
 
-Never run under prediction yet: a race with two or more humans on separate
-machines, a race played from the host's seat, sixteen karts, a full race from
-grid to results, Battle, Grand Prix and Encore.
+**Not done yet:** two people racing each other on separate machines; a real
+Internet connection, with jitter and packet loss (the bench only delays);
+round trips above about 340 ms; smaller machines; items used on purpose;
+most maps; Battle, Grand Prix and Encore.
 
 The measurement journal, with every figure and the prediction written before
 each run, is [docs/WORLDWIDE.md](docs/WORLDWIDE.md) -- its *Current state*
 block first.
 
-## The plan
+## What this fork adds
 
-The detailed roadmap is [docs/ROADMAP.md](docs/ROADMAP.md). In order:
+| Feature | Console switch | State |
+|---|---|---|
+| WORLDWIDE mode: one server switch, clients follow, stock clients refused | `worldwide` (server; also in the menus) | measured, checked against stock 2.4 |
+| Two-clock prediction, your own input applied at once | `rollback_twoclock` | measured, on in WORLDWIDE mode |
+| Speculation that never writes over tics already received | `rollback_cleancmds` | measured, on by default |
+| Replaying your inputs still in flight | `rollback_history`, `rollback_histreal` | measured, on in WORLDWIDE mode |
+| Keeping the speculation when the server confirms it | `rollback_keepspec` | measured, on in WORLDWIDE mode |
+| Light state-correction channel in place of full resends | `rollback_correct` (server) | measured, on in WORLDWIDE mode |
+| Raw snapshots of the level's object pools | `rollback_rawsnap` | measured, on by default |
+| No chain of rebuilds after a stall of the client | `rollback_ontime` | measured, on in WORLDWIDE mode |
+| Smooth drawing between kept passes | -- | measured |
+| Each sound heard once, and heard after a join | `rollback_soundreset` | heard, on by default |
+| No fixed input delay for the host or clients while predicting | -- | measured |
+| A cap on a rebuild's cost, for smaller machines | `rollback_rebuildbudget` | measured, off by default |
+| Restore fixes: item roulette, polyobjects, dynamic slopes, ACS references, kart reference counts, and more | -- | measured |
+| Diagnostics: snapshot and leak soaks, drift and blame logs, cost per pass, unattended test races | `rollback_test`, `rollback_soak`, `rollback_drift`, ... | in use |
+| Not netcode: typing with the system's keyboard layout (AZERTY and others) | `textinput` | checked |
+| Not netcode: WORLDWIDE's title screen, window title and icon | -- | in use |
 
-1. **Cost** -- the gate for an alpha: a pass must fit in about 30% of a tic at
-   sixteen karts late in a race. In progress: keeping the speculation when it
-   was right, then raw snapshots of the level's object pools (a memory copy in
-   place of the field-by-field save), then predicting less.
-2. **Compatibility**, under the rule *the server decides*: the WORLDWIDE mode
-   switch (built), checked against stock builds, on a release base the public
-   servers run.
-3. **Breadth**: full races, every mode, items used on purpose, maps of every
-   kind, several humans.
-4. **Feel**: correction smoothing, remote karts, the prediction depth, a
-   person hosting -- judged by people, not logs.
-5. **A capability check** that tells a player whether their machine can keep
-   up, and a recommended setting.
-6. **An alpha** that someone other than the maintainer has played.
+Every switch, with what it does, is in [docs/COMMANDS.md](docs/COMMANDS.md).
+The order of the work left is in [docs/ROADMAP.md](docs/ROADMAP.md).
 
-## How this project is made: AI-assisted, human-decided
+## Where it's going
 
-This project is developed with the help of an AI coding assistant
-(Anthropic's Claude, through Claude Code), under rules written into the
-repository's agent instructions and applied at every step:
+1. **A second person**: two people on two machines, on a LAN, then over the
+   Internet, then one of them hosting.
+2. **A real network** in the test bench, with jitter and loss, and the
+   samples filed by sequence number if the current scheme slips under it.
+3. **Deep round trips**: a history long enough for the players of a truly
+   worldwide lobby.
+4. **Breadth**: items used on purpose, more maps of every kind.
+5. **A public alpha**: a download on a GitHub release (Windows, a Linux
+   tarball and a Flatpak), a short install guide for Windows, Linux and the
+   Steam Deck, a place to report and send logs, and a plain list of what is
+   known to be broken.
 
-- **The AI assists; Gibax decides.** The AI does research work -- reading the
-  Ring Racers code base, comparing it with other netcodes, tracing a
-  mechanism down to a line -- writes code and instruments, and drafts the
-  documentation. Analysing the need, choosing between solutions, and
-  deciding what is done, kept or dropped are Gibax's.
-- **Nothing is launched without Gibax's explicit go-ahead, every time**: the
-  game, a test scenario, a soak. Gibax runs the tests and drives the races;
-  the feel of a race is judged by a person, never inferred from a log.
-- **Measure, don't assume.** Every change is tested on a binary verified by
-  its hash, with the prediction written down *before* the run and a control
-  in the same session. A result counts once Gibax has run it and read it.
-- **Nothing is rewritten after the fact.** The journal is annotated, never
-  edited: when a later result overturns an earlier one, the earlier one gets
-  a pointer forward, so wrong guesses stay visible.
-- **Every code change is pushed on Gibax's approval**, one subject per
-  commit; commits written with the AI say so in their trailer.
+## About AI
 
-### Why I use AI, and where it stops -- a note from Gibax
+### A word from Gibax
 
-**Who is behind this.** I learned to program before the rise of AI, and I am
-a C# developer by trade, not a C expert. Ring Racers is written in C and C++,
-in an engine that comes from Doom Legacy, SRB2 and SRB2Kart. Alone, a project
-of this size would have meant months, if not more, of teaching myself the
-concepts -- netcode, prediction, determinism, this engine's internals -- and
-then designing the code, which would easily have made it unviable. It takes
-something away from the achievement, of course. But if I wait for someone
-else to do it, nobody will. And I did not want to hand the project over to
-somebody else just because C is not my strongest language.
+**This project is AI-assisted, and there is no need to pretend otherwise.**
 
-**Why it went public.** It started as a small personal project. As it grew, I
-decided to take it online, because I am convinced that progress in Ring
-Racers' netcode can benefit everyone -- think of the rollback patches that
-were added to many older fighting games. Letting a European play properly on
-American servers would be a gift, especially in a game as demanding as Ring
-Racers, which unfortunately has few players in Europe. I also decided to use
-this project to find out how far generative AI can be pushed on real code, and
-where it breaks.
+I don't agree with using AI for art. Placeholder art on a small indie project
+is the one use I can defend: not everyone can pay an artist. Hell, I did it
+myself: the custom font of the "WORLDWIDE" lettering was made with AI. Every
+other piece of art here is human-made -- and badly, at that.
 
-**Kart Krew and the community.** I am not associated with Kart Krew, and I am
-not trying to be: this is a fork, a project of my own. I am well aware of how
-negatively generative AI is seen in the SRB2 community in general, and I fully
-understand the movement against it. I have decided that this is not mine to
-carry: if people don't like it, so be it -- they can boycott it and call it
-"AI slop", and not necessarily wrongly.
+I fully expect people to be disappointed and leave the moment they see "AI"
+on this project. I don't blame them: with how much slop AI has brought, I can
+only understand. Still, I do believe this project is one of the few decent
+ones. That is not my call to make, though. So I'm asking you to at least try
+it, and then decide whether it's truly slop or not.
 
-**What the AI is for here.** I use it as a development assistant. It helps me
-move faster and, above all, keeps me working within a structure: a written
-prediction before every test, a journal that is never rewritten, one change
-at a time. It reads code faster than I can, keeps track of what was measured
-and when, and does a lot of the typing.
+I also know how the SRB2 Message Board and the SRB2 community see AI, and that
+it is mostly negative, largely because of art theft. But I'll be honest: as a
+programmer, I don't see generative AI as a horrible thing for coding. Art and
+other creative media are an entirely different subject, but I do believe AI is
+helpful for code, and that in the hands of someone who knows what they're
+doing, it can genuinely help programmers on difficult projects.
 
-**Its limits are written down, not hidden.** It gets things wrong: many of the
-predictions in the journal are its own, and many of them failed -- they stay
-there, marked as such. It cannot test a game properly: it cannot play a race,
-feel input delay or see a stutter, and a log only says what it was built to
-measure. It can explain a mechanism with confidence and be wrong about it.
-That is why nothing here counts until I have run it and checked it myself.
+I am **not** associated with Kart Krew or Sonic Team Jr. This is a purely
+independent fork. I don't want to be associated with them because of my use
+of AI: I don't know their view on it, and I don't want my choices to drag
+them into a shitstorm. I think I've made my stance clear, and I completely
+understand if they don't support this project at all because of its use of
+AI. But I won't take it down because they don't like it: the code is open
+source, under the GNU General Public License, which lets anyone modify it and
+share it as long as the result is published under the same license -- and
+that is exactly what this fork does. That said, I am fully open to
+constructive criticism on this, and anyone is welcome to take this work and
+rework it their own way.
 
-I don't believe a project coded entirely by AI can be good. Assuming an AI can
-do everything on its own, with no human knowledge behind it to check its work
--- especially on code like Ring Racers -- greatly underestimates what human
-verification brings. AI is a tool to speed up development and make the work
-easier, not an automatic developer that does the job while nobody is looking.
+Over the years, and despite the games' popularity, I haven't seen anyone take
+on the delay-based netcode inherited from Doom Legacy. It has clearly shown
+its age, especially now that fast-paced games are everywhere and rollback
+patches are being applied to everything (and thank god for that -- BBCF, my
+beloved). Sure, there have been a few improvements along the way, but other
+than that, it is pretty much the same stock lockstep, delay-based netplay as
+SRB2's.
 
-**My commitment.** As long as I maintain this project, I will do everything I
-can to make it as good as it can be -- ideally to the point where it can no
-longer objectively be called AI slop.
+The closest thing to this I've seen is SRB2 NetPlus by LXShadow: a first step
+toward client-side prediction, but a client-only fix, with plenty of room for
+desyncs. Inspired by it, I decided to put some of my knowledge on the subject
+to good use, and to modify Ring Racers' netcode to implement client-side
+prediction, to smooth out the gameplay, especially at higher pings.
 
-A human always has to steer the AI, and steer it properly.
+To be fair, though, my knowledge of C and C++ is pretty bare, just the
+minimum, and a project of this scale was not something easy to take on alone.
+I also wanted to test the limits of AI on this kind of project (sadly, with
+the state of the programming world, it is becoming clear that you need it
+just to compete). So at first it was only a test, to see how far AI could
+take a project like this. After a while, it became a serious project I wanted
+to spend time on and perfect.
+
+Do I expect a ton of bugs and problems? Yes. In fact, I want people to report
+the bugs and problems they run into: I want this fork to be the best it can
+be, and for that I need your help. Will people boycott it because it's AI?
+Probably, yes. Sadly, I expect it to flop hard, despite the real step forward
+it brings to the SRB2 engine in general.
+
+Thank you, Kart Krew, for your dedicated work throughout the years. I love
+SRB2Kart, I've started to love Ring Racers, and despite what I said above,
+which may have sounded negative: if anyone on the team could test this and
+report bugs or give constructive criticism, it would be far more than I could
+ever have asked for. I don't need praise; I just want to make a decent
+product for the players. But if you decide to boycott it instead, and
+(probably rightfully) judge it as "AI slop", I completely understand, and I
+won't hold it against you, or against anyone else for that matter.
+
+If you've read this far: first of all, thank you. I want you to know that I
+did this for the love of the game, for the love of SRB2 and Ring Racers. I'm
+not trying to take any credit or fame from it -- frankly, I don't care about
+that. This was just a project for fun, and I wanted to share it with the
+world.
 
 -- Gibax
 
+### How the AI is used, in practice
+
+The assistant is Anthropic's Claude, through Claude Code, working under rules
+written into the repository's agent instructions:
+
+- **The AI assists; Gibax decides.** It reads the Ring Racers code base,
+  traces a mechanism down to a line, writes code and test instruments, and
+  drafts the documentation. Choosing between solutions, and what is kept or
+  dropped, is Gibax's.
+- **Nothing runs without Gibax's go-ahead, every time.** Gibax runs the tests
+  and drives the races: the feel of a race is judged by a person, never
+  inferred from a log.
+- **Measure, don't assume.** Every change is tested on a binary verified by
+  its hash, with the prediction written down *before* the run and a control
+  in the same session.
+- **Mistakes stay visible.** The journal is annotated, never rewritten: when
+  a later result overturns an earlier one, the earlier one gets a pointer
+  forward. Many of the wrong predictions in it are the AI's.
+- **Commits written with the AI say so** in their trailer.
+
 ## Trying it
 
-There are no releases. Each push to `rollback-netcode` is built by GitHub
-Actions (see [.github/workflows/build.yml](.github/workflows/build.yml)); the
-Windows executables are the run's artifacts:
+There is no release yet. Every push is built by GitHub Actions (see
+[.github/workflows/build.yml](.github/workflows/build.yml)), and the builds
+are the runs' artifacts: downloading one needs a GitHub account, and they
+expire after 90 days. Two branches matter:
 
-- `ringracers-win64-<sha>`: the development build every measurement uses. It
-  can only join a server running the very same build.
-- `ringracers-win64-release-<sha>`: release configuration, real version
-  numbers.
+- **`worldwide-2.4`**, built on the Ring Racers 2.4 release, is the one that
+  plays with stock 2.4 servers and clients, and the base of the coming alpha:
+  - `ringracers-win64-release-<sha>`: Windows. Put the executable in an
+    existing Ring Racers 2.4 folder.
+  - `ringracers-linux64-release-<sha>`: a Linux tarball, unpacked into a 2.4
+    data folder; it uses the system's SDL2.
+  - `ringracers-flatpak-<sha>`: a Flatpak, which reads the data of the
+    official Ring Racers Flatpak from Flathub: install that one first.
+- **`rollback-netcode`** is where the work goes on. Its builds follow
+  upstream's development line, not 2.4: use them to follow the work, not to
+  meet stock players.
 
-Either needs the data files of an existing Ring Racers 2.4 installation: put
-the executable next to them. To host in WORLDWIDE mode, set `worldwide On` in the
-console (or `+worldwide On` on the command line) **before** anybody joins;
-WORLDWIDE clients then switch themselves on when they join.
+The `-release` builds carry real version numbers; the others are development
+builds, which can only meet the very same build.
+
+**To host in WORLDWIDE mode**, turn on *Options > Server Options >
+Advanced... > Network Connection > WORLDWIDE Mode*, or start the game with
+`+worldwide On`, **before** anybody joins. **To join**, just connect:
+a WORLDWIDE client switches its prediction on by itself.
+
+## Reporting a problem
+
+Open an [issue](https://github.com/GibaxLeGrand/RingRacers_Worldwide/issues)
+on this repository: what happened, on which map, with how many players, and
+the `latest-log.txt` from the game folder. Please never report this fork's
+bugs to Kart Krew.
 
 ## Building from source
 
 Ring Racers Worldwide builds like upstream Ring Racers: CMake, a C17/C++20
-toolchain (GCC, Clang, MinGW), and SDL3 among its dependencies. The two
-recipes below are the ones the CI runs.
+toolchain (GCC, Clang, MinGW), and SDL among its dependencies -- SDL3 on
+`rollback-netcode`, SDL2 on `worldwide-2.4`, as in the 2.4 release. The
+recipes below are the ones the CI runs for `rollback-netcode`.
 
 ### Linux
 
@@ -238,8 +290,8 @@ package, checked against a known SHA-256); the toolchain file and the exact
 flags are in [.github/workflows/build.yml](.github/workflows/build.yml).
 
 Upstream documents another route, not tried on this fork: install
-[vcpkg](https://vcpkg.io/en/), set
-`VCPKG_ROOT`, and use a [CMake preset](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html)
+[vcpkg](https://vcpkg.io/en/), set `VCPKG_ROOT`, and use a
+[CMake preset](https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html)
 from `CMakePresets.json`, for example:
 
     cmake --preset ninja-x86_mingw_static_vcpkg-develop
@@ -259,8 +311,6 @@ repository is [hosted on gitlab.com](https://gitlab.com/kart-krew-dev/ring-racer
 - [Kart Krew Dev Website](https://www.kartkrew.org/)
 - [Kart Krew Dev Discord](https://www.kartkrew.org/discord)
 - [SRB2 Forums](https://mb.srb2.org/)
-
-Issues with this fork belong here, not upstream.
 
 ## Disclaimer
 

@@ -15,6 +15,8 @@
 #include "k_gyro.h"
 #include "i_joy.h" // JOYAXISRANGE
 #include "i_time.h"
+#include "k_profiles.h"
+#include "z_zone.h"
 
 #define MAXGYRODEVICES 16
 #define GYRO_DEADZONE 2.0f          // degrees of tilt read as none
@@ -130,27 +132,126 @@ void K_GyroForget(INT32 device)
 		memset(s, 0, sizeof *s);
 }
 
-INT32 K_GyroSteerAxis(INT32 device)
+static boolean K_GyroOfProfile(const char *profile, INT32 *mode, INT32 *range);
+
+INT32 K_GyroSteerAxis(INT32 device, INT32 localplayer)
 {
+	const profile_t *pr = PR_GetLocalPlayerProfile(localplayer);
 	const gyrostate_t *s;
 	float range, tilt, amount;
+	INT32 mode, degrees;
 
-	if (cv_gyrosteer.value == 0 || device <= 0)
+	K_GyroOfProfile((pr != NULL) ? pr->profilename : NULL, &mode, &degrees);
+
+	if (mode == 0 || device <= 0)
 		return 0;
 
 	s = K_GyroState(device, false);
 	if (s == NULL || s->haveroll == false || I_GetTime() - s->lastsample > GYRO_STALE)
 		return 0;
 
-	tilt = (cv_gyrosteer.value == 2) ? -s->roll : s->roll; // 2: Inverted
+	tilt = (mode == 2) ? -s->roll : s->roll; // 2: Inverted
 	amount = fabsf(tilt);
 	if (amount <= GYRO_DEADZONE)
 		return 0;
 
-	range = (float)cv_gyrorange.value;
+	range = (float)degrees;
 	amount = (amount - GYRO_DEADZONE) / (range - GYRO_DEADZONE);
 	if (amount > 1.0f)
 		amount = 1.0f;
 
 	return (INT32)((tilt > 0.0f ? amount : -amount) * JOYAXISRANGE);
+}
+
+// ----------------------------------------------------------------------------
+// The settings, each profile's (Gibax: "plutot sur le profil plutot que ALL
+// profile"). A profile is the game's file, read by stock 2.4 too, so they are
+// kept beside it: profilegyro, "GIBAX=1:30,GUEST=0:30" -- the mode (0 Off,
+// 1 On, 2 Inverted) and the range, by the profile's name.
+// ----------------------------------------------------------------------------
+
+#define GYRO_DEFAULTRANGE 30
+
+/** A profile's settings in profilegyro; false, and the defaults, if none. */
+static boolean K_GyroOfProfile(const char *profile, INT32 *mode, INT32 *range)
+{
+	const char *s = cv_profilegyro.string;
+	const size_t plen = (profile != NULL) ? strlen(profile) : 0;
+
+	*mode = 0;
+	*range = GYRO_DEFAULTRANGE;
+
+	if (plen == 0)
+		return false;
+
+	while (s != NULL && *s != '\0')
+	{
+		const char *comma = strchr(s, ',');
+		const char *end = (comma != NULL) ? comma : s + strlen(s);
+
+		if ((size_t)(end - s) > plen + 1 && s[plen] == '=' && !strnicmp(s, profile, plen))
+		{
+			INT32 m = 0, r = GYRO_DEFAULTRANGE;
+
+			if (sscanf(s + plen + 1, "%d:%d", &m, &r) >= 1)
+			{
+				*mode = (m >= 0 && m <= 2) ? m : 0;
+				*range = (r >= 10 && r <= 90) ? r : GYRO_DEFAULTRANGE;
+			}
+			return true;
+		}
+
+		s = (comma != NULL) ? comma + 1 : NULL;
+	}
+
+	return false;
+}
+
+void K_GyroProfileToMenu(const char *profile)
+{
+	INT32 mode, range;
+
+	K_GyroOfProfile(profile, &mode, &range);
+	CV_StealthSetValue(&cv_dummyprofilegyrosteer, mode);
+	CV_StealthSetValue(&cv_dummyprofilegyrorange, range);
+}
+
+void K_GyroProfileFromMenu(const char *profile)
+{
+	char key[32];
+	char out[1024] = "";
+	const char *s = cv_profilegyro.string;
+	size_t klen;
+
+	if (profile == NULL || profile[0] == '\0')
+		return;
+
+	snprintf(key, sizeof key, "%s=", profile);
+	klen = strlen(key);
+
+	// The other profiles' kept, this one's replaced.
+	while (s != NULL && *s != '\0')
+	{
+		const char *comma = strchr(s, ',');
+		const size_t entry = (comma != NULL) ? (size_t)(comma - s) : strlen(s);
+
+		if (!(entry >= klen && !strnicmp(s, key, klen))
+			&& strlen(out) + entry + 2 < sizeof out)
+		{
+			if (out[0] != '\0')
+				strlcat(out, ",", sizeof out);
+			strncat(out, s, entry);
+		}
+
+		s = (comma != NULL) ? comma + 1 : NULL;
+	}
+
+	if (strlen(out) + klen + 8 < sizeof out)
+	{
+		if (out[0] != '\0')
+			strlcat(out, ",", sizeof out);
+		strlcat(out, va("%s%d:%d", key, cv_dummyprofilegyrosteer.value, cv_dummyprofilegyrorange.value), sizeof out);
+	}
+
+	CV_Set(&cv_profilegyro, out);
 }

@@ -16,7 +16,7 @@
 #include "../k_menu.h"
 #include "../m_easing.h"
 #include "../p_local.h" // cv_tilting
-#include "../k_gyro.h" // cv_gyrosteer, cv_gyrorange (WORLDWIDE.md section 9)
+#include "../k_gyro.h" // cv_dummyprofilegyro* (WORLDWIDE.md section 9)
 
 extern "C" consvar_t cv_mindelay, cv_drawinput;
 
@@ -121,6 +121,14 @@ menuitem_t OPTIONS_ProfileAccessibility[] = {
 	{IT_STRING | IT_CVAR, "Field of View", "Higher FOV lets you see more.",
 		NULL, srb2::itemaction(&cv_dummyprofilefov), 0, 0},
 
+	// WORLDWIDE: steering by tilting the controller, this profile's (k_gyro.c,
+	// WORLDWIDE.md section 9).
+	{IT_STRING | IT_CVAR, "Gyro Steering", "Steer by tilting a gamepad that has motion sensors, as a wheel.",
+		NULL, srb2::itemaction(&cv_dummyprofilegyrosteer), 0, 0},
+
+	{IT_STRING | IT_CVAR, "Gyro Range", "How far to tilt, in degrees, for a full turn.",
+		NULL, srb2::itemaction(&cv_dummyprofilegyrorange), 0, 0},
+
 	{IT_SPACE | IT_NOTHING, NULL,  NULL,
 		NULL, {NULL}, 0, 0},
 
@@ -142,12 +150,6 @@ menuitem_t OPTIONS_ProfileAccessibility[] = {
 	{IT_STRING | IT_CVAR, "Input Display", "Show virtual controller on the HUD.",
 		NULL, srb2::itemaction(&cv_drawinput), 0, 0},
 
-	// WORLDWIDE: steering by tilting the controller (k_gyro.c, WORLDWIDE.md section 9).
-	{IT_STRING | IT_CVAR, "Gyro Steering", "Steer by tilting a gamepad that has motion sensors, as a wheel.",
-		NULL, srb2::itemaction(&cv_gyrosteer), 0, 0},
-
-	{IT_STRING | IT_CVAR, "Gyro Range", "How far to tilt, in degrees, for a full turn.",
-		NULL, srb2::itemaction(&cv_gyrorange), 0, 0},
 };
 
 menu_t OPTIONS_ProfileAccessibilityDef = {

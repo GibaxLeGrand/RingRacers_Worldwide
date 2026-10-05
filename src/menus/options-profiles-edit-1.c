@@ -14,6 +14,7 @@
 #include "../k_menu.h"
 #include "../s_sound.h"
 #include "../m_cond.h"
+#include "../k_gyro.h" // K_GyroProfileFromMenu (WORLDWIDE.md section 9)
 
 // These are placed in descending order next to the things they modify, for clarity.
 // Try to keep the mvar2 in order, if you add new profile info!!
@@ -103,6 +104,8 @@ static void M_ProfileEditApply(void)
 	optionsmenu.profile->autoring = cv_dummyprofileautoring.value;
 	optionsmenu.profile->rumble = cv_dummyprofilerumble.value;
 	optionsmenu.profile->fov = cv_dummyprofilefov.value;
+	K_GyroProfileFromMenu(optionsmenu.profile->profilename[0] != '\0'
+		? optionsmenu.profile->profilename : cv_dummyprofilename.string);
 
 	// If this profile is in-use by anyone, apply the changes immediately upon exiting.
 	// Don't apply the full profile itself as that would lead to issues mid-game.

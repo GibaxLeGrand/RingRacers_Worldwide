@@ -356,9 +356,12 @@ class TiccmdBuilder
 		joystickvector.yaxis = 0;
 		handle_axis_deadzone();
 
-		// WORLDWIDE: the controller tilted as a wheel steers as its stick does,
-		// added to it (k_gyro.c, WORLDWIDE.md section 9).
-		joystickvector.xaxis += K_GyroSteerAxis(G_GetDeviceForPlayer(pid));
+		// WORLDWIDE: the controller tilted as a wheel steers as its stick does
+		// (k_gyro.c, WORLDWIDE.md section 9) -- while the stick is left alone:
+		// pushed, the stick has it, never fought by the tilt (Gibax: "Garder si
+		// possible la direction au stick pendant le gyro").
+		if (joystickvector.xaxis == 0)
+			joystickvector.xaxis = K_GyroSteerAxis(G_GetDeviceForPlayer(pid), pid);
 		if (joystickvector.xaxis > JOYAXISRANGE)
 			joystickvector.xaxis = JOYAXISRANGE;
 		else if (joystickvector.xaxis < -JOYAXISRANGE)

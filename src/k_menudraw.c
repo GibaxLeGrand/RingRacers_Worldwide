@@ -1953,6 +1953,72 @@ static void M_DrawCharSelectSprite(UINT8 num, INT16 x, INT16 y, boolean charflip
 		(p->mdepth == CSSTEP_ASKCHANGES || p->mdepth == CSSTEP_DUBS) ? V_TRANSLUCENT : 0, colormap);
 }
 
+// WORLDWIDE: a character's voices, listed as the profiles are -- centred on
+// cx, the one chosen at cy (WORLDWIDE.md 8.142).
+static void M_DrawDubList(setup_player_t *p, INT16 cx, INT16 cy)
+{
+	const skin_t *skin;
+	INT32 last, i;
+	INT16 px = cx-26;
+	INT16 py;
+
+	if (p->skin < 0)
+		return;
+
+	skin = skins[p->skin];
+	last = K_DubCount(skin);
+	py = cy - p->dubn*12 +
+		Easing_OutSine(
+			M_DueFrac(p->dubn_slide.start, 5),
+			p->dubn_slide.dist*12,
+			0
+		);
+
+	V_SetClipRect(0, (cy-23)*FRACUNIT, BASEVIDWIDTH*FRACUNIT, (5*12)*FRACUNIT, 0);
+
+	for (i = 0; i <= last; i++)
+	{
+		const INT32 dist = abs(p->dubn - i);
+		const char *txt = K_DubName(skin, i);
+
+		if (dist > 3)
+		{
+			py += 12;
+			continue;
+		}
+
+		if (dist > 1)
+		{
+			V_DrawCenteredFileString(px+26, py, 0, txt);
+			V_DrawScaledPatch(px, py, V_TRANSLUCENT, W_CachePatchName("FILEBACK", PU_CACHE));
+		}
+		else
+		{
+			V_DrawScaledPatch(px, py, 0, W_CachePatchName("FILEBACK", PU_CACHE));
+
+			if (i != p->dubn || ((setup_animcounter/10) & 1))
+			{
+				fixed_t w = V_StringScaledWidth(FRACUNIT, FRACUNIT, FRACUNIT, 0, FILE_FONT, txt);
+
+				V_DrawStringScaled(
+					((px+26) * FRACUNIT) - (w/2),
+					py * FRACUNIT,
+					FRACUNIT,
+					FRACUNIT,
+					FRACUNIT,
+					0,
+					i == p->dubn ? R_GetTranslationColormap(TC_RAINBOW, SKINCOLOR_SAPPHIRE, GTC_CACHE) : NULL,
+					FILE_FONT,
+					txt
+				);
+			}
+		}
+		py += 12;
+	}
+
+	V_ClearClipRect();
+}
+
 static void M_DrawCharSelectPreview(UINT8 num)
 {
 	INT16 x = 11, y = 5;
@@ -2097,62 +2163,9 @@ static void M_DrawCharSelectPreview(UINT8 num)
 	}
 	// WORLDWIDE: the character's voices, listed as the profiles are
 	// (WORLDWIDE.md 8.142).
-	else if (p->mdepth == CSSTEP_DUBS && p->skin >= 0)
+	else if (p->mdepth == CSSTEP_DUBS)
 	{
-		const skin_t *skin = skins[p->skin];
-		const INT32 last = K_DubCount(skin);
-		INT16 px = x+12;
-		INT16 py = y+48 - p->dubn*12 +
-			Easing_OutSine(
-				M_DueFrac(p->dubn_slide.start, 5),
-				p->dubn_slide.dist*12,
-				0
-			);
-		INT32 i;
-
-		V_SetClipRect(0, (y+25)*FRACUNIT, BASEVIDWIDTH*FRACUNIT, (5*12)*FRACUNIT, 0);
-
-		for (i = 0; i <= last; i++)
-		{
-			const INT32 dist = abs(p->dubn - i);
-			const char *txt = K_DubName(skin, i);
-
-			if (dist > 3)
-			{
-				py += 12;
-				continue;
-			}
-
-			if (dist > 1)
-			{
-				V_DrawCenteredFileString(px+26, py, 0, txt);
-				V_DrawScaledPatch(px, py, V_TRANSLUCENT, W_CachePatchName("FILEBACK", PU_CACHE));
-			}
-			else
-			{
-				V_DrawScaledPatch(px, py, 0, W_CachePatchName("FILEBACK", PU_CACHE));
-
-				if (i != p->dubn || ((setup_animcounter/10) & 1))
-				{
-					fixed_t w = V_StringScaledWidth(FRACUNIT, FRACUNIT, FRACUNIT, 0, FILE_FONT, txt);
-
-					V_DrawStringScaled(
-						((px+26) * FRACUNIT) - (w/2),
-						py * FRACUNIT,
-						FRACUNIT,
-						FRACUNIT,
-						FRACUNIT,
-						0,
-						i == p->dubn ? R_GetTranslationColormap(TC_RAINBOW, SKINCOLOR_SAPPHIRE, GTC_CACHE) : NULL,
-						FILE_FONT,
-						txt
-					);
-				}
-			}
-			py += 12;
-		}
-
-		V_ClearClipRect();
+		M_DrawDubList(p, x+38, y+48);
 	}
 	// "Changes?"
 	else if (p->mdepth == CSSTEP_ASKCHANGES)
@@ -2467,11 +2480,16 @@ void M_DrawProfileCard(INT32 x, INT32 y, boolean greyedout, profile_t *p)
 		{
 			UINT8 *ccolormap = R_GetTranslationColormap(skinnum, truecol, GTC_MENUCACHE);
 
-			if (M_DrawCharacterSprite(x-22, y+119, skinnum, SPR2_STIN, 7, 0, 0, ccolormap))
+			if (M_DrawCharacterSprite(x-22, y+119, skinnum, SPR2_STIN, 7, 0,
+				(sp->mdepth == CSSTEP_DUBS) ? V_TRANSLUCENT : 0, ccolormap)) // WORLDWIDE.md 8.142
 				V_DrawMappedPatch(x+14, y+66, 0, faceprefix[skinnum][FACE_RANK], ccolormap);
 		}
 
 		M_DrawCharSelectCircle(sp, x-22, y+104);
+
+		// WORLDWIDE: the voices, on the character (WORLDWIDE.md 8.142).
+		if (sp->mdepth == CSSTEP_DUBS)
+			M_DrawDubList(sp, x-22, y+98);
 
 		if (sp->mdepth >= CSSTEP_FOLLOWER)
 		{

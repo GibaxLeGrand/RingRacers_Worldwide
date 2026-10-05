@@ -4645,8 +4645,11 @@ static void HandleConnect(SINT8 node)
 	{
 		CONS_Printf("worldwide: refused node %d -- WORLDWIDE protocol %d, this server's is %d\n",
 			node, wwprotocol, WORLDWIDE_PROTOCOL);
-		SV_SendRefuse(node, va(M_GetText("Different WORLDWIDE versions\ncannot play together.\n(server %d, yours %d)"),
-			WORLDWIDE_PROTOCOL, wwprotocol));
+		// The counter is no version of the fork: the player is told which
+		// side is behind, not its number (the log above keeps both).
+		SV_SendRefuse(node, (wwprotocol < WORLDWIDE_PROTOCOL)
+			? M_GetText("This server runs a newer\nRing Racers WORLDWIDE.\nUpdate yours to join it.")
+			: M_GetText("This server runs an older\nRing Racers WORLDWIDE.\nIt cannot take your build."));
 	}
 	else if (!cv_allownewplayer.value && node)
 	{

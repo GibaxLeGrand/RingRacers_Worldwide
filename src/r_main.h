@@ -126,6 +126,7 @@ extern struct RenderStats g_renderstats;
 //
 
 extern consvar_t cv_showhud;
+extern consvar_t cv_split2p;
 extern consvar_t cv_homremoval;
 extern consvar_t cv_chasecam[MAXSPLITSCREENPLAYERS];
 
@@ -181,6 +182,10 @@ void R_SetViewSize(void);
 
 // do it (sometimes explicitly called)
 void R_ExecuteSetViewSize(void);
+
+// Where view `view` sits on a width x height screen in the split in force,
+// two players side by side included (r_splitvertical).
+void R_SplitViewRect(UINT8 view, INT32 width, INT32 height, INT32 *x, INT32 *y, INT32 *w, INT32 *h);
 
 fixed_t R_FOV(int split);
 void R_CheckFOV(void);

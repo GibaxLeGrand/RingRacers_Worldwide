@@ -51,6 +51,12 @@ tic_t K_TranslateTimer(tic_t drawtime, UINT8 mode, INT32 *return_jitter);
 
 const char *K_GetItemPatch(UINT8 item, boolean tiny);
 void K_LoadKartHUDGraphics(void);
+
+// The split the HUD lays a view out for: r_splitscreen, but 3 -- the 3P/4P
+// layout, made for a half-wide view -- for two players side by side
+// (r_splitvertical, WORLDWIDE.md 9.4). Not a count of views: loops over the
+// views still go to r_splitscreen.
+INT32 K_HudSplits(void);
 void K_drawKartHUD(void);
 void K_drawKartFreePlay(void);
 void K_drawKartPowerUps(void);

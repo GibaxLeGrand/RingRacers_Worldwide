@@ -26,6 +26,7 @@
 #include "p_local.h"
 #include "p_setup.h"
 #include "k_rollback.h" // K_RollbackPredicting
+#include "k_dubs.h" // K_LoadDubDefs (WORLDWIDE.md 8.142)
 #include "p_spec.h"
 #include "p_saveg.h"
 
@@ -9816,6 +9817,11 @@ UINT16 P_PartialAddWadFile(const char *wadfilename)
 	// edit music defs
 	//
 	S_LoadMusicDefs(wadnum);
+
+	//
+	// character dubs (WORLDWIDE.md 8.142)
+	//
+	K_LoadDubDefs(wadnum);
 
 	//
 	// extra sprite/skin data

@@ -24,6 +24,7 @@
 #include "i_sound.h"
 #include "s_sound.h"
 #include "k_rollback.h" // K_RollbackReplaying
+#include "k_dubs.h" // K_DubSkinSound
 #include "w_wad.h"
 #include "z_zone.h"
 #include "d_main.h"
@@ -525,7 +526,8 @@ void S_StartSoundAtVolume(const void *origin_p, sfxenum_t sfx_id, INT32 volume)
 		skin_t *skin = (origin->player ? skins[origin->player->skin] : ((skin_t *)origin->skin));
 		if (R_CanShowSkinInDemo(skin->skinnum) == false)
 			return;
-		sfx_id = skin->soundsid[sfx->skinsound];
+		// The voice its pilot chose (WORLDWIDE.md 8.142, 9.7).
+		sfx_id = K_DubPilotSound(origin->player, skin, sfx->skinsound);
 		sfx = &S_sfx[sfx_id];
 	}
 

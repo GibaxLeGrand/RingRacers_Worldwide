@@ -87,6 +87,7 @@ player_t *viewplayer;
 mobj_t *r_viewmobj;
 
 int r_splitscreen;
+boolean r_splitvertical;
 
 fixed_t rendertimefrac;
 fixed_t rendertimefrac_unpaused;
@@ -661,9 +662,12 @@ void R_CheckViewMorph(int s)
 
 	if (r_splitscreen > 0)
 	{
-		height /= 2;
+		if (r_splitvertical == false)
+		{
+			height /= 2;
+		}
 
-		if (r_splitscreen > 1)
+		if (r_splitscreen > 1 || r_splitvertical)
 		{
 			width /= 2;
 		}
@@ -750,7 +754,7 @@ void R_CheckViewMorph(int s)
 
 	realend = end = width * height - 1;
 
-	if (r_splitscreen > 1)
+	if (r_splitscreen > 1 || r_splitvertical) // a half-wide view
 	{
 		realend = ( realend << 1 ) - width;
 	}
@@ -888,7 +892,16 @@ void R_ApplyViewMorph(int s)
 	if (!viewmorph[s].use)
 		return;
 
-	if (r_splitscreen == 1)
+	if (r_splitvertical)
+	{
+		width /= 2;
+
+		if (s == 1)
+		{
+			srcscr += width;
+		}
+	}
+	else if (r_splitscreen == 1)
 	{
 		height /= 2;
 
@@ -968,6 +981,39 @@ void R_SetViewSize(void)
 	setsizeneeded = true;
 }
 
+void R_SplitViewRect(UINT8 view, INT32 width, INT32 height, INT32 *x, INT32 *y, INT32 *w, INT32 *h)
+{
+	*x = *y = 0;
+	*w = width;
+	*h = height;
+
+	if (r_splitscreen > 1)
+	{
+		*w = width / 2;
+		*h = height / 2;
+
+		if (view & 1)
+			*x = *w;
+
+		if (view > 1)
+			*y = *h;
+	}
+	else if (r_splitscreen == 1 && r_splitvertical)
+	{
+		*w = width / 2;
+
+		if (view == 1)
+			*x = *w;
+	}
+	else if (r_splitscreen == 1)
+	{
+		*h = height / 2;
+
+		if (view == 1)
+			*y = *h;
+	}
+}
+
 void R_CheckFOV(void)
 {
 	for (UINT8 s = 0; s <= r_splitscreen; ++s)
@@ -1005,6 +1051,9 @@ void R_ExecuteSetViewSize(void)
 
 	setsizeneeded = false;
 
+	// Two players side by side (cv_split2p), latched here with the sizes.
+	r_splitvertical = (r_splitscreen == 1 && cv_split2p.value == 1);
+
 	if (rendermode == render_none)
 		return;
 
@@ -1014,12 +1063,12 @@ void R_ExecuteSetViewSize(void)
 	scaledviewwidth = vid.width;
 	viewheight = vid.height;
 
-	if (r_splitscreen)
+	if (r_splitscreen && r_splitvertical == false)
 		viewheight >>= 1;
 
 	viewwidth = scaledviewwidth;
 
-	if (r_splitscreen > 1)
+	if (r_splitscreen > 1 || r_splitvertical)
 	{
 		viewwidth >>= 1;
 		scaledviewwidth >>= 1;
@@ -1035,7 +1084,9 @@ void R_ExecuteSetViewSize(void)
 		g_fovcache[s] = R_FOV(s);
 		fov = FixedAngle(g_fovcache[s]/2) + ANGLE_90;
 		fovtan[s] = FixedMul(FINETANGENT(fov >> ANGLETOFINESHIFT), viewmorph[s].zoomneeded);
-		if (r_splitscreen == 1) // Splitscreen FOV should be adjusted to maintain expected vertical view
+		if (r_splitvertical) // Side by side, the same rule turned: 1.7 along the tall side, 0.85 across (K_ObjectTracking follows)
+			fovtan[s] = 17*fovtan[s]/20;
+		else if (r_splitscreen == 1) // Splitscreen FOV should be adjusted to maintain expected vertical view
 			fovtan[s] = 17*fovtan[s]/10;
 
 		projection[s] = projectiony[s] = FixedDiv(centerxfrac, fovtan[s]);

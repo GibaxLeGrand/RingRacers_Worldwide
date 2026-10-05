@@ -54,8 +54,9 @@ Ring Racers.
   (hundreds of KB and a visible hitch when a client parts from the server),
   the server sends each client a small packet with every kart's state a few
   times a second.
-- **The server decides.** A server hosting with `worldwide On` advertises the
-  mode, runs the correction channel, and accepts WORLDWIDE clients only. A
+- **The server decides.** A server hosting with `worldwide On`, the default,
+  advertises the mode, runs the correction channel, and accepts WORLDWIDE
+  clients only. A
   WORLDWIDE client turns its prediction on when it joins such a server, and
   plays the stock netcode, as a stock client, everywhere else.
 
@@ -249,10 +250,13 @@ expire after 90 days. Two branches matter:
 The `-release` builds carry real version numbers; the others are development
 builds, which can only meet the very same build.
 
-**To host in WORLDWIDE mode**, turn on *Options > Server Options >
-Advanced... > Network Connection > WORLDWIDE Mode*, or start the game with
-`+worldwide On`, **before** anybody joins. **To join**, just connect:
-a WORLDWIDE client switches its prediction on by itself.
+**To host in WORLDWIDE mode**, just host: it is on by default. **To host
+for stock 2.4 players**, turn off *Options > Server Options > Advanced... >
+Network Connection > WORLDWIDE Mode*, or start the game with
+`+worldwide Off`, **before** anybody joins. A config saved by an earlier
+build keeps the Off it saved: turn the mode on once in that menu. **To
+join**, just connect: a WORLDWIDE client switches its prediction on by
+itself.
 
 ## Reporting a problem
 

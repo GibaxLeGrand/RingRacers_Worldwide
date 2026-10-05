@@ -1087,7 +1087,7 @@ void R_DrawSinglePlane(drawspandata_t *ds, visplane_t *pl, boolean allow_paralle
 				INT32 scry = top;
 				INT32 offset;
 
-				if (r_splitscreen == 1)
+				if (r_splitscreen == 1 && r_splitvertical == false)
 				{
 					if (i & 1)
 					{

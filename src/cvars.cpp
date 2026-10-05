@@ -459,6 +459,10 @@ consvar_t cv_attacksplits = Player("attacksplits", "Next").values({{0, "Off"}, {
 void R_SetViewSize(void);
 consvar_t cv_showhud = Player("showhud", "Yes").yes_no().onchange(R_SetViewSize).dont_save();
 
+// WORLDWIDE: two players one above the other, the game's, or side by side
+// (WORLDWIDE.md 9.4). R_ExecuteSetViewSize reads it, which R_SetViewSize asks for.
+consvar_t cv_split2p = Player("split2p", "Horizontal").values({{0, "Horizontal"}, {1, "Vertical"}}).onchange(R_SetViewSize);
+
 consvar_t cv_skybox = Player("skybox", "On").on_off();
 
 // Display song credits
@@ -603,11 +607,13 @@ consvar_t cv_sleep = Server("cpusleep", "1").min_max(0, 1000/TICRATE);
 // when it joins, so it cannot change while anybody else is connected. Saved,
 // since the menus set it (Server Options > Advanced) and a host expects it to
 // stay. A server variable, not a netvar: a client never takes the server's
-// value, so only what it set itself is saved. The test harness starts every
-// server with it off and lets the WORLDWIDE scenarios turn it on, or a saved
-// value would put a control run in the mode.
+// value, so only what it set itself is saved. On by default (WORLDWIDE.md 9.2):
+// a host is in WORLDWIDE mode unless it turns it off, for stock players; a
+// config saved before keeps the Off it saved. The test harness starts every
+// server with it set on the command line, or a saved value would put a control
+// run in the mode.
 void Worldwide_OnChange(void);
-consvar_t cv_worldwide = Server("worldwide", "Off").on_off().onchange_noinit(Worldwide_OnChange);
+consvar_t cv_worldwide = Server("worldwide", "On").on_off().onchange_noinit(Worldwide_OnChange);
 
 
 //
@@ -979,6 +985,14 @@ extern CV_PossibleValue_t gpdifficulty_cons_t[];
 void Dummygpdifficulty_OnChange(void);
 consvar_t cv_dummygpdifficulty = MenuDummy("dummygpdifficulty", "Intense").values(gpdifficulty_cons_t).onchange(Dummygpdifficulty_OnChange);
 consvar_t cv_dummygpencore = MenuDummy("dummygpencore", "Off").on_off();
+
+// WORLDWIDE: character dubs, each pilot's and the listener's (k_dubs.c,
+// WORLDWIDE.md 8.142, 9.7).
+consvar_t cv_voicelanguage = Player("voicelanguage", "Default");
+consvar_t cv_pilotdubs = Player("pilotdubs", "");
+extern CV_PossibleValue_t dublanguage_cons_t[];
+void K_DubMenuChanged(void);
+consvar_t cv_dummyvoicelanguage = MenuDummy("dummyvoicelanguage", "Default").values(dublanguage_cons_t).onchange_noinit(K_DubMenuChanged);
 
 consvar_t cv_dummyip = MenuDummy("dummyip", "");
 consvar_t cv_dummyipselect = MenuDummy("dummyipselect", "0").min_max(0, 2);

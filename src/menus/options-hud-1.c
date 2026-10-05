@@ -25,6 +25,10 @@ menuitem_t OPTIONS_HUD[] =
 	{IT_STRING | IT_CVAR, "Speedometer", "Choose which speed unit to display on the speedometer.",
 		NULL, {.cvar = &cv_kartspeedometer}, 0, 0},
 
+	// WORLDWIDE (WORLDWIDE.md 9.4): two players side by side.
+	{IT_STRING | IT_CVAR, "2P Splitscreen", "Two players: one above the other, or side by side.",
+		NULL, {.cvar = &cv_split2p}, 0, 0},
+
 	{IT_SPACE | IT_NOTHING, NULL,  NULL,
 		NULL, {NULL}, 0, 0},
 

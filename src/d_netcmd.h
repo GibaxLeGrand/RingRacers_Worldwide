@@ -190,6 +190,7 @@ typedef enum
 	XD_SERVERMUTEPLAYER, // 42
 	XD_SERVERDEAFENPLAYER, // 43
 	XD_SERVERTEMPMUTEPLAYER, // 44
+	XD_PILOTDUB,    // 45 -- WORLDWIDE: a pilot's dub, WORLDWIDE mode only (k_dubs.c)
 
 	MAXNETXCMD
 } netxcmd_t;

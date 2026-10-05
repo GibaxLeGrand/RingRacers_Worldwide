@@ -22,6 +22,7 @@
 #include "r_things.h" // R_Frame2Char etc
 #include "m_random.h"
 #include "s_sound.h"
+#include "k_dubs.h" // K_DubSkinSound
 #include "g_game.h"
 #include "y_inter.h"
 #include "hu_stuff.h"	// HU_AddChatText
@@ -3672,7 +3673,7 @@ static int lib_kLossSound(lua_State *L)
 	if (!mobj->player)
 		return luaL_error(L, "K_PlayLossSound: mobj_t isn't a player object.");
 
-	sfx_id = ((skin_t *)mobj->skin)->soundsid[S_sfx[sfx_klose].skinsound];
+	sfx_id = K_DubPilotSound(mobj->player, (skin_t *)mobj->skin, S_sfx[sfx_klose].skinsound);
 	S_StartSound(mobj, sfx_id);
 	return 0;
 }

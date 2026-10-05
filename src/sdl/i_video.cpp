@@ -813,10 +813,21 @@ static void Impl_HandleControllerDeviceAddedEvent(SDL_ControllerDeviceEvent even
 #if SDL_VERSION_ATLEAST(2, 0, 14)
 	// WORLDWIDE: its motion sensors, if it has any, for steering by tilting
 	// (k_gyro.c, WORLDWIDE.md section 9). SDL leaves them off until asked.
-	if (SDL_GameControllerHasSensor(controller, SDL_SENSOR_ACCEL))
-		SDL_GameControllerSetSensorEnabled(controller, SDL_SENSOR_ACCEL, SDL_TRUE);
-	if (SDL_GameControllerHasSensor(controller, SDL_SENSOR_GYRO))
-		SDL_GameControllerSetSensorEnabled(controller, SDL_SENSOR_GYRO, SDL_TRUE);
+	{
+		const SDL_bool accel = SDL_GameControllerHasSensor(controller, SDL_SENSOR_ACCEL);
+		const SDL_bool gyro = SDL_GameControllerHasSensor(controller, SDL_SENSOR_GYRO);
+
+		if (accel)
+			SDL_GameControllerSetSensorEnabled(controller, SDL_SENSOR_ACCEL, SDL_TRUE);
+		if (gyro)
+			SDL_GameControllerSetSensorEnabled(controller, SDL_SENSOR_GYRO, SDL_TRUE);
+
+		// Whether tilting can steer with it: a controller that Steam Input
+		// or a driver shows as a plain one has no sensors here.
+		CONS_Printf("Gyro: %s -- accelerometer %s, gyroscope %s\n",
+			SDL_GameControllerName(controller) ? SDL_GameControllerName(controller) : "?",
+			accel ? "yes" : "no", gyro ? "yes" : "no");
+	}
 #endif
 
 	event_t engine_event {};

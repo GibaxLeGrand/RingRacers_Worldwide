@@ -3430,7 +3430,7 @@ boolean P_MoveChaseCamera(player_t *player, camera_t *thiscam, boolean resetcall
 	// Map-specific camera height
 	if (mapheaderinfo[gamemap-1]->cameraHeight >= 0)
 	{
-		if (r_splitscreen != 1)
+		if (r_splitscreen != 1 || r_splitvertical)
 			camheight = FixedMul(mapheaderinfo[gamemap-1]->cameraHeight, cameraScale);
 
 		// For 2p SPLITSCREEN SPECIFICALLY:

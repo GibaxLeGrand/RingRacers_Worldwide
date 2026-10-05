@@ -45,13 +45,15 @@ static const BlitVertex kVerts[] =
 static const uint16_t kIndices[] = {0, 1, 2, 1, 3, 2};
 
 
-static Rect get_screen_viewport(uint32_t screen, uint32_t screens, uint32_t w, uint32_t h)
+static Rect get_screen_viewport(uint32_t screen, uint32_t screens, uint32_t w, uint32_t h, bool vertical)
 {
 	switch (screens)
 	{
 	case 1:
 		return {0, 0, w, h};
 	case 2:
+		if (vertical)
+			return {screen == 0 ? 0 : (static_cast<int32_t>(w) / 2), 0, w / 2, h};
 		return {0, screen == 0 ? (static_cast<int32_t>(h) / 2) : 0, w, (h / 2)};
 	default:
 		switch (screen)
@@ -112,7 +114,7 @@ void BlitPostimgScreens::draw(Rhi& rhi)
 
 		rhi.bind_program(data.program);
 		rhi.set_rasterizer_state(r_state);
-		rhi.set_viewport(get_screen_viewport(i, screens_, target_width_, target_height_));
+		rhi.set_viewport(get_screen_viewport(i, screens_, target_width_, target_height_, vertical_));
 		rhi.bind_vertex_attrib("a_position", quad_vbo_, rhi::VertexAttributeFormat::kFloat3, offsetof(BlitVertex, x), sizeof(BlitVertex));
 		rhi.bind_vertex_attrib("a_texcoord0", quad_vbo_, rhi::VertexAttributeFormat::kFloat2, offsetof(BlitVertex, u), sizeof(BlitVertex));
 		rhi.bind_index_buffer(quad_ibo_);

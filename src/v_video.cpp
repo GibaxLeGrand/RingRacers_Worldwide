@@ -526,13 +526,25 @@ void V_AdjustXYWithSnap(INT32 *x, INT32 *y, UINT32 options, INT32 dupx, INT32 du
 	{
 		if (options & V_SPLITSCREEN)
 		{
-			screenheight /= 2;
-			baseheight /= 2;
-
-			if (r_splitscreen > 1)
+			if (r_splitvertical)
 			{
+				// Side by side (WORLDWIDE.md 9.4): the HUD lays a view out as
+				// 3P/4P do, half the width and half the height, and the view
+				// has the whole height -- the snaps below reach it.
 				screenwidth /= 2;
 				basewidth /= 2;
+				baseheight /= 2;
+			}
+			else
+			{
+				screenheight /= 2;
+				baseheight /= 2;
+
+				if (r_splitscreen > 1)
+				{
+					screenwidth /= 2;
+					basewidth /= 2;
+				}
 			}
 		}
 	}
@@ -553,7 +565,7 @@ void V_AdjustXYWithSnap(INT32 *x, INT32 *y, UINT32 options, INT32 dupx, INT32 du
 			*x += (screenwidth - basewidth) / 2;
 	}
 
-	if (vid.height != (BASEVIDHEIGHT * dupy))
+	if (vid.height != (BASEVIDHEIGHT * dupy) || screenheight != baseheight)
 	{
 		if (options & V_SNAPTOBOTTOM)
 			*y += (screenheight - baseheight);
@@ -563,7 +575,12 @@ void V_AdjustXYWithSnap(INT32 *x, INT32 *y, UINT32 options, INT32 dupx, INT32 du
 
 	if (options & V_SPLITSCREEN)
 	{
-		if (r_splitscreen == 1)
+		if (r_splitvertical)
+		{
+			if (player == 1)
+				*x += screenwidth;
+		}
+		else if (r_splitscreen == 1)
 		{
 			if (player == 1)
 				*y += screenheight;
@@ -589,7 +606,7 @@ void V_AdjustXYWithSnap(INT32 *x, INT32 *y, UINT32 options, INT32 dupx, INT32 du
 				const fixed_t offsetAmount = (screenwidth * FRACUNIT/2);
 				INT32 offset = (offsetAmount - FixedMul(offsetAmount, st_fadein)) / FRACUNIT;
 
-				if (r_splitscreen > 1)
+				if (r_splitscreen > 1 || r_splitvertical)
 				{
 					if (player & 1)
 						slidefromright = true;
@@ -3781,6 +3798,7 @@ void VID_DisplaySoftwareScreen()
 
 	const int screens = std::clamp(r_splitscreen + 1, 1, MAXSPLITSCREENPLAYERS);
 	hw_state->blit_postimg_screens->set_num_screens(screens);
+	hw_state->blit_postimg_screens->set_vertical(screens == 2 && r_splitvertical);
 	hw_state->blit_postimg_screens->set_target(static_cast<uint32_t>(vid.width), static_cast<uint32_t>(vid.height));
 
 	for (int i = 0; i < screens; i++)
@@ -3805,6 +3823,14 @@ void VID_DisplaySoftwareScreen()
 			case 3:
 				uv_offset = glm::vec2(.5f, .5f);
 				break;
+			}
+		}
+		else if (screens > 1 && r_splitvertical)
+		{
+			uv_size = glm::vec2(.5f, 1.f);
+			if (i == 1)
+			{
+				uv_offset = glm::vec2(.5f, 0.f);
 			}
 		}
 		else if (screens > 1)

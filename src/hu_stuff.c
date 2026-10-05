@@ -1937,7 +1937,11 @@ static void HU_DrawTitlecardCEcho(size_t num)
 
 		if (p4)
 		{
-			if (r_splitscreen == 1) // 2P
+			if (r_splitvertical) // 2P side by side
+			{
+				x -= (1 - (viewnum * 2)) * (x / 2);
+			}
+			else if (r_splitscreen == 1) // 2P
 			{
 				y -= (1 - (viewnum * 2)) * (y / 2);
 			}
@@ -2375,7 +2379,7 @@ HU_drawMiniPing (INT32 x, INT32 y, UINT32 ping, UINT32 mindelay, INT32 flags)
 	patch_t *patch;
 	INT32 w = BASEVIDWIDTH;
 
-	if (r_splitscreen > 1)
+	if (K_HudSplits() > 1)
 	{
 		w /= 2;
 	}

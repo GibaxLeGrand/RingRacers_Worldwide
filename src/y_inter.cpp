@@ -1861,7 +1861,7 @@ void Y_DrawIntermissionHeader(fixed_t x, fixed_t y, boolean gotthrough, const ch
 	const fixed_t frac = (small ? FRACUNIT/2 : FRACUNIT);
 	const INT32 small_flag = (small ? V_SPLITSCREEN : 0);
 
-	if (small && r_splitscreen > 1)
+	if (small && K_HudSplits() > 1)
 	{
 		V_SetClipRect(
 			0,

@@ -602,7 +602,7 @@ static bool D_Display(bool world)
 								switch (i)
 								{
 									case 1:
-										if (r_splitscreen > 1)
+										if (r_splitscreen > 1 || r_splitvertical)
 										{
 											viewwindowx = viewwidth;
 											viewwindowy = 0;

@@ -3135,6 +3135,7 @@ EXPORT void HWRAPI(DrawModel) (model_t *model, INT32 frameIndex, float duration,
 EXPORT void HWRAPI(SetTransform) (FTransform *stransform)
 {
 	static boolean special_splitscreen;
+	static boolean vertical_splitscreen;
 	boolean shearing = false;
 	float used_fov;
 
@@ -3156,7 +3157,8 @@ EXPORT void HWRAPI(SetTransform) (FTransform *stransform)
 		pglRotatef(stransform->angley+270.0f, 0.0f, 1.0f, 0.0f);
 		pglTranslatef(-stransform->x, -stransform->z, -stransform->y);
 
-		special_splitscreen = (stransform->splitscreen == 1);
+		vertical_splitscreen = (stransform->splitscreen == 1 && stransform->splitvertical);
+		special_splitscreen = (stransform->splitscreen == 1 && !vertical_splitscreen);
 		shearing = stransform->shearing;
 	}
 	else
@@ -3178,7 +3180,15 @@ EXPORT void HWRAPI(SetTransform) (FTransform *stransform)
 		pglTranslatef(0.0f, -fdy/BASEVIDHEIGHT, 0.0f);
 	}
 
-	if (special_splitscreen)
+	if (vertical_splitscreen)
+	{
+		// Side by side (WORLDWIDE.md 9.4): a view half as wide, its
+		// horizontal field 0.85 of a whole screen's, as the software
+		// renderer's fovtan * 17/20.
+		used_fov = atan(tan(used_fov*M_PI/360)*1.7)*360/M_PI;
+		GLPerspective(used_fov, 0.5f*ASPECT_RATIO);
+	}
+	else if (special_splitscreen)
 	{
 		used_fov = atan(tan(used_fov*M_PI/360)*0.8)*360/M_PI;
 		GLPerspective(used_fov, 2*ASPECT_RATIO);

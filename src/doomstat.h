@@ -235,6 +235,10 @@ extern boolean multiplayer;
 
 extern UINT8 splitscreen;
 extern int r_splitscreen;
+// WORLDWIDE: two players side by side (Options > HUD > 2P Splitscreen,
+// WORLDWIDE.md 9.4). Latched with r_splitscreen by R_ExecuteSetViewSize, so
+// the renderer and the HUD never see the setting change mid-frame.
+extern boolean r_splitvertical;
 
 extern boolean forceresetplayers, deferencoremode, forcespecialstage;
 extern boolean staffsync;

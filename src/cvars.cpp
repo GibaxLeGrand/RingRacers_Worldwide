@@ -459,6 +459,10 @@ consvar_t cv_attacksplits = Player("attacksplits", "Next").values({{0, "Off"}, {
 void R_SetViewSize(void);
 consvar_t cv_showhud = Player("showhud", "Yes").yes_no().onchange(R_SetViewSize).dont_save();
 
+// WORLDWIDE: two players one above the other, the game's, or side by side
+// (WORLDWIDE.md 9.4). R_ExecuteSetViewSize reads it, which R_SetViewSize asks for.
+consvar_t cv_split2p = Player("split2p", "Horizontal").values({{0, "Horizontal"}, {1, "Vertical"}}).onchange(R_SetViewSize);
+
 consvar_t cv_skybox = Player("skybox", "On").on_off();
 
 // Display song credits

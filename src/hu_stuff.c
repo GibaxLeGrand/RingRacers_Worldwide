@@ -1937,7 +1937,11 @@ static void HU_DrawTitlecardCEcho(size_t num)
 
 		if (p4)
 		{
-			if (r_splitscreen == 1) // 2P
+			if (r_splitvertical) // 2P side by side
+			{
+				x -= (1 - (viewnum * 2)) * (x / 2);
+			}
+			else if (r_splitscreen == 1) // 2P
 			{
 				y -= (1 - (viewnum * 2)) * (y / 2);
 			}
@@ -2029,7 +2033,10 @@ void HU_DrawSongCredits(void)
 	}
 	else
 	{
-		y = (r_splitscreen ? (BASEVIDHEIGHT/2)-4 : 40) * FRACUNIT;
+		// Side by side, the middle of the screen is both views': at the
+		// top, as 1P (Gibax: "mets la en haut, meme endroit que en
+		// single player").
+		y = ((r_splitscreen && !r_splitvertical) ? (BASEVIDHEIGHT/2)-4 : 40) * FRACUNIT;
 	}
 
 	INT32 bgt = (NUMTRANSMAPS/2) + (cursongcredit.trans / 2);
@@ -2375,7 +2382,7 @@ HU_drawMiniPing (INT32 x, INT32 y, UINT32 ping, UINT32 mindelay, INT32 flags)
 	patch_t *patch;
 	INT32 w = BASEVIDWIDTH;
 
-	if (r_splitscreen > 1)
+	if (K_HudSplits() > 1)
 	{
 		w /= 2;
 	}

@@ -5570,6 +5570,7 @@ static void HWR_DrawSkyBackground(player_t *player)
 		dometransform.fovyangle = fpov; // Tails
 		HWR_RollTransform(&dometransform, viewroll);
 		dometransform.splitscreen = r_splitscreen;
+		dometransform.splitvertical = r_splitvertical;
 
 		HWR_GetTexture(texturetranslation[skytexture], skytexture);
 
@@ -5628,7 +5629,7 @@ static void HWR_DrawSkyBackground(player_t *player)
 		angle = aimingangle;
 		dimensionmultiply = ((float)textures[texturetranslation[skytexture]]->height/(128.0f*aspectratio));
 
-		if (r_splitscreen == 1)
+		if (r_splitscreen == 1 && !r_splitvertical)
 		{
 			dimensionmultiply *= 2;
 			angle *= 2;
@@ -5706,9 +5707,10 @@ void HWR_SetViewSize(void)
 
 	if (r_splitscreen > 0)
 	{
-		gl_viewheight /= 2;
+		if (!r_splitvertical)
+			gl_viewheight /= 2;
 
-		if (r_splitscreen > 1)
+		if (r_splitscreen > 1 || r_splitvertical)
 		{
 			gl_viewwidth /= 2;
 		}
@@ -5742,13 +5744,13 @@ static void HWR_ShiftViewPort(void)
 	gl_viewwindowy = gl_baseviewwindowy;
 	gl_windowcentery = gl_basewindowcentery;
 
-	if (viewssnum > ( r_splitscreen > 1 ))
+	if (!r_splitvertical && viewssnum > ( r_splitscreen > 1 ))
 	{
 		gl_viewwindowy += gl_viewheight;
 		gl_windowcentery += gl_viewheight;
 	}
 
-	if (r_splitscreen > 1 && viewssnum & 1)
+	if ((r_splitscreen > 1 || r_splitvertical) && viewssnum & 1)
 	{
 		gl_viewwindowx += gl_viewwidth;
 		gl_windowcenterx += gl_viewwidth;
@@ -5853,6 +5855,7 @@ static void HWR_RenderViewpoint(player_t *player, boolean drawSkyTexture, boolea
 	atransform.fovyangle = fpov; // Tails
 	HWR_RollTransform(&atransform, viewroll);
 	atransform.splitscreen = r_splitscreen;
+	atransform.splitvertical = r_splitvertical;
 
 	gl_fovlud = (float)(1.0l/tan((double)(fpov*M_PIl/360l)));
 

@@ -116,6 +116,7 @@ typedef struct
 	FLOAT       scalex,scaley,scalez;
 	FLOAT       fovxangle, fovyangle;
 	UINT8       splitscreen;
+	boolean     splitvertical;   // WORLDWIDE: two players side by side
 	boolean     flip;            // screenflip
 	boolean     shearing;        // 14042019
 	float       viewaiming;      // 17052019

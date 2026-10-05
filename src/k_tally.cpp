@@ -961,28 +961,28 @@ void level_tally_t::Draw(void)
 	const float transition_f = FixedToFloat(transition);
 	const float transition_i = 1.0 - transition_f;
 
-	const float frac = (r_splitscreen ? 0.5 : 1.0);
+	const float frac = (K_HudSplits() ? 0.5 : 1.0);
 
 	INT32 v_width = BASEVIDWIDTH;
 	INT32 v_height = BASEVIDHEIGHT;
-	if (r_splitscreen > 0)
+	if (K_HudSplits() > 0)
 	{
 		v_height /= 2;
 	}
-	if (r_splitscreen > 1)
+	if (K_HudSplits() > 1)
 	{
 		v_width /= 2;
 	}
 
 	SINT8 h_transition_sign = 1;
-	if (r_splitscreen > 1)
+	if (K_HudSplits() > 1)
 	{
 		if (!(R_GetViewNumber() & 1))
 		{
 			h_transition_sign = -h_transition_sign;
 		}
 	}
-	else if (r_splitscreen > 0)
+	else if (K_HudSplits() > 0)
 	{
 		if (R_GetViewNumber() == 1)
 		{
@@ -1003,16 +1003,19 @@ void level_tally_t::Draw(void)
 		fade = (5 * transition_f);
 	}
 
+	INT32 fade_x, fade_y, fade_w, fade_h;
+	R_SplitViewRect(R_GetViewNumber(), vid.width, vid.height, &fade_x, &fade_y, &fade_w, &fade_h);
+
 	V_DrawFadeFill(
-		(vid.width / 2) * (r_splitscreen > 1 && R_GetViewNumber() & 1),
-		(vid.height / 2) * (R_GetViewNumber() > (r_splitscreen > 1)),
-		vid.width / (r_splitscreen > 1 ? 2 : 1),
-		vid.height / (r_splitscreen ? 2 : 1),
+		fade_x,
+		fade_y,
+		fade_w,
+		fade_h,
 		V_NOSCALESTART,
 		31, fade
 	);
 
-	const INT32 header_width = (r_splitscreen ? (BASEVIDWIDTH * 0.5) : BASEVIDWIDTH);
+	const INT32 header_width = (K_HudSplits() ? (BASEVIDWIDTH * 0.5) : BASEVIDWIDTH);
 	const INT32 header_x = (v_width - header_width) * 0.5;
 
 	const INT32 header_height = 36 * frac;
@@ -1027,7 +1030,7 @@ void level_tally_t::Draw(void)
 			Y_DrawIntermissionHeader(
 				(header_x * FRACUNIT) + (v_width * transition_i * FRACUNIT * h_transition_sign),
 				header_centered * FRACUNIT,
-				gotThru, header, showRoundNum, (r_splitscreen > 0)
+				gotThru, header, showRoundNum, (K_HudSplits() > 0)
 			);
 			break;
 
@@ -1035,7 +1038,7 @@ void level_tally_t::Draw(void)
 			Y_DrawIntermissionHeader(
 				header_x * FRACUNIT,
 				header_centered * transition_i * FRACUNIT,
-				gotThru, header, showRoundNum, (r_splitscreen > 0)
+				gotThru, header, showRoundNum, (K_HudSplits() > 0)
 			);
 			break;
 
@@ -1043,7 +1046,7 @@ void level_tally_t::Draw(void)
 			Y_DrawIntermissionHeader(
 				header_x * FRACUNIT,
 				0,
-				gotThru, header, showRoundNum, (r_splitscreen > 0)
+				gotThru, header, showRoundNum, (K_HudSplits() > 0)
 			);
 			break;
 	}
@@ -1107,11 +1110,11 @@ void level_tally_t::Draw(void)
 			numBoxes++;
 		}
 
-		patch_t *box_fg = static_cast<patch_t*>( W_CachePatchName(va("RNKBLK%sA", (r_splitscreen ? "4" : "1")), PU_CACHE) );
-		patch_t *box_bg = static_cast<patch_t*>( W_CachePatchName(va("RNKBLK%sB", (r_splitscreen ? "4" : "1")), PU_CACHE) );
+		patch_t *box_fg = static_cast<patch_t*>( W_CachePatchName(va("RNKBLK%sA", (K_HudSplits() ? "4" : "1")), PU_CACHE) );
+		patch_t *box_bg = static_cast<patch_t*>( W_CachePatchName(va("RNKBLK%sB", (K_HudSplits() ? "4" : "1")), PU_CACHE) );
 
-		patch_t *sticker = static_cast<patch_t*>( W_CachePatchName((r_splitscreen ? "K_SPDMBG" : "K_STTIME"), PU_CACHE) );
-		const float sticker_offset = (r_splitscreen ? 0.0 : 3.0);
+		patch_t *sticker = static_cast<patch_t*>( W_CachePatchName((K_HudSplits() ? "K_SPDMBG" : "K_STTIME"), PU_CACHE) );
+		const float sticker_offset = (K_HudSplits() ? 0.0 : 3.0);
 
 		patch_t *egg_sticker = static_cast<patch_t*>( W_CachePatchName("EGGSTKR", PU_CACHE) );
 
@@ -1145,7 +1148,7 @@ void level_tally_t::Draw(void)
 
 			srb2::Draw drawer_text = drawer_box_offset
 				.xy(11.0 * frac, 6.0 * frac)
-				.font(r_splitscreen ? srb2::Draw::Font::kPing : srb2::Draw::Font::kTimer);
+				.font(K_HudSplits() ? srb2::Draw::Font::kPing : srb2::Draw::Font::kTimer);
 
 			UINT8 boxLines = 0;
 			if (drawStats == true)
@@ -1227,7 +1230,7 @@ void level_tally_t::Draw(void)
 					}
 				}
 
-				if (r_splitscreen == 0)
+				if (K_HudSplits() == 0)
 				{
 					drawer_text
 						.xy(100.0 * frac, -2.0 * frac)
@@ -1236,7 +1239,7 @@ void level_tally_t::Draw(void)
 
 				drawer_text
 					.y(-1.0 * frac)
-					.patch(va("BNS%sP_%s", (r_splitscreen ? "4" : "1"), bonus_code));
+					.patch(va("BNS%sP_%s", (K_HudSplits() ? "4" : "1"), bonus_code));
 
 				drawer_text
 					.xy((197.0 * frac) - (sticker->width * 0.5), -sticker_offset)
@@ -1305,9 +1308,9 @@ void level_tally_t::Draw(void)
 
 								const skincolornum_t color = static_cast<skincolornum_t>(owner->skincolor);
 								lives_drawer
-									.x(r_splitscreen ? -7.0 : -2.0)
+									.x(K_HudSplits() ? -7.0 : -2.0)
 									.colormap(owner->skin, color)
-									.patch(faceprefix[owner->skin][r_splitscreen ? FACE_MINIMAP : FACE_RANK]);
+									.patch(faceprefix[owner->skin][K_HudSplits() ? FACE_MINIMAP : FACE_RANK]);
 
 								UINT8 lives_num = std::min(owner->lives + livesAdded, 10);
 								if (xtraBlink > 0 && (xtraBlink & 1) == 0 && livesAdded > 0)
@@ -1317,7 +1320,7 @@ void level_tally_t::Draw(void)
 
 								if (lives_num > 0)
 								{
-									if (r_splitscreen)
+									if (K_HudSplits())
 									{
 										lives_drawer = lives_drawer
 											.xy(6.0, 2.0)
@@ -1431,7 +1434,7 @@ void level_tally_t::Draw(void)
 	{
 		char grade_letter = K_GetGradeChar( static_cast<gp_rank_e>(rank) );
 
-		patch_t *grade_img = static_cast<patch_t*>( W_CachePatchName(va("R_FINR%c%c", (r_splitscreen ? 'S' : 'N'), grade_letter), PU_CACHE) );
+		patch_t *grade_img = static_cast<patch_t*>( W_CachePatchName(va("R_FINR%c%c", (K_HudSplits() ? 'S' : 'N'), grade_letter), PU_CACHE) );
 		srb2::Draw grade_drawer = drawer
 			.xy(v_width * 0.5, v_height - (2.0 * frac) - (grade_img->height * 0.5))
 			.colormap( static_cast<skincolornum_t>(K_GetGradeColor( static_cast<gp_rank_e>(rank) )) );

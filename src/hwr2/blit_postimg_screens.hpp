@@ -56,6 +56,7 @@ private:
 	bool upload_quad_buffer_;
 
 	uint32_t screens_;
+	bool vertical_ = false; // two screens side by side (WORLDWIDE.md 9.4)
 	std::array<ScreenConfig, 4> screen_configs_;
 	srb2::StaticVec<ScreenData, 4> screen_data_;
 	uint32_t target_width_;
@@ -76,6 +77,8 @@ public:
 		SRB2_ASSERT(screens > 0 && screens <= MAXSPLITSCREENPLAYERS);
 		screens_ = screens;
 	}
+
+	void set_vertical(bool vertical) noexcept { vertical_ = vertical; }
 
 	void set_screen(uint32_t screen_index, const ScreenConfig& config) noexcept
 	{

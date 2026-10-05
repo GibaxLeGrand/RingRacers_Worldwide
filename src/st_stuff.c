@@ -1286,11 +1286,11 @@ static void ST_overlayDrawer(void)
 		{
 			if (!demo.attract && !P_IsPartyPlayer(stplyr) && !camera[viewnum].freecam)
 			{
-				if (r_splitscreen <= 1)
+				if (K_HudSplits() <= 1)
 				{
 					INT32 flags = V_SNAPTOBOTTOM | V_SPLITSCREEN | V_HUDTRANS;
 					INT32 x = BASEVIDWIDTH/2;
-					INT32 y = (BASEVIDHEIGHT / (r_splitscreen + 1)) - 34;
+					INT32 y = (BASEVIDHEIGHT / (K_HudSplits() + 1)) - 34;
 					INT32 width = 50;
 
 					const char *text = player_names[stplyr-players];

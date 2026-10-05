@@ -75,6 +75,7 @@
 #include "k_roulette.h"
 #include "k_objects.h"
 #include "k_credits.h"
+#include "k_photo.h" // K_PhotoModeTicker (WORLDWIDE.md 8.145)
 #include "g_gamedata.h"
 
 #ifdef HAVE_DISCORDRPC
@@ -1926,6 +1927,9 @@ void G_MoveTiccmdsIntoPlayers(void)
 void G_Ticker(boolean run)
 {
 	uint32_t i;
+
+	// WORLDWIDE: photo mode left when its camera was let go (WORLDWIDE.md 8.145).
+	K_PhotoModeTicker();
 
 	// see also SCR_DisplayMarathonInfo
 	if ((marathonmode & (MA_INIT|MA_INGAME)) == MA_INGAME && gamestate == GS_LEVEL)

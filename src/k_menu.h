@@ -587,6 +587,7 @@ typedef enum
 	mpause_tryagain,
 
 	mpause_continue,
+	mpause_photomode, // WORLDWIDE.md 8.145
 	mpause_spectatetoggle,
 	mpause_psetup,
 	mpause_cheats,
@@ -1278,6 +1279,7 @@ extern struct pausemenu_s {
 
 void M_OpenPauseMenu(void);
 void M_QuitPauseMenu(INT32 choice);
+void M_PhotoMode(INT32 choice); // WORLDWIDE.md 8.145
 boolean M_PauseInputs(INT32 ch);
 void M_PauseTick(void);
 

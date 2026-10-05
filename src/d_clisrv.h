@@ -328,7 +328,7 @@ struct clientconfig_pak
 // the stock one while it runs WORLDWIDE mode. WORLDWIDE_PROTOCOL goes up when
 // two WORLDWIDE builds can no longer play together.
 #define WORLDWIDE_MAGIC "RRWW"
-#define WORLDWIDE_PROTOCOL 1
+#define WORLDWIDE_PROTOCOL 2 // 2: XD_PILOTDUB, which a protocol 1 build would kick for (WORLDWIDE.md 9.7)
 
 struct clientworldwide_pak
 {

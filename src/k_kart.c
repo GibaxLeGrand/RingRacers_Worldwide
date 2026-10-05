@@ -3102,7 +3102,7 @@ static void K_PlayGenericCombatSound(mobj_t *source, mobj_t *other, sfxenum_t sf
 	{
 		S_StartSound(
 			alwaysHear ? NULL : source,
-			K_DubSkinSound(skins[skinid], S_sfx[sfx_id].skinsound) // the voice chosen here
+			K_DubPilotSound(source->player, skins[skinid], S_sfx[sfx_id].skinsound) // its pilot's voice
 		);
 	}
 

@@ -983,6 +983,10 @@ void D_SRB2Loop(void)
 				TryRunTics(realtics);
 			}
 
+			// Once a frame, never in a tic the prediction runs again
+			// (WORLDWIDE.md 9.7).
+			K_DubNetUpdate();
+
 			if (lastdraw || singletics || gametic > rendergametic)
 			{
 				rendergametic = gametic;

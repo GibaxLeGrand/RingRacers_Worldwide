@@ -753,6 +753,14 @@ static void M_HandleBackToGrid(setup_player_t *p)
 	}
 }
 
+// WORLDWIDE: the profile a setup player's dub is chosen for (WORLDWIDE.md 9.7).
+static const char *M_DubProfile(setup_player_t *p)
+{
+	profile_t *pr = PR_GetProfile(p->profilen);
+
+	return (pr != NULL) ? pr->profilename : "GUEST";
+}
+
 // WORLDWIDE: a character with dubs has its voice step between it and the
 // colors (WORLDWIDE.md 8.142).
 static boolean M_HandleBeginningDubs(setup_player_t *p)
@@ -761,7 +769,7 @@ static boolean M_HandleBeginningDubs(setup_player_t *p)
 		return false;
 
 	p->mdepth = CSSTEP_DUBS;
-	p->dubn = (UINT8)K_DubChosen(skins[p->skin]);
+	p->dubn = (UINT8)K_DubChosenBy(M_DubProfile(p), skins[p->skin]);
 	p->dubn_slide.dist = 0;
 	p->dubn_slide.start = 0;
 	return true;
@@ -822,8 +830,8 @@ static void M_HandleAfterDubs(setup_player_t *p)
 
 static void M_HandleBeginningColorsOrFollowers(setup_player_t *p)
 {
-	if (p->skin != -1) // in the voice chosen for it (WORLDWIDE.md 8.142)
-		S_StartSound(NULL, K_DubSkinSound(skins[p->skin], S_sfx[sfx_kattk1].skinsound));
+	if (p->skin != -1) // in the voice this pilot chose for it (WORLDWIDE.md 9.7)
+		S_StartSound(NULL, K_DubPreview(skins[p->skin], K_DubChosenBy(M_DubProfile(p), skins[p->skin]), S_sfx[sfx_kattk1].skinsound));
 	if (M_HandleBeginningDubs(p))
 		S_StartSound(NULL, sfx_s3k63);
 	else
@@ -1013,8 +1021,8 @@ static void M_HandleCharRotate(setup_player_t *p, UINT8 num)
 }
 
 // WORLDWIDE: the character's voice, chosen as a profile is (WORLDWIDE.md 8.142).
-// Each one heard as it comes up; the choice is this machine's, for that
-// character, wherever it races.
+// Each one heard as it comes up; the choice is this profile's, for that
+// character: its kart speaks with it, for everyone (WORLDWIDE.md 9.7).
 static void M_HandleDubSelect(setup_player_t *p, UINT8 num)
 {
 	const UINT8 last = (UINT8)K_DubCount(skins[p->skin]);
@@ -1038,7 +1046,7 @@ static void M_HandleDubSelect(setup_player_t *p, UINT8 num)
 	}
 	else if (M_MenuConfirmPressed(num))
 	{
-		K_DubChoose(skins[p->skin], p->dubn);
+		K_DubChooseFor(M_DubProfile(p), skins[p->skin], p->dubn);
 		M_HandleAfterDubs(p);
 		M_SetMenuDelay(num);
 	}

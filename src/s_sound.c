@@ -526,8 +526,8 @@ void S_StartSoundAtVolume(const void *origin_p, sfxenum_t sfx_id, INT32 volume)
 		skin_t *skin = (origin->player ? skins[origin->player->skin] : ((skin_t *)origin->skin));
 		if (R_CanShowSkinInDemo(skin->skinnum) == false)
 			return;
-		// The voice this machine chose for it (WORLDWIDE.md 8.142).
-		sfx_id = K_DubSkinSound(skin, sfx->skinsound);
+		// The voice its pilot chose (WORLDWIDE.md 8.142, 9.7).
+		sfx_id = K_DubPilotSound(origin->player, skin, sfx->skinsound);
 		sfx = &S_sfx[sfx_id];
 	}
 

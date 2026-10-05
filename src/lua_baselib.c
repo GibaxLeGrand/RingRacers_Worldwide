@@ -3673,7 +3673,7 @@ static int lib_kLossSound(lua_State *L)
 	if (!mobj->player)
 		return luaL_error(L, "K_PlayLossSound: mobj_t isn't a player object.");
 
-	sfx_id = K_DubSkinSound((skin_t *)mobj->skin, S_sfx[sfx_klose].skinsound);
+	sfx_id = K_DubPilotSound(mobj->player, (skin_t *)mobj->skin, S_sfx[sfx_klose].skinsound);
 	S_StartSound(mobj, sfx_id);
 	return 0;
 }

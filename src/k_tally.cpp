@@ -525,11 +525,11 @@ void level_tally_t::Init(player_t *player)
 			;
 		else if (rank < GRADE_C)
 		{
-			gradeVoice = K_DubSkinSound(skins[skinid], S_sfx[sfx_klose].skinsound);
+			gradeVoice = K_DubPilotSound(player, skins[skinid], S_sfx[sfx_klose].skinsound);
 		}
 		else
 		{
-			gradeVoice = K_DubSkinSound(skins[skinid], S_sfx[sfx_kwin].skinsound);
+			gradeVoice = K_DubPilotSound(player, skins[skinid], S_sfx[sfx_kwin].skinsound);
 		}
 	}
 

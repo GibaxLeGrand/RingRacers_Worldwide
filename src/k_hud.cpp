@@ -3424,7 +3424,15 @@ static void K_drawKartDuelScores(void)
 	if (!K_InRaceDuel())
 		return;
 
-	if (K_HudSplits() > 1 && !K_FirstActiveDisplayPlayer(stplyr))
+	if (r_splitvertical)
+	{
+		// Side by side, the second view's bar: it puts its own player
+		// on the right and the foe on the left, so each face sits on its
+		// view's side (Gibax: "Affiche juste celle de j2 a la place").
+		if (R_GetViewNumber() != 1)
+			return;
+	}
+	else if (K_HudSplits() > 1 && !K_FirstActiveDisplayPlayer(stplyr))
 		return;
 
 	using srb2::Draw;
@@ -3477,9 +3485,9 @@ static void K_drawKartDuelScores(void)
 
 		if (r_splitvertical)
 		{
-			// Side by side: one bar, the first view's, at the bottom,
-			// where 3P/4P draw their second copy (Gibax: "affiche que
-			// celui du J1, et uniquement en bas").
+			// Side by side: one bar (see the top of this function), at
+			// the bottom, where 3P/4P draw their second copy (Gibax:
+			// "uniquement en bas").
 			redraw = false;
 			basey = BASEVIDHEIGHT - 40;
 			flags = V_SNAPTOBOTTOM|V_HUDTRANS|V_SLIDEIN;

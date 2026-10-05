@@ -5608,15 +5608,29 @@ static void K_DrawNameTagForPlayer(fixed_t x, fixed_t y, player_t *p, UINT32 fla
 
 	// Since there's no "V_DrawFixedFill", and I don't feel like making it,
 	// fuck it, we're gonna just V_NOSCALESTART hack it
-	if (K_HudSplits() > 1 && cnum & 1)
+	if (r_splitvertical)
 	{
-		x += (BASEVIDWIDTH/2) * FRACUNIT;
-	}
+		// Side by side (WORLDWIDE.md 9.4): from this view's HUD frame
+		// (V_AdjustXYWithSnap) to the whole screen's, which all below
+		// assumes -- the halves of the other splits do not fit it.
+		const INT32 frame = ((vid.width / 2) - (BASEVIDWIDTH / 2) * vid.dupx) / 2;
+		const INT32 whole = (vid.width - BASEVIDWIDTH * vid.dupx) / 2;
 
-	if ((K_HudSplits() == 1 && cnum == 1)
-	|| (K_HudSplits() > 1 && cnum > 1))
+		x += FixedDiv((((cnum & 1) * (vid.width / 2)) + frame - whole) * FRACUNIT, vid.dupx * FRACUNIT);
+		y += (BASEVIDHEIGHT / 4) * FRACUNIT;
+	}
+	else
 	{
-		y += (BASEVIDHEIGHT/2) * FRACUNIT;
+		if (K_HudSplits() > 1 && cnum & 1)
+		{
+			x += (BASEVIDWIDTH/2) * FRACUNIT;
+		}
+
+		if ((K_HudSplits() == 1 && cnum == 1)
+		|| (K_HudSplits() > 1 && cnum > 1))
+		{
+			y += (BASEVIDHEIGHT/2) * FRACUNIT;
+		}
 	}
 
 	barw = (namelen * vid.dupx);
@@ -5795,7 +5809,17 @@ static void K_drawKartNameTags(void)
 	}
 
 	// Crop within splitscreen bounds
-	switch (K_HudSplits())
+	if (r_splitvertical)
+	{
+		// Side by side (WORLDWIDE.md 9.4), this view whole: half the width,
+		// all the height. The 3P/4P quarter below cut its lower half away,
+		// and the tags of the karts in it (Gibax: "s'efface").
+		INT32 vx, vy, vw, vh;
+
+		R_SplitViewRect(cnum, vid.width, vid.height, &vx, &vy, &vw, &vh);
+		V_SetClipRect(vx, vy, vw, vh, V_NOSCALESTART);
+	}
+	else switch (K_HudSplits())
 	{
 		case 1:
 			V_SetClipRect(

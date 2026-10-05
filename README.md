@@ -265,9 +265,12 @@ or newer one is told which side to update.
 
 **Dubs**: a dub is a WAD or PK3 of voice lines with `DUBDEF` lumps, one per
 character (`skin = sonic`, `name = Japanese`, then the S_SKIN's sound
-lines). Packs in a `dubs` folder of the game's folder load at start-up,
-on this machine alone; each player picks a dub at character select, and
-*Options > Sound > Voice Language* sets the one heard for bots.
+lines). Packs in the `dubs` folder, next to the downloaded `addons`, load
+at start-up, on this machine alone: the game's folder on Windows,
+`~/.var/app/io.github.ringracers_worldwide.RingRacersWorldwide/.ringracers/dubs`
+with the Flatpak -- the game makes it at its first start. Each player
+picks a dub at character select, and *Options > Sound > Voice Language*
+sets the one heard for bots.
 
 ## Reporting a problem
 

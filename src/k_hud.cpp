@@ -1646,6 +1646,27 @@ void K_DrawMapAsFace(INT32 x, INT32 y, UINT32 flags, UINT16 map, const UINT8 *co
 }
 
 // see also K_DrawNameTagItemSpy
+// Side by side (WORLDWIDE.md 9.4): the item box, the ring counter and the
+// place in their 1P/2P size, at the corners the 3P/4P layout gives each
+// view -- P1 on the left, P2 against the right edge. Gibax: "reprend le
+// ring compteur, l'indicateur de place, et les items". A box `width` wide,
+// at the top: where 2P puts it (ITEM_X 5, ITEM_Y 3, raised 5).
+static void K_SideItemCorner(INT32 width, INT32 *fx, INT32 *fy, INT32 *fflags)
+{
+	*fy = 3 - 5;
+
+	if (R_GetViewNumber() & 1)
+	{
+		*fx = (BASEVIDWIDTH/2) - 5 - width;
+		*fflags = V_SNAPTORIGHT|V_SNAPTOTOP|V_SPLITSCREEN;
+	}
+	else
+	{
+		*fx = 5;
+		*fflags = V_SNAPTOLEFT|V_SNAPTOTOP|V_SPLITSCREEN;
+	}
+}
+
 static void K_drawKartItem(void)
 {
 	// ITEM_X = BASEVIDWIDTH-50;	// 270
@@ -1653,7 +1674,7 @@ static void K_drawKartItem(void)
 
 	// Why write V_DrawScaledPatch calls over and over when they're all the same?
 	// Set to 'no item' just in case.
-	const UINT8 offset = ((K_HudSplits() > 1) ? 1 : 0);
+	const UINT8 offset = ((K_HudSplits() > 1 && !r_splitvertical) ? 1 : 0);
 	patch_t *localpatch[3] = { kp_nodraw, kp_nodraw, kp_nodraw };
 	UINT8 localamt[3] = {0, 0, 0};
 	patch_t *localbg = ((offset) ? kp_itembg[2] : kp_itembg[0]);
@@ -1857,6 +1878,10 @@ static void K_drawKartItem(void)
 		rouletteCrop.x = 16;
 		rouletteCrop.y = 15;
 	}
+	else if (r_splitvertical)
+	{
+		K_SideItemCorner(SHORT(kp_itemmulsticker[0]->width), &fx, &fy, &fflags);
+	}
 	else
 	{
 		fx = ITEM_X;
@@ -1896,8 +1921,8 @@ static void K_drawKartItem(void)
 			using srb2::Draw;
 			Draw(
 				fx + rouletteCrop.x + FixedToFloat(rouletteSpace/2),
-				fy + rouletteCrop.y + FixedToFloat(rouletteOffset + y + rouletteSpace) - (K_HudSplits() > 1 ? 15 : 33))
-				.font(K_HudSplits() > 1 ? Draw::Font::kRollingNum4P : Draw::Font::kRollingNum)
+				fy + rouletteCrop.y + FixedToFloat(rouletteOffset + y + rouletteSpace) - (offset ? 15 : 33))
+				.font(offset ? Draw::Font::kRollingNum4P : Draw::Font::kRollingNum)
 				.align(Draw::Align::kCenter)
 				.flags(V_HUDTRANS|V_SLIDEIN|fflags)
 				.colormap(colormap)
@@ -2044,7 +2069,7 @@ static void K_drawKartItem(void)
 // == SHITGARBAGE UNLIMITED 3: HACKS GONE WILD ==
 static void K_drawBackupItem(void)
 {
-	bool tiny = K_HudSplits() > 1;
+	bool tiny = K_HudSplits() > 1 && !r_splitvertical;
 	patch_t *localpatch[3] = { kp_nodraw, kp_nodraw, kp_nodraw };
 	patch_t *localinv = kp_invincibility[((leveltime % (6*3)) / 3) + 7 + tiny];
 	INT32 fx = 0, fy = 0, fflags = 0, tx = 0, ty = 0;	// final coords for hud and flags...
@@ -2091,6 +2116,11 @@ static void K_drawBackupItem(void)
 	if (K_HudSplits() == 1)
 	{
 		fy -= 5;
+	}
+
+	if (r_splitvertical) // with the big box (K_drawKartItem)
+	{
+		K_SideItemCorner(SHORT(kp_itemmulsticker[0]->width), &fx, &fy, &fflags);
 	}
 
 	// final fudge - vegeta 2025
@@ -2156,7 +2186,7 @@ static void K_drawKartSlotMachine(void)
 
 	// Why write V_DrawScaledPatch calls over and over when they're all the same?
 	// Set to 'no item' just in case.
-	const UINT8 offset = ((K_HudSplits() > 1) ? 1 : 0);
+	const UINT8 offset = ((K_HudSplits() > 1 && !r_splitvertical) ? 1 : 0);
 
 	patch_t *localpatch[3] = { kp_nodraw, kp_nodraw, kp_nodraw };
 	patch_t *localbg = offset ? kp_ringbg[1] : kp_ringbg[0];
@@ -2251,6 +2281,10 @@ static void K_drawKartSlotMachine(void)
 		splitbsy = -6;
 		boxoffy += 2;
 		hstretch = 0;
+	}
+	else if (r_splitvertical)
+	{
+		K_SideItemCorner(SHORT(kp_itemmulsticker[0]->width), &fx, &fy, &fflags);
 	}
 	else
 	{
@@ -2634,7 +2668,7 @@ static void K_DrawKartPositionNum(UINT8 num)
 	if (stplyr->positiondelay > 0 || K_PlayerTallyActive(stplyr) == true)
 	{
 		const UINT8 delay = (stplyr->exiting) ? POS_DELAY_TIME : stplyr->positiondelay;
-		const fixed_t add = (scale * 3) >> ((K_HudSplits() == 1) ? 1 : 2);
+		const fixed_t add = (scale * 3) >> ((K_HudSplits() == 1 || r_splitvertical) ? 1 : 2);
 		scale += std::min((add * (delay * delay)) / (POS_DELAY_TIME * POS_DELAY_TIME), add);
 	}
 
@@ -2687,6 +2721,10 @@ static void K_DrawKartPositionNum(UINT8 num)
 		// We're putting it in the same corner as
 		// the rest of our HUD, so it needs raised.
 		fy -= (21 << FRACBITS);
+
+		// Side by side, above the 1P/2P ring counter (K_drawRingCounter).
+		if (r_splitvertical)
+			fy -= (13 << FRACBITS);
 	}
 
 	if (trans > 0)
@@ -4380,10 +4418,10 @@ static void K_drawRingCounter(boolean gametypeinfoshown)
 	{
 		ringflip = V_FLIP;
 		ringanim_realframe = RINGANIM_NUMFRAMES-stplyr->karthud[khud_ringframe];
-		ringx += SHORT((K_HudSplits() > 1) ? kp_smallring[ringanim_realframe]->width : kp_ring[ringanim_realframe]->width);
+		ringx += SHORT((K_HudSplits() > 1 && !r_splitvertical) ? kp_smallring[ringanim_realframe]->width : kp_ring[ringanim_realframe]->width);
 	}
 
-	if (K_HudSplits() > 1)
+	if (K_HudSplits() > 1 && !r_splitvertical)
 	{
 		INT32 fx = 0, fr = 0;
 		INT32 flipflag = 0;
@@ -4506,7 +4544,27 @@ static void K_drawRingCounter(boolean gametypeinfoshown)
 	}
 	else
 	{
+		// Side by side, the 1P/2P counter at the 3P/4P corner, P2's
+		// against the right edge (K_SideItemCorner); the laps below it
+		// stay where 3P/4P put them.
+		INT32 ringlx = LAPS_X;
+
 		fy = LAPS_Y;
+
+		if (r_splitvertical)
+		{
+			fy = (BASEVIDHEIGHT/2) - 24; // 2P's LAPS_Y
+
+			if (R_GetViewNumber() & 1)
+			{
+				ringlx = (BASEVIDWIDTH/2) - (uselives ? 78 : 42);
+				splitflags = V_SNAPTOBOTTOM|V_SNAPTORIGHT|V_SPLITSCREEN;
+			}
+			else
+			{
+				ringlx = 9; // 1P/2P's LAPS_X
+			}
+		}
 
 		if (gametypeinfoshown)
 		{
@@ -4522,7 +4580,7 @@ static void K_drawRingCounter(boolean gametypeinfoshown)
 
 		// Rings
 		using srb2::Draw;
-		Draw(LAPS_X+7, fy+1)
+		Draw(ringlx+7, fy+1)
 			.flags(V_HUDTRANS|V_SLIDEIN|splitflags)
 			.align(Draw::Align::kCenter)
 			.width(uselives ? (stplyr->lives >= 10 ? 70 : 64) : 33)
@@ -4530,20 +4588,20 @@ static void K_drawRingCounter(boolean gametypeinfoshown)
 
 		if (stplyr->overdrive)
 		{
-			V_DrawMappedPatch(LAPS_X+7-8, fy-5-8, V_HUDTRANS|V_SLIDEIN|splitflags, kp_overdrive[0][leveltime%32], R_GetTranslationColormap(TC_RAINBOW, static_cast<skincolornum_t>(stplyr->skincolor), GTC_CACHE));
+			V_DrawMappedPatch(ringlx+7-8, fy-5-8, V_HUDTRANS|V_SLIDEIN|splitflags, kp_overdrive[0][leveltime%32], R_GetTranslationColormap(TC_RAINBOW, static_cast<skincolornum_t>(stplyr->skincolor), GTC_CACHE));
 		}
 		else
 		{
-			V_DrawMappedPatch(LAPS_X+ringx+7, fy-5, V_HUDTRANS|V_SLIDEIN|splitflags|ringflip, kp_ring[ringanim_realframe], (colorring ? ringmap : NULL));
+			V_DrawMappedPatch(ringlx+ringx+7, fy-5, V_HUDTRANS|V_SLIDEIN|splitflags|ringflip, kp_ring[ringanim_realframe], (colorring ? ringmap : NULL));
 
 			if (stplyr->amps)
 			{
 				UINT8 amplevel = std::min(stplyr->amps / AMPLEVEL, 6);
 
-				V_DrawMappedPatch(LAPS_X+7-7, fy-5-8, V_HUDTRANS|V_SLIDEIN|splitflags, kp_amps[amplevel][leveltime%12], R_GetTranslationColormap(TC_RAINBOW, static_cast<skincolornum_t>(stplyr->skincolor), GTC_CACHE));
+				V_DrawMappedPatch(ringlx+7-7, fy-5-8, V_HUDTRANS|V_SLIDEIN|splitflags, kp_amps[amplevel][leveltime%12], R_GetTranslationColormap(TC_RAINBOW, static_cast<skincolornum_t>(stplyr->skincolor), GTC_CACHE));
 				if (amplevel == 6)
 				{
-					V_DrawMappedPatch(LAPS_X+7-7, fy-5-8, V_ADD|V_HUDTRANS|V_SLIDEIN|splitflags, kp_amps_underlay[leveltime%12], R_GetTranslationColormap(TC_RAINBOW, static_cast<skincolornum_t>(stplyr->skincolor), GTC_CACHE));
+					V_DrawMappedPatch(ringlx+7-7, fy-5-8, V_ADD|V_HUDTRANS|V_SLIDEIN|splitflags, kp_amps_underlay[leveltime%12], R_GetTranslationColormap(TC_RAINBOW, static_cast<skincolornum_t>(stplyr->skincolor), GTC_CACHE));
 				}
 			}
 		}
@@ -4556,29 +4614,29 @@ static void K_drawRingCounter(boolean gametypeinfoshown)
 		if (hr < -999)
 			hr = -999;
 
-		// "Why fy-4? Why LAPS_X+29+1?"
+		// "Why fy-4? Why ringlx+29+1?"
 		// "use magic numbers" - jartha 2024-03-05
 		if (hr < 0) // Draw the minus for ring debt
 		{
-			V_DrawMappedPatch(LAPS_X+23-1, fy, V_HUDTRANS|V_SLIDEIN|splitflags, kp_ringdebtminus, ringmap);
+			V_DrawMappedPatch(ringlx+23-1, fy, V_HUDTRANS|V_SLIDEIN|splitflags, kp_ringdebtminus, ringmap);
 			using srb2::Draw;
-			Draw row = Draw(LAPS_X+29+0, fy-4).flags(V_HUDTRANS|V_SLIDEIN|splitflags).font(Draw::Font::kThinTimer).colormap(ringmap);
+			Draw row = Draw(ringlx+29+0, fy-4).flags(V_HUDTRANS|V_SLIDEIN|splitflags).font(Draw::Font::kThinTimer).colormap(ringmap);
 			row.text("{:02}", abs(hr));
-			// V_DrawMappedPatch(LAPS_X+29, fy, V_HUDTRANS|V_SLIDEIN|splitflags, fontv[TALLNUM_FONT].font[rn[0]], ringmap);
-			// V_DrawMappedPatch(LAPS_X+35, fy, V_HUDTRANS|V_SLIDEIN|splitflags, fontv[TALLNUM_FONT].font[rn[1]], ringmap);
+			// V_DrawMappedPatch(ringlx+29, fy, V_HUDTRANS|V_SLIDEIN|splitflags, fontv[TALLNUM_FONT].font[rn[0]], ringmap);
+			// V_DrawMappedPatch(ringlx+35, fy, V_HUDTRANS|V_SLIDEIN|splitflags, fontv[TALLNUM_FONT].font[rn[1]], ringmap);
 		}
 		else
 		{
 			using srb2::Draw;
-			Draw row = Draw(LAPS_X+23+3, fy-4).flags(V_HUDTRANS|V_SLIDEIN|splitflags).font(Draw::Font::kThinTimer).colormap(ringmap);
+			Draw row = Draw(ringlx+23+3, fy-4).flags(V_HUDTRANS|V_SLIDEIN|splitflags).font(Draw::Font::kThinTimer).colormap(ringmap);
 			row.text("{:02}", abs(hr));
-			// V_DrawMappedPatch(LAPS_X+23, fy, V_HUDTRANS|V_SLIDEIN|splitflags, fontv[TALLNUM_FONT].font[rn[0]], ringmap);
-			// V_DrawMappedPatch(LAPS_X+29, fy, V_HUDTRANS|V_SLIDEIN|splitflags, fontv[TALLNUM_FONT].font[rn[1]], ringmap);
+			// V_DrawMappedPatch(ringlx+23, fy, V_HUDTRANS|V_SLIDEIN|splitflags, fontv[TALLNUM_FONT].font[rn[0]], ringmap);
+			// V_DrawMappedPatch(ringlx+29, fy, V_HUDTRANS|V_SLIDEIN|splitflags, fontv[TALLNUM_FONT].font[rn[1]], ringmap);
 		}
 
 		// SPB ring lock
 		if (stplyr->pflags & PF_RINGLOCK)
-			V_DrawScaledPatch(LAPS_X-5, fy-17, V_HUDTRANS|V_SLIDEIN|splitflags, kp_ringspblock[stplyr->karthud[khud_ringspblock]]);
+			V_DrawScaledPatch(ringlx-5, fy-17, V_HUDTRANS|V_SLIDEIN|splitflags, kp_ringspblock[stplyr->karthud[khud_ringspblock]]);
 
 		UINT32 greyout = V_HUDTRANS;
 
@@ -4591,7 +4649,7 @@ static void K_drawRingCounter(boolean gametypeinfoshown)
 		if (uselives)
 		{
 			UINT8 *colormap = R_GetTranslationColormap(stplyr->skin, static_cast<skincolornum_t>(stplyr->skincolor), GTC_CACHE);
-			V_DrawMappedPatch(LAPS_X+46, fy-5, V_SLIDEIN|splitflags|greyout, faceprefix[stplyr->skin][FACE_RANK], colormap);
+			V_DrawMappedPatch(ringlx+46, fy-5, V_SLIDEIN|splitflags|greyout, faceprefix[stplyr->skin][FACE_RANK], colormap);
 			SINT8 livescount = 0;
 			if (stplyr->lives > 0)
 			{
@@ -4600,14 +4658,14 @@ static void K_drawRingCounter(boolean gametypeinfoshown)
 					livescount = 10;
 			}
 			using srb2::Draw;
-			Draw row = Draw(LAPS_X+65, fy-4).flags(V_SLIDEIN|splitflags|greyout).font(Draw::Font::kThinTimer);
+			Draw row = Draw(ringlx+65, fy-4).flags(V_SLIDEIN|splitflags|greyout).font(Draw::Font::kThinTimer);
 			row.text("{}", livescount);
 		}
 
 		if (stplyr->superringdisplay && !(stplyr->superringalert % 2))
 		{
 			using srb2::Draw;
-			Draw row = Draw(LAPS_X+23+3+15, fy-4).flags(V_HUDTRANS|V_SLIDEIN|splitflags).font(Draw::Font::kThinTimer).colorize(superringcolor);
+			Draw row = Draw(ringlx+23+3+15, fy-4).flags(V_HUDTRANS|V_SLIDEIN|splitflags).font(Draw::Font::kThinTimer).colorize(superringcolor);
 			row.text("+{:01}", abs(stplyr->superringdisplay));
 		}
 	}

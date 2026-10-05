@@ -39,7 +39,7 @@
 #include "p_tick.h"
 #include "tables.h"
 #include "m_random.h" // monkey input
-#include "k_gyro.h" // K_GyroSteerAxis (WORLDWIDE.md 8.144)
+#include "k_gyro.h" // K_GyroSteerAxis (WORLDWIDE.md section 9)
 
 extern "C" consvar_t cv_1pswap;
 
@@ -357,7 +357,7 @@ class TiccmdBuilder
 		handle_axis_deadzone();
 
 		// WORLDWIDE: the controller tilted as a wheel steers as its stick does,
-		// added to it (k_gyro.c, WORLDWIDE.md 8.144).
+		// added to it (k_gyro.c, WORLDWIDE.md section 9).
 		joystickvector.xaxis += K_GyroSteerAxis(G_GetDeviceForPlayer(pid));
 		if (joystickvector.xaxis > JOYAXISRANGE)
 			joystickvector.xaxis = JOYAXISRANGE;

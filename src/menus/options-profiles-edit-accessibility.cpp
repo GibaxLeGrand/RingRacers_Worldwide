@@ -16,7 +16,7 @@
 #include "../k_menu.h"
 #include "../m_easing.h"
 #include "../p_local.h" // cv_tilting
-#include "../k_gyro.h" // cv_gyrosteer, cv_gyrorange (WORLDWIDE.md 8.144)
+#include "../k_gyro.h" // cv_gyrosteer, cv_gyrorange (WORLDWIDE.md section 9)
 
 extern "C" consvar_t cv_mindelay, cv_drawinput;
 
@@ -142,7 +142,7 @@ menuitem_t OPTIONS_ProfileAccessibility[] = {
 	{IT_STRING | IT_CVAR, "Input Display", "Show virtual controller on the HUD.",
 		NULL, srb2::itemaction(&cv_drawinput), 0, 0},
 
-	// WORLDWIDE: steering by tilting the controller (k_gyro.c, WORLDWIDE.md 8.144).
+	// WORLDWIDE: steering by tilting the controller (k_gyro.c, WORLDWIDE.md section 9).
 	{IT_STRING | IT_CVAR, "Gyro Steering", "Steer by tilting a gamepad that has motion sensors, as a wheel.",
 		NULL, srb2::itemaction(&cv_gyrosteer), 0, 0},
 

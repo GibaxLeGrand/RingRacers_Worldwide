@@ -7,7 +7,7 @@
 // See the 'LICENSE' file for more details.
 //-----------------------------------------------------------------------------
 /// \file  k_gyro.c
-/// \brief Steering by tilting the controller (WORLDWIDE.md 8.144)
+/// \brief Steering by tilting the controller (WORLDWIDE.md section 9)
 
 #include <math.h>
 

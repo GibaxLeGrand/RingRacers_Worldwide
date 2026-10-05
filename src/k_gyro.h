@@ -7,7 +7,7 @@
 // See the 'LICENSE' file for more details.
 //-----------------------------------------------------------------------------
 /// \file  k_gyro.h
-/// \brief Steering by tilting the controller (WORLDWIDE.md 8.144)
+/// \brief Steering by tilting the controller (WORLDWIDE.md section 9)
 ///
 /// A controller with motion sensors -- a Steam Deck, a DualSense, a Switch Pro
 /// -- turned like a wheel steers as its stick does. Its accelerometer gives

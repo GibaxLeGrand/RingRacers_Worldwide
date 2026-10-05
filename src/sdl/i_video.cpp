@@ -71,7 +71,7 @@
 #include "../s_sound.h"
 #include "../i_sound.h"  	// midi pause/unpause
 #include "../i_joy.h"
-#include "../k_gyro.h" // WORLDWIDE.md 8.144
+#include "../k_gyro.h" // WORLDWIDE.md section 9
 #include "../st_stuff.h"
 #include "../hu_stuff.h"
 #include "../g_game.h"
@@ -778,7 +778,7 @@ static void Impl_HandleControllerButtonEvent(SDL_ControllerButtonEvent evt, Uint
 
 #if SDL_VERSION_ATLEAST(2, 0, 14)
 // WORLDWIDE: a controller's motion, for steering by tilting it (k_gyro.c,
-// WORLDWIDE.md 8.144). Each sample at its own time, not the frame's: a
+// WORLDWIDE.md section 9). Each sample at its own time, not the frame's: a
 // frame handles many of them at once.
 static void Impl_HandleControllerSensorEvent(SDL_ControllerSensorEvent evt)
 {
@@ -812,7 +812,7 @@ static void Impl_HandleControllerDeviceAddedEvent(SDL_ControllerDeviceEvent even
 
 #if SDL_VERSION_ATLEAST(2, 0, 14)
 	// WORLDWIDE: its motion sensors, if it has any, for steering by tilting
-	// (k_gyro.c, WORLDWIDE.md 8.144). SDL leaves them off until asked.
+	// (k_gyro.c, WORLDWIDE.md section 9). SDL leaves them off until asked.
 	if (SDL_GameControllerHasSensor(controller, SDL_SENSOR_ACCEL))
 		SDL_GameControllerSetSensorEnabled(controller, SDL_SENSOR_ACCEL, SDL_TRUE);
 	if (SDL_GameControllerHasSensor(controller, SDL_SENSOR_GYRO))
@@ -835,7 +835,7 @@ static void Impl_HandleControllerDeviceRemovedEvent(SDL_ControllerDeviceEvent ev
 
 	engine_event.type = ev_gamepad_device_removed;
 	engine_event.device = 1 + event.which;
-	K_GyroForget(engine_event.device); // WORLDWIDE.md 8.144
+	K_GyroForget(engine_event.device); // WORLDWIDE.md section 9
 
 	D_PostEvent(&engine_event);
 }
@@ -1104,7 +1104,7 @@ void I_GetEvent(void)
 				break;
 
 #if SDL_VERSION_ATLEAST(2, 0, 14)
-			case SDL_CONTROLLERSENSORUPDATE: // WORLDWIDE.md 8.144
+			case SDL_CONTROLLERSENSORUPDATE: // WORLDWIDE.md section 9
 				Impl_HandleControllerSensorEvent(evt.csensor);
 				break;
 #endif

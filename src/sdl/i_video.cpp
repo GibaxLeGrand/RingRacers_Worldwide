@@ -71,6 +71,7 @@
 #include "../s_sound.h"
 #include "../i_sound.h"  	// midi pause/unpause
 #include "../i_joy.h"
+#include "../k_gyro.h" // WORLDWIDE.md section 9
 #include "../st_stuff.h"
 #include "../hu_stuff.h"
 #include "../g_game.h"
@@ -775,6 +776,26 @@ static void Impl_HandleControllerButtonEvent(SDL_ControllerButtonEvent evt, Uint
 	}
 }
 
+#if SDL_VERSION_ATLEAST(2, 0, 14)
+// WORLDWIDE: a controller's motion, for steering by tilting it (k_gyro.c,
+// WORLDWIDE.md section 9). Each sample at its own time, not the frame's: a
+// frame handles many of them at once.
+static void Impl_HandleControllerSensorEvent(SDL_ControllerSensorEvent evt)
+{
+	UINT64 microseconds = (UINT64)evt.timestamp * 1000;
+
+#if SDL_VERSION_ATLEAST(2, 26, 0)
+	if (evt.timestamp_us != 0)
+		microseconds = evt.timestamp_us;
+#endif
+
+	if (evt.sensor == SDL_SENSOR_ACCEL)
+		K_GyroSample(1 + evt.which, GYRO_ACCEL, evt.data, microseconds);
+	else if (evt.sensor == SDL_SENSOR_GYRO)
+		K_GyroSample(1 + evt.which, GYRO_GYRO, evt.data, microseconds);
+}
+#endif
+
 static void Impl_HandleControllerDeviceAddedEvent(SDL_ControllerDeviceEvent event)
 {
 	// The game is always interested in controller events, even if they aren't internally assigned to a player.
@@ -788,6 +809,26 @@ static void Impl_HandleControllerDeviceAddedEvent(SDL_ControllerDeviceEvent even
 
 	SDL_Joystick* joystick = SDL_GameControllerGetJoystick(controller);
 	SDL_JoystickID joystick_instance_id = SDL_JoystickInstanceID(joystick);
+
+#if SDL_VERSION_ATLEAST(2, 0, 14)
+	// WORLDWIDE: its motion sensors, if it has any, for steering by tilting
+	// (k_gyro.c, WORLDWIDE.md section 9). SDL leaves them off until asked.
+	{
+		const SDL_bool accel = SDL_GameControllerHasSensor(controller, SDL_SENSOR_ACCEL);
+		const SDL_bool gyro = SDL_GameControllerHasSensor(controller, SDL_SENSOR_GYRO);
+
+		if (accel)
+			SDL_GameControllerSetSensorEnabled(controller, SDL_SENSOR_ACCEL, SDL_TRUE);
+		if (gyro)
+			SDL_GameControllerSetSensorEnabled(controller, SDL_SENSOR_GYRO, SDL_TRUE);
+
+		// Whether tilting can steer with it: a controller that Steam Input
+		// or a driver shows as a plain one has no sensors here.
+		CONS_Printf("Gyro: %s -- accelerometer %s, gyroscope %s\n",
+			SDL_GameControllerName(controller) ? SDL_GameControllerName(controller) : "?",
+			accel ? "yes" : "no", gyro ? "yes" : "no");
+	}
+#endif
 
 	event_t engine_event {};
 
@@ -805,6 +846,7 @@ static void Impl_HandleControllerDeviceRemovedEvent(SDL_ControllerDeviceEvent ev
 
 	engine_event.type = ev_gamepad_device_removed;
 	engine_event.device = 1 + event.which;
+	K_GyroForget(engine_event.device); // WORLDWIDE.md section 9
 
 	D_PostEvent(&engine_event);
 }
@@ -1071,6 +1113,12 @@ void I_GetEvent(void)
 			case SDL_CONTROLLERDEVICEREMOVED:
 				Impl_HandleControllerDeviceRemovedEvent(evt.cdevice);
 				break;
+
+#if SDL_VERSION_ATLEAST(2, 0, 14)
+			case SDL_CONTROLLERSENSORUPDATE: // WORLDWIDE.md section 9
+				Impl_HandleControllerSensorEvent(evt.csensor);
+				break;
+#endif
 
 			case SDL_QUIT:
 				LUA_HookBool(true, HOOK(GameQuit));

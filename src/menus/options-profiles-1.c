@@ -14,6 +14,7 @@
 #include "../k_menu.h"
 #include "../s_sound.h"
 #include "../m_cond.h"
+#include "../k_gyro.h" // K_GyroProfileToMenu (WORLDWIDE.md section 9)
 
 // profile select
 menuitem_t OPTIONS_Profiles[] = {
@@ -112,6 +113,7 @@ void M_StartEditProfile(INT32 c)
 			CV_StealthSetValue(&cv_dummyprofileautoring, optionsmenu.profile->autoring);
 			CV_StealthSetValue(&cv_dummyprofilerumble, optionsmenu.profile->rumble);
 			CV_StealthSetValue(&cv_dummyprofilefov, optionsmenu.profile->fov);
+			K_GyroProfileToMenu(optionsmenu.profile->profilename);
 		}
 		else
 		{
@@ -125,6 +127,7 @@ void M_StartEditProfile(INT32 c)
 			CV_StealthSetValue(&cv_dummyprofileautoring, 0); // on
 			CV_StealthSetValue(&cv_dummyprofilerumble, 1);	// on
 			CV_StealthSetValue(&cv_dummyprofilefov, 90);
+			K_GyroProfileToMenu(NULL);
 		}
 
 		// Setup greyout and stuff.

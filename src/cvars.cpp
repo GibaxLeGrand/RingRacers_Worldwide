@@ -1275,6 +1275,12 @@ consvar_t cv_kickstartaccel[MAXSPLITSCREENPLAYERS] = {
 
 consvar_t cv_mindelay = Player("mindelay", "2").min_max(0, 15).onchange(weaponPrefChange);
 
+// WORLDWIDE: steering by tilting the controller, each profile's (k_gyro.c,
+// WORLDWIDE.md section 9): kept by profile name, edited through two dummies.
+consvar_t cv_profilegyro = Player("profilegyro", "");
+consvar_t cv_dummyprofilegyrosteer = MenuDummy("dummyprofilegyrosteer", "Off").values({{0, "Off"}, {1, "On"}, {2, "Inverted"}});
+consvar_t cv_dummyprofilegyrorange = MenuDummy("dummyprofilegyrorange", "30").min_max(10, 90).step_amount(5);
+
 extern CV_PossibleValue_t Color_cons_t[];
 void Color1_OnChange(void);
 void Color2_OnChange(void);

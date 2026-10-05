@@ -173,6 +173,7 @@ add_executable(SRB2SDL2 MACOSX_BUNDLE WIN32
 	k_endcam.cpp
 	k_rollback.c
 	k_photo.c
+	k_gyro.c
 	k_dubs.c
 	k_credits.cpp
 	k_modinfo.cpp

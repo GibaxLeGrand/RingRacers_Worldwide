@@ -39,6 +39,7 @@
 #include "p_tick.h"
 #include "tables.h"
 #include "m_random.h" // monkey input
+#include "k_gyro.h" // K_GyroSteerAxis (WORLDWIDE.md section 9)
 
 extern "C" consvar_t cv_1pswap;
 
@@ -354,6 +355,17 @@ class TiccmdBuilder
 		joystickvector.xaxis = G_PlayerInputAnalog(pid, gc_right, 0) - G_PlayerInputAnalog(pid, gc_left, 0);
 		joystickvector.yaxis = 0;
 		handle_axis_deadzone();
+
+		// WORLDWIDE: the controller tilted as a wheel steers as its stick does
+		// (k_gyro.c, WORLDWIDE.md section 9) -- while the stick is left alone:
+		// pushed, the stick has it, never fought by the tilt (Gibax: "Garder si
+		// possible la direction au stick pendant le gyro").
+		if (joystickvector.xaxis == 0)
+			joystickvector.xaxis = K_GyroSteerAxis(G_GetDeviceForPlayer(pid), pid);
+		if (joystickvector.xaxis > JOYAXISRANGE)
+			joystickvector.xaxis = JOYAXISRANGE;
+		else if (joystickvector.xaxis < -JOYAXISRANGE)
+			joystickvector.xaxis = -JOYAXISRANGE;
 
 		// For kart, I've turned the aim axis into a digital axis because we only
 		// use it for aiming to throw items forward/backward and the vote screen

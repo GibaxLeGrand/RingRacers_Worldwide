@@ -1281,6 +1281,13 @@ consvar_t cv_profilegyro = Player("profilegyro", "");
 consvar_t cv_dummyprofilegyrosteer = MenuDummy("dummyprofilegyrosteer", "Off").values({{0, "Off"}, {1, "On"}, {2, "Inverted"}});
 consvar_t cv_dummyprofilegyrorange = MenuDummy("dummyprofilegyrorange", "30").min_max(10, 90).step_amount(5);
 
+// WORLDWIDE's own input delay (ROADMAP, the client-local input delay knob):
+// how many tics the prediction stops short of this machine's newest input,
+// for a steadier picture against a later one. Under the prediction only, and
+// local: it never goes into a packet, as mindelay would (K_RollbackPays lifts
+// that one), nor into the player's config. 0, the default, changes nothing.
+consvar_t cv_localdelay = Player("localdelay", "0").min_max(0, 12);
+
 extern CV_PossibleValue_t Color_cons_t[];
 void Color1_OnChange(void);
 void Color2_OnChange(void);

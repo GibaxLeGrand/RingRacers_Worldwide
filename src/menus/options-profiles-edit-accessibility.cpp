@@ -18,7 +18,7 @@
 #include "../p_local.h" // cv_tilting
 #include "../k_gyro.h" // cv_dummyprofilegyro* (WORLDWIDE.md section 9)
 
-extern "C" consvar_t cv_mindelay, cv_drawinput;
+extern "C" consvar_t cv_mindelay, cv_localdelay, cv_drawinput;
 
 using srb2::Draw;
 
@@ -137,6 +137,11 @@ menuitem_t OPTIONS_ProfileAccessibility[] = {
 
 	{IT_STRING | IT_CVAR, "Minimum Input Delay", "Practice for online play! 0 = instant response.",
 		NULL, srb2::itemaction(&cv_mindelay), 0, 0},
+
+	// WORLDWIDE's own (ROADMAP's client-local knob): the prediction lifts the
+	// one above, and this is what it offers in its place.
+	{IT_STRING | IT_CVAR, "WORLDWIDE Input Delay", "WORLDWIDE online: steadier view, later input. 0 = instant.",
+		NULL, srb2::itemaction(&cv_localdelay), 0, 0},
 
 	{IT_STRING | IT_CVAR, "Screen Tilting", "View rotation on inclines.",
 		NULL, srb2::itemaction(&cv_tilting), 0, 0},

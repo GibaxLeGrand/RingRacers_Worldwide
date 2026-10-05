@@ -3699,6 +3699,8 @@ static uint32_t g_histmatched;  // ... and found it, for the first local player
 static uint32_t g_histcapped;   // passes whose replay was cut short by the depth cap
 static uint64_t g_histunackedsum;
 static uint64_t g_histdepthsum;
+static uint32_t g_delayheld;     // speculations localdelay held back
+static uint32_t g_delaytics;     // ... by this many tics in all
 
 // Where the replay and the server's filing part (WORLDWIDE.md 8.85). The replay
 // assumes one sample a tic; NetUpdate makes one a call, however many tics went
@@ -7590,6 +7592,21 @@ static int32_t K_SpeculationDepth(int32_t ahead, tic_t frontier)
 		g_histdepthsum += (uint64_t)ahead;
 	}
 
+	// The player's own input delay (localdelay, ROADMAP's client-local knob):
+	// the speculation stops that many tics short of where the inputs in flight
+	// take it, so this machine's input shows that much later and everyone
+	// else is guessed that much less. The inputs leave as before, for the same
+	// tics: nothing of it reaches a packet. Taken after the lead is held, which
+	// it does not move, and one tic at least, as above.
+	if (cv_localdelay.value > 0 && ahead > 1)
+	{
+		const int32_t held = (cv_localdelay.value < ahead) ? cv_localdelay.value : ahead - 1;
+
+		ahead -= held;
+		g_delayheld++;
+		g_delaytics += (uint32_t)held;
+	}
+
 	return ahead;
 }
 
@@ -7995,6 +8012,26 @@ void K_RollbackNoteRepeat(int32_t player)
 	g_filedrepeat[player]++;
 }
 
+static uint32_t g_wantpackets;   // remote clients' packets in a level
+static uint32_t g_wantnonzero;   // ... asking for a delay
+static uint8_t g_wantmax;        // ... the most asked
+
+void K_RollbackNoteWantDelay(uint8_t wantdelay, dboolean fromhost, dboolean inlevel)
+{
+	if (fromhost || inlevel == false)
+		return;
+
+	g_wantpackets++;
+
+	if (wantdelay != 0)
+	{
+		g_wantnonzero++;
+
+		if (wantdelay > g_wantmax)
+			g_wantmax = wantdelay;
+	}
+}
+
 void K_RollbackNoteRelabel(int32_t delta, dboolean fromhost, dboolean inlevel)
 {
 	const int32_t split = fromhost
@@ -8046,6 +8083,10 @@ static void Command_RollbackRelabel_f(void)
 		(int32_t)(g_relabelsum / (int64_t)g_relabelcount),
 		(int32_t)(((g_relabelsum < 0 ? -g_relabelsum : g_relabelsum) * 100
 			/ (int64_t)g_relabelcount) % 100));
+
+	CONS_Printf("rollback_relabel: %u packets from remote clients in a race, %u of them "
+		"asking for a delay (wantdelay up to %u)" "\n",
+		g_wantpackets, g_wantnonzero, (unsigned)g_wantmax);
 
 	if (g_relabelfar > 0)
 	{
@@ -8968,6 +9009,7 @@ static void K_SetHistory(int32_t want)
 	g_samples = g_samplelate = g_samplelatetics = g_samplesamestamp = 0;
 	g_ontimesamples = g_ontimestepped = 0;
 	g_budgetcuts = g_budgettics = 0;
+	g_delayheld = g_delaytics = 0;
 	g_anchorambiguous = 0;
 	g_histstretched = 0;
 }
@@ -9018,6 +9060,12 @@ static void Command_RollbackHistory_f(void)
 		CONS_Printf("rollback_history: rollback_rebuildbudget %d ms -- %u speculations cut "
 			"short, %u tics left to the passes after\n",
 			(int)g_budgetms, g_budgetcuts, g_budgettics);
+	}
+
+	if (cv_localdelay.value > 0 || g_delayheld > 0)
+	{
+		CONS_Printf("rollback_history: localdelay %d tics -- %u speculations held back, "
+			"%u tics in all\n", cv_localdelay.value, g_delayheld, g_delaytics);
 	}
 
 	if (g_slowtic > 0)

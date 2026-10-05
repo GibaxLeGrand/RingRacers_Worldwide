@@ -167,6 +167,11 @@ void K_RollbackLiveInputs(uint32_t *count, uint32_t *hash);
   * server's own node or a remote one) and by whether a level is running. */
 void K_RollbackNoteRelabel(int32_t delta, dboolean fromhost, dboolean inlevel);
 
+/** Server side: the delay a client's packet asked for (wantdelay), counted
+  * for remote clients in a level. Under the prediction it must be 0 whatever
+  * the client's localdelay; rollback_relabel prints the count. */
+void K_RollbackNoteWantDelay(uint8_t wantdelay, dboolean fromhost, dboolean inlevel);
+
 /** NetUpdate has just made this machine's sample, realtics real tics after the
   * last one. One sample for several tics leaves the server a tic with none,
   * which it fills by repeating the one before (WORLDWIDE.md 8.85). Client side. */

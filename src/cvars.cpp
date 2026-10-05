@@ -1261,6 +1261,10 @@ consvar_t cv_kickstartaccel[MAXSPLITSCREENPLAYERS] = {
 
 consvar_t cv_mindelay = Player("mindelay", "2").min_max(0, 15).onchange(weaponPrefChange);
 
+// WORLDWIDE: steering by tilting the controller (k_gyro.c, WORLDWIDE.md 8.144).
+consvar_t cv_gyrosteer = Player("gyrosteer", "Off").values({{0, "Off"}, {1, "On"}, {2, "Inverted"}});
+consvar_t cv_gyrorange = Player("gyrorange", "30").min_max(10, 90).step_amount(5);
+
 extern CV_PossibleValue_t Color_cons_t[];
 void Color1_OnChange(void);
 void Color2_OnChange(void);

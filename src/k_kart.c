@@ -34,6 +34,7 @@
 #include "r_local.h"
 #include "r_things.h"
 #include "s_sound.h"
+#include "k_dubs.h" // K_DubSkinSound
 #include "st_stuff.h"
 #include "v_video.h"
 #include "z_zone.h"
@@ -3101,7 +3102,7 @@ static void K_PlayGenericCombatSound(mobj_t *source, mobj_t *other, sfxenum_t sf
 	{
 		S_StartSound(
 			alwaysHear ? NULL : source,
-			skins[skinid]->soundsid[S_sfx[sfx_id].skinsound]
+			K_DubSkinSound(skins[skinid], S_sfx[sfx_id].skinsound) // the voice chosen here
 		);
 	}
 

@@ -21,6 +21,7 @@
 #include "hu_stuff.h"
 #include "r_local.h"
 #include "s_sound.h"
+#include "k_dubs.h" // K_DubSkinSound
 #include "i_time.h"
 #include "i_video.h"
 #include "v_video.h"
@@ -294,11 +295,11 @@ void podiumData_s::Init(void)
 	// but not this close to release
 	if (rank.position > RANK_NEUTRAL_POSITION || grade < GRADE_C)
 	{
-		gradeVoice = skins[rank.skin]->soundsid[S_sfx[sfx_klose].skinsound];
+		gradeVoice = K_DubSkinSound(skins[rank.skin], S_sfx[sfx_klose].skinsound);
 	}
 	else
 	{
-		gradeVoice = skins[rank.skin]->soundsid[S_sfx[sfx_kwin].skinsound];
+		gradeVoice = K_DubSkinSound(skins[rank.skin], S_sfx[sfx_kwin].skinsound);
 	}
 }
 

@@ -18,6 +18,7 @@
 #include "../z_zone.h"
 #include "../r_skins.h"
 #include "../s_sound.h"
+#include "../k_dubs.h" // K_DubSkinSound
 
 #ifdef DEVELOP
 extern consvar_t cv_debugchallenges;
@@ -1245,7 +1246,7 @@ boolean M_ChallengesInputs(INT32 ch)
 								CV_Set(&cv_skin[0], skins[skin]->name);
 
 								S_StartSound(NULL, sfx_s3k63);
-								S_StartSound(NULL, skins[skin]->soundsid[S_sfx[sfx_kattk1].skinsound]);
+								S_StartSound(NULL, K_DubSkinSound(skins[skin], S_sfx[sfx_kattk1].skinsound));
 								M_SetMenuDelay(pid);
 
 								forceflip = true;

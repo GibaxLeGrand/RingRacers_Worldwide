@@ -109,6 +109,10 @@ block first.
 | Diagnostics: snapshot and leak soaks, drift and blame logs, cost per pass, unattended test races | `rollback_test`, `rollback_soak`, `rollback_drift`, ... | in use |
 | Not netcode: typing with the system's keyboard layout (AZERTY and others) | `textinput` | checked |
 | Not netcode: WORLDWIDE's title screen, window title and icon | -- | in use |
+| Not netcode: character dubs -- each pilot's voice set per character, "Japanese" say; online in WORLDWIDE mode only | `pilotdubs`, `voicelanguage`, `dublist` | played, 2.4 builds |
+| Not netcode: two-player splitscreen side by side | `split2p` (*Options > HUD*) | played, 2.4 builds |
+| Not netcode: photo mode -- the game held, the HUD hidden, a free camera | the pause menu | played, 2.4 builds |
+| Not netcode: steering by tilting a controller with motion sensors, each profile's | `profilegyro` (*Profiles > Accessibility*) | played, 2.4 builds |
 
 Every switch, with what it does, is in [docs/COMMANDS.md](docs/COMMANDS.md).
 The order of the work left is in [docs/ROADMAP.md](docs/ROADMAP.md).
@@ -256,7 +260,14 @@ Network Connection > WORLDWIDE Mode*, or start the game with
 `+worldwide Off`, **before** anybody joins. A config saved by an earlier
 build keeps the Off it saved: turn the mode on once in that menu. **To
 join**, just connect: a WORLDWIDE client switches its prediction on by
-itself.
+itself. A WORLDWIDE build meets the same WORLDWIDE builds only: an older
+or newer one is told which side to update.
+
+**Dubs**: a dub is a WAD or PK3 of voice lines with `DUBDEF` lumps, one per
+character (`skin = sonic`, `name = Japanese`, then the S_SKIN's sound
+lines). Packs in a `dubs` folder of the game's folder load at start-up,
+on this machine alone; each player picks a dub at character select, and
+*Options > Sound > Voice Language* sets the one heard for bots.
 
 ## Reporting a problem
 

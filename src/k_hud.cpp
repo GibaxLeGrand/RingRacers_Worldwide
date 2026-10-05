@@ -3475,6 +3475,16 @@ static void K_drawKartDuelScores(void)
 
 		redraw = true;
 
+		if (r_splitvertical)
+		{
+			// Side by side: one bar, the first view's, at the bottom,
+			// where 3P/4P draw their second copy (Gibax: "affiche que
+			// celui du J1, et uniquement en bas").
+			redraw = false;
+			basey = BASEVIDHEIGHT - 40;
+			flags = V_SNAPTOBOTTOM|V_HUDTRANS|V_SLIDEIN;
+		}
+
 		if (K_HudSplits() == 1)
 		{
 			redraw = false;
@@ -4557,7 +4567,9 @@ static void K_drawRingCounter(boolean gametypeinfoshown)
 
 			if (R_GetViewNumber() & 1)
 			{
-				ringlx = (BASEVIDWIDTH/2) - (uselives ? 78 : 42);
+				// As far from the right edge as P1's from the left: 10 units,
+				// the counter 45 wide (Gibax's capture, 1920x1080).
+				ringlx = (BASEVIDWIDTH/2) - (uselives ? 86 : 56);
 				splitflags = V_SNAPTOBOTTOM|V_SNAPTORIGHT|V_SPLITSCREEN;
 			}
 			else

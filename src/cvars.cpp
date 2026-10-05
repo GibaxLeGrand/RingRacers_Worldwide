@@ -603,11 +603,13 @@ consvar_t cv_sleep = Server("cpusleep", "1").min_max(0, 1000/TICRATE);
 // when it joins, so it cannot change while anybody else is connected. Saved,
 // since the menus set it (Server Options > Advanced) and a host expects it to
 // stay. A server variable, not a netvar: a client never takes the server's
-// value, so only what it set itself is saved. The test harness starts every
-// server with it off and lets the WORLDWIDE scenarios turn it on, or a saved
-// value would put a control run in the mode.
+// value, so only what it set itself is saved. On by default (WORLDWIDE.md 9.2):
+// a host is in WORLDWIDE mode unless it turns it off, for stock players; a
+// config saved before keeps the Off it saved. The test harness starts every
+// server with it set on the command line, or a saved value would put a control
+// run in the mode.
 void Worldwide_OnChange(void);
-consvar_t cv_worldwide = Server("worldwide", "Off").on_off().onchange_noinit(Worldwide_OnChange);
+consvar_t cv_worldwide = Server("worldwide", "On").on_off().onchange_noinit(Worldwide_OnChange);
 
 
 //

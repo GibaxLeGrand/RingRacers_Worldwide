@@ -32,6 +32,7 @@
 #include "y_inter.h"
 #include "m_easing.h"
 #include "s_sound.h"
+#include "k_dubs.h" // K_DubSkinSound
 #include "st_stuff.h"
 #include "r_fps.h"
 #include "g_party.h"
@@ -524,11 +525,11 @@ void level_tally_t::Init(player_t *player)
 			;
 		else if (rank < GRADE_C)
 		{
-			gradeVoice = skins[skinid]->soundsid[S_sfx[sfx_klose].skinsound];
+			gradeVoice = K_DubSkinSound(skins[skinid], S_sfx[sfx_klose].skinsound);
 		}
 		else
 		{
-			gradeVoice = skins[skinid]->soundsid[S_sfx[sfx_kwin].skinsound];
+			gradeVoice = K_DubSkinSound(skins[skinid], S_sfx[sfx_kwin].skinsound);
 		}
 	}
 

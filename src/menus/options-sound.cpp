@@ -21,6 +21,7 @@
 #include "../m_easing.h"
 #include "../s_sound.h"	// sounds consvars
 #include "../g_game.h" // cv_chatnotifications
+#include "../k_dubs.h" // cv_dummyvoicelanguage
 
 extern "C" consvar_t cv_mastervolume, cv_continuousmusic;
 
@@ -229,6 +230,8 @@ void tick_routine(void)
 
 void init_routine(void)
 {
+	K_DubMenuSync(); // WORLDWIDE.md 8.142
+
 	OPTIONS_Sound[sopt_followhorns].status = IT_SECRET;
 	OPTIONS_Sound[sopt_attackmusic].status = IT_SECRET;
 
@@ -307,6 +310,10 @@ menuitem_t OPTIONS_Sound[] =
 
 	{IT_STRING | IT_CVAR, "Character Voices", "Characters speak when interacting on the course.",
 		NULL, srb2::itemaction(&cv_kartvoices), 0, 0},
+
+	// WORLDWIDE: character dubs (k_dubs.c, WORLDWIDE.md 8.142).
+	{IT_STRING | IT_CVAR, "Voice Language", "The voice of every character you have not chosen one for, among the dubs loaded. Only you hear it.",
+		NULL, srb2::itemaction(&cv_dummyvoicelanguage), 0, 0},
 
 	{IT_STRING | IT_CVAR, "Follower Horns", NULL, // set in init_routine
 		NULL, srb2::itemaction(&cv_karthorns), 0, 0},

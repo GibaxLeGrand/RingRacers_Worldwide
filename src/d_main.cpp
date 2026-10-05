@@ -34,6 +34,11 @@
 
 #include <time.h>
 
+#include <algorithm>
+#include <filesystem>
+#include <string>
+#include <vector>
+
 #include "doomdef.h"
 #include "am_map.h"
 #include "console.h"
@@ -85,6 +90,7 @@
 #include "acs/interface.h"
 #include "k_podium.h"
 #include "k_vote.h"
+#include "k_dubs.h" // K_InitDubDefs (WORLDWIDE.md 8.142)
 #include "k_serverstats.h"
 #include "music.h"
 #include "k_dialogue.h"
@@ -1714,6 +1720,53 @@ void D_SRB2Main(void)
 	snprintf(addonsdir, sizeof addonsdir, "%s%s%s", srb2home, PATHSEP, "addons");
 	I_mkdir(addonsdir, 0755);
 
+	// WORLDWIDE: character dubs (k_dubs.c, WORLDWIDE.md 8.142). The files in
+	// <home>/dubs that hold only sounds and DUBDEFs are loaded with the music:
+	// never sent, never checked against a server's list. Any other is left out.
+	try
+	{
+		char dubsdir[256];
+		std::error_code ec;
+		std::vector<std::string> packs;
+
+		snprintf(dubsdir, sizeof dubsdir, "%s%s%s", srb2home, PATHSEP, "dubs");
+		I_mkdir(dubsdir, 0755);
+
+		for (const auto &entry : std::filesystem::directory_iterator(dubsdir, ec))
+		{
+			std::string ext = entry.path().extension().string();
+			std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c) { return (char)tolower(c); });
+			if (entry.is_regular_file(ec) && (ext == ".pk3" || ext == ".wad"))
+				packs.push_back(entry.path().string());
+		}
+		std::sort(packs.begin(), packs.end());
+
+		for (const std::string &pack : packs)
+		{
+			const char *path = pack.c_str();
+			FILE *handle = W_OpenWadFile(&path, NULL, false);
+			int ms;
+
+			if (handle == NULL)
+				continue;
+			ms = W_VerifyNMUSlumps(path, handle, false);
+			fclose(handle);
+			if (ms != 1)
+			{
+				CONS_Alert(CONS_WARNING, "dubs: %s holds more than sounds and DUBDEFs, left out\n", path);
+				continue;
+			}
+			if (num_startupiwads >= MAX_WADFILES)
+				break;
+			D_AddFile(startupiwads, num_startupiwads++, path, NULL);
+			musicwads++;
+		}
+	}
+	catch (...)
+	{
+		CONS_Alert(CONS_WARNING, "dubs: the dubs folder could not be read\n");
+	}
+
 	/* and downloads in a subdirectory */
 	snprintf(downloaddir, sizeof downloaddir, "%s%s%s",
 			addonsdir, PATHSEP, DOWNLOADDIR_PART);
@@ -1964,6 +2017,7 @@ void D_SRB2Main(void)
 	CON_SetLoadingProgress(LOADED_SINITSFXCHANNELS);
 
 	S_InitMusicDefs();
+	K_InitDubDefs(); // WORLDWIDE: character dubs (WORLDWIDE.md 8.142)
 
 	CONS_Printf("ST_Init(): Init status bar.\n");
 	ST_Init();

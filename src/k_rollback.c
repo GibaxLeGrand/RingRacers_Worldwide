@@ -9375,6 +9375,63 @@ static void Command_RollbackLag_f(void)
 	}
 }
 
+/** Prints what rollback_jitter and rollback_loss did since their last reset. */
+static void K_PrintNetNoise(const char *who)
+{
+	uint32_t jittered, reordered, lost, seen;
+
+	Net_NoiseStatus(&jittered, &reordered, &lost, &seen);
+	CONS_Printf("%s: jitter 0 to %d tics (%d ms), loss %d%% -- of %u peer packets, "
+		"%u held longer, %u released out of order, %u thrown away\n",
+		who, netjittertics, (netjittertics * 1000) / TICRATE, netlosspercent,
+		seen, jittered, reordered, lost);
+}
+
+/** Console command: rollback_jitter [tics]
+  *
+  * ROADMAP item 3: rollback_lag only delays, and a real network also jitters.
+  * Each peer packet is held 0 to that many tics more than rollback_lag, at
+  * random, on reception -- so two can arrive out of order. Off at 0. Setting
+  * it zeroes the counts and the draws (Net_NoiseReset), shared with
+  * rollback_loss; without an argument it prints them.
+  */
+static void Command_RollbackJitter_f(void)
+{
+	if (COM_Argc() > 1)
+	{
+		netjittertics = atoi(COM_Argv(1));
+
+		if (netjittertics < 0)
+			netjittertics = 0;
+
+		Net_NoiseReset();
+	}
+
+	K_PrintNetNoise("rollback_jitter");
+}
+
+/** Console command: rollback_loss [percent]
+  *
+  * ROADMAP item 3: that share of the peer packets thrown away on reception,
+  * 0 to 100, off at 0. As rollback_jitter: setting it zeroes the counts.
+  */
+static void Command_RollbackLoss_f(void)
+{
+	if (COM_Argc() > 1)
+	{
+		netlosspercent = atoi(COM_Argv(1));
+
+		if (netlosspercent < 0)
+			netlosspercent = 0;
+		else if (netlosspercent > 100)
+			netlosspercent = 100;
+
+		Net_NoiseReset();
+	}
+
+	K_PrintNetNoise("rollback_loss");
+}
+
 /** Console command: rollback_maxdepth [tics]
   *
   * How far back a rollback may rewind. Latency beyond this has to be paid for
@@ -9743,6 +9800,8 @@ void K_RegisterRollbackStuff(void)
 	COM_AddDebugCommand("rollback_detect", Command_RollbackDetect_f);
 	COM_AddDebugCommand("rollback_loop", Command_RollbackLoop_f);
 	COM_AddDebugCommand("rollback_lag", Command_RollbackLag_f);
+	COM_AddDebugCommand("rollback_jitter", Command_RollbackJitter_f);
+	COM_AddDebugCommand("rollback_loss", Command_RollbackLoss_f);
 	COM_AddDebugCommand("rollback_pace", Command_RollbackPace_f);
 	COM_AddDebugCommand("rollback_smooth", Command_RollbackSmooth_f);
 	COM_AddDebugCommand("rollback_twoclock", Command_RollbackTwoClock_f);

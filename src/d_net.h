@@ -67,6 +67,15 @@ dboolean HGetPacket(void);
 // Artificial latency, in tics, for testing the rollback loop. Zero is off.
 extern int32_t netlagtics;
 void Net_LagStatus(int32_t *tics, uint32_t *held, uint32_t *dropped);
+
+// And a network's other two faces (ROADMAP item 3), also on reception and
+// also off at zero: each peer packet held 0 to netjittertics more tics, at
+// random -- so two can arrive out of order -- and netlosspercent of them
+// thrown away.
+extern int32_t netjittertics;
+extern int32_t netlosspercent;
+void Net_NoiseStatus(uint32_t *jittered, uint32_t *reordered, uint32_t *lost, uint32_t *seen);
+void Net_NoiseReset(void);
 void D_SetDoomcom(void);
 boolean D_CheckNetGame(void);
 void D_CloseConnection(void);

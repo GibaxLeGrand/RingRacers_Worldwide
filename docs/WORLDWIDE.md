@@ -9114,6 +9114,21 @@ first (the notes' session of 2026-10-06).
   was freed) inside the tic, its head reference not counted in. Next:
   breakpoints on that object's own thinker fields -- its removal, its
   unlinking from the thinker list -- to name who removes and frees it.
+- **Never removed, never handed back** (Gibax: "lance"; prediction
+  wrong): hardware breakpoints on that overlay's `function` (written by
+  `P_RemoveMobj`), `prev` and the block's first word (written when the
+  level pool takes the block back, `PoolAllocator::deallocate`) -- not
+  one hit before the crash, on the same object. A pool restore keeps the
+  chunks grown since aside, mapped (`PoolAllocator::restore`); only
+  `release()` frees them, from `Z_FreeTags(PU_LEVEL)` in
+  `P_FreeLevelState` -- `P_LoadLevel`, `D_ClearState` -- and no level
+  load came (`3bd3eb084`). Unexplained. **Seen in every crashing run's
+  `cdb` log**: first-chance C++ exceptions (`0x20474343`, the GCC/clang
+  unwinder's) on the game's thread, one before the overlay first goes
+  into the list and seven between that and the crash. The game throws
+  and catches in its audio (`audio/chunk_load.cpp`), its ACS
+  serialisation (`acs/interface.cpp`), its gamedata; one caught high
+  enough would cut a tic short. Next: the stack of each.
 
 ### 9.16 Jitter and loss in the harness
 

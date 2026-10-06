@@ -9045,9 +9045,16 @@ the race. Prediction written first (the notes' session of 2026-10-06).
   and 3 rebuilds against none. **Not explained yet**: the lead over the
   clock was neither raised nor lowered in any race window, so these moves
   do not come from the lead; R1 laid no pass out differently either (the
-  prediction's point 2 for R1 was wrong). To read next: where the drawn tic
-  moves against the clock under jitter (the frontier's steps, a pass with
-  no confirmed tic).
+  prediction's point 2 for R1 was wrong).
+- **Found: the cap.** The passes the history's cap of 12 cut follow the
+  moves window by window -- 8/9, 279/241, 6/5, 168/153: at 6 tics of lag
+  and 0 to 3 of jitter the round trip goes past 12 by moments. **Measured**
+  (`wwjitter24`: `wwjitter` with the cap at 24 after the join, prediction
+  written first): 0 passes cut and **0 moves of the drawn world in every
+  window**, jitter or not (the prediction said about ten); the depth 11.3
+  and 10.9 under jitter, 8.0 without; 6 and 5 rebuilds, as many as at 12.
+  So 9.15's `histcap-2.4` takes the jitter's cost away too: the cap, not
+  the network's jitter, was what moved the picture.
 - **And `rollback_lag` alone reorders**: 2 to 9 packets a window come out
   of order with no jitter -- packets due on the same tic go out by their
   slot in the queue, not by their arrival. Small, but every latency

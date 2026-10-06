@@ -3855,7 +3855,15 @@ static uint32_t g_driftsame;        // ... and karts already where the server ha
 // after it has joined.
 #define WORLDWIDE_CORRECTRATE 4   // tics between corrections: every driven race since 8.44
 #define WORLDWIDE_TWOCLOCK 4      // the speculation's floor; rollback_history lifts it
-#define WORLDWIDE_HISTORY 12      // how deep the history may take it (8.47, 8.48, 8.78)
+#define WORLDWIDE_HISTORY 12      // how deep the history may take it (8.47, 8.48, 8.78);
+                                  // 18 and 24 tried and left, 9.15
+
+// The deepest a speculation may go: one tic short of the snapshot ring. A
+// speculation ROLLBACK_TICS deep writes over the confirmed tic's slot, the
+// confirmed world cannot be loaded back, and the loop runs on from the
+// guessed one -- "left the world stranded", a client that never took the
+// server's map change (WORLDWIDE.md 9.15). One tic more to spare.
+#define ROLLBACK_HISTORY_MAX (ROLLBACK_TICS - 2)
 
 static dboolean g_wwclient;       // this client's switches were set by joining a WORLDWIDE server
 static dboolean g_wwkeepingwas;   // the snapshot keeper's switch before that join turned it on
@@ -8958,7 +8966,12 @@ static void Command_RollbackCleanCmds_f(void)
   * counts. Shared by the command and by WORLDWIDE mode. */
 static void K_SetHistory(int32_t want)
 {
-	g_histmax = (want <= 0) ? 0 : ((want > MAXGENTLEMENDELAY - 1) ? MAXGENTLEMENDELAY - 1 : want);
+	// Under the input history's length, and under the snapshot ring's
+	// (ROLLBACK_HISTORY_MAX): deeper strands the confirmed world.
+	const int32_t most = (ROLLBACK_HISTORY_MAX < MAXGENTLEMENDELAY - 1)
+		? ROLLBACK_HISTORY_MAX : MAXGENTLEMENDELAY - 1;
+
+	g_histmax = (want <= 0) ? 0 : ((want > most) ? most : want);
 	g_histpasses = g_histmatched = g_histcapped = 0;
 	g_histunackedsum = g_histdepthsum = 0;
 	g_histhold = false;

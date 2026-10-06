@@ -9073,6 +9073,21 @@ first (the notes' session of 2026-10-06).
   free. Next, measured: a check at each tic's start that the head is
   empty, saying which run (speculated or not, which pass, after which
   load) left it set.
+- **Not between tics** (Gibax: "Oui"; `overlaydiag-2.4`, `085c1e530`,
+  diagnostic only, never to be merged): the head checked at every tic's
+  start, at every network and raw load and at every level load -- the
+  crashing race printed **no line at all**, and crashed the same way.
+  Both halves of the prediction were wrong: the head goes stale inside
+  the crashing tic itself, an overlay put at its head there and its
+  memory gone before `P_RunOverlays`. **The server's log** has, after
+  the client's join: the Guest entered, became a spectator, then
+  "Speeding off to level..." and `RR_TESTRUN` loaded again -- 2.4
+  restarts the waiting map as a player comes in -- and the client's last
+  lines before the crash are that map command's settings ("... next
+  round", `Got_Mapcmd`, which loads the level at once through
+  `G_InitNew`). The lead now: **a level load run inside a speculated
+  tic**, the level's memory released under it. `3bd3eb084` prints every
+  level load and whether it is speculated, replayed or live.
 
 ### 9.16 Jitter and loss in the harness
 

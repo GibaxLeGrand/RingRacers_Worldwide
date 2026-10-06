@@ -8870,3 +8870,24 @@ Gibax, on a capture of a race side by side: the tag over P2 in P1's view
   attempts"), then went through. Tried by Gibax with its dev build: "je
   valide du coup". Merged into `worldwide-2.4` (`46da12bf2`, on his word,
   CI run 37375414315).
+
+### 9.12 The laps and the EXP side by side
+
+Gibax, 2026-10-06: "pour le splitscreen vertical, voit si tu peux utiliser
+le HUD 2 player pour les laps et l'exp aussi ? même regle que pour le
+compteur de ring".
+
+- **What it was**: side by side, `K_HudSplits` says 3 (9.4), so the laps
+  and the EXP were 3P/4P's small sticker, under 9.6's 1P/2P ring counter.
+- **So** (`55abd251a`, `splitv-2.4`): their 1P/2P sticker and font
+  (`K_drawKartLaps`), where 2P puts them -- `LAPS_X` 9 and 2P's `LAPS_Y`,
+  just under the ring counter, as in 2P; P2's against the right edge, as
+  far from it as P1's from the left, by the block's width (the lap sticker,
+  then 25+bump between the sticker's two ends). The accessibility icons
+  (kickstart, auto roulette, auto ring), which 3P/4P puts beside its small
+  laps, where the big ones now are, go where 2P puts them, above the ring
+  counter, P2's mirrored from the right edge. The flag is `quarter`, not
+  `small`, a macro in Windows' headers.
+- **Tried** by Gibax with that branch's release build (CI run
+  37453218896): "c'est bon ça marche". Merged into `worldwide-2.4`
+  (`8937d0ff3`, on his word).

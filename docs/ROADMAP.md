@@ -164,8 +164,12 @@ audit's, kept because `WORLDWIDE.md` and the harness cite them; items 12 and
    (about 5 tics at 428 ms). Raise it (up to 34) or set it from the round
    trip; a rebuild then goes deeper. A worldwide lobby will have such
    players. **Measured at 428 ms** (9.15): at 24 the depth
-   reaches the round trip, 17, no pass cut, the pass's cost the same;
-   `histcap-2.4` sets 24 -- a driven race at `lag=15` before it is merged.
+   reaches the round trip, 17, no pass cut, the pass's cost the same. But
+   24 strands the confirmed world past the 20-slot snapshot ring, and
+   driven at 428 ms a cap of 18 rebuilds 16 tics at a time, 62 to 109
+   skipped frames a window, where 12 is smooth: Gibax chose 12 ("la 1
+   très clairement", 9.15). Under jitter at 171 ms 18 felt better: a
+   cap set from the round trip is what is left to try.
 8. **Breadth, as far as the alpha's scope** (Phase C): items used on purpose
    (the roulette under speculation), and two or three more maps driven --
    water, polyobjects, executors. Battle, Grand Prix and Encore stay out of

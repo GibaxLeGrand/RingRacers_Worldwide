@@ -9234,6 +9234,28 @@ first (the notes' session of 2026-10-06).
   trade, met head on; `rollback_rebuildbudget` (8.134) spreads a long
   rebuild over passes. Not merged: a driven comparison at 428 ms first --
   the cap of 12 against 18 with a rebuild budget.
+- **The driven comparison at 428 ms** (Gibax: "je suis prêt"; prediction
+  written first), `join`, under `cdb`, all to the race's end, the map
+  change taken, 0 stranded. A window of 1000 tics:
+
+| | cap 12 (`fbfd77d`) | cap 18 | cap 18, `rollback_rebuildbudget 20` |
+|---|---|---|---|
+| depth | 12.0, every pass cut | 17.1 | 17.1 |
+| behind the newest input | 5 tics | 0 | 0 |
+| rebuilt | 0 to 4 | 205 to 222 | 241 to 269 |
+| skipped frames | **0 to 2** | 62 to 109 | 3 to 10 |
+| drawn world moved | **0 to 1** | 0 | 165 to 265 (648 to 866 tics) |
+| a pass | 1.5 ms | 5.2 to 5.6 ms | 5.7 to 6.3 ms |
+
+  Gibax: "la 1 très clairement, la 2e a trop de saccade relou". The
+  prediction's first half held (few skipped frames at 12), the second
+  too (the budget trades them for moves of the drawn world). **Not
+  explained**: at 18 the rebuilds for another kart's input went to 706
+  and 827 a race, against 4 at 12 -- in a speculation reaching this
+  machine's newest inputs the bots answer a guessed kart; to read. **So
+  the cap stays 12** at this latency; under 171 ms of jitter 18 was the
+  better feel ("la 2e avait un bien meilleure feeling") -- a cap from
+  the round trip, not one number, is the open question.
 
 ### 9.16 Jitter and loss in the harness
 

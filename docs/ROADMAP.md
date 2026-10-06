@@ -113,8 +113,8 @@ audit's, kept because `WORLDWIDE.md` and the harness cite them; items 12 and
    the compatibility policy allows -- if R1 slips under it. **Harness
    written and run** (9.16, `netsim-2.4`): `rollback_jitter`, `rollback_loss`;
    2% loss is absorbed, 0-3 tics of jitter moves the drawn world on a fifth
-   to a third of the passes and rebuilds a few times, from somewhere other
-   than the lead -- to read next.
+   to a third of the passes -- through the history's cap of 12; at 24
+   (`histcap-2.4`, item 7) not once.
 4. **The release base and its compatibility cases** (*Compatibility*,
    below): `worldwide-2.4`, ported onto `v2.4` (8.114), built by the CI, dev
    and release (8.115), starting in a stock 2.4 folder since `68f5eb582`

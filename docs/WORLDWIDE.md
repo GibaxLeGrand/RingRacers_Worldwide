@@ -9052,6 +9052,14 @@ first (the notes' session of 2026-10-06).
   join takes effect (its spectator body removed, a body spawned), 12 did
   not. A lead, not a finding: to be told apart by a race without `join`
   and one at a lag the cap of 12 already covers.
+- **Told apart** (Gibax: "lance les tests du coup"; prediction written
+  first, both right): `histcap-2.4` at 15 tics of lag **without** `join`
+  (the client a spectator throughout) -- no crash, the race to its end;
+  at 6 tics **with** `join` (a round trip of about 8, under either cap)
+  -- no crash, the client in the race to its end. So the crash needs
+  both: this machine's player entering the game, and a speculation as
+  deep as 17 tics or more, which at that latency only the cap of 24
+  allows. A join run in a shallow speculation is fine.
 
 ### 9.16 Jitter and loss in the harness
 

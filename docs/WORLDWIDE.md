@@ -13,6 +13,12 @@ rest lives in the private notes only -- `README.md`, the entry point (working
 rules, decisions, environment); `ROLLBACK.md`, the closed journal from before
 the pivot; and `AUDIT_20260909.md`, the comparison with SRB2 NetPlus and Odamex.
 
+Commits are cited by their SHA. Since 2026-10-06 the main branch is
+`worldwide-2.4`; `rollback-netcode`, where most of this journal was built and
+measured, and its side branches are kept, their commits unchanged, in a
+private archive rather than in the public repository (`ROADMAP.md`,
+*Branches*).
+
 ## Current state (2026-10-05) -- read this first
 
 This block is the only part of this file that is rewritten to stay current.

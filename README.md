@@ -239,22 +239,23 @@ written into the repository's agent instructions:
 There is no release yet. Every push is built by GitHub Actions (see
 [.github/workflows/build.yml](.github/workflows/build.yml)), and the builds
 are the runs' artifacts: downloading one needs a GitHub account, and they
-expire after 90 days. Two branches matter:
+expire after 90 days.
 
-- **`worldwide-2.4`**, built on the Ring Racers 2.4 release, is the one that
-  plays with stock 2.4 servers and clients, and the base of the coming alpha:
-  - `ringracers-win64-release-<sha>`: Windows. Put the executable in an
-    existing Ring Racers 2.4 folder.
-  - `ringracers-linux64-release-<sha>`: a Linux tarball, unpacked into a 2.4
-    data folder; it uses the system's SDL2.
-  - `ringracers-flatpak-<sha>`: a Flatpak, which reads the data of the
-    official Ring Racers Flatpak from Flathub: install that one first.
-- **`rollback-netcode`** is where the work goes on. Its builds follow
-  upstream's development line, not 2.4: use them to follow the work, not to
-  meet stock players.
+The main branch, **`worldwide-2.4`**, is built on the Ring Racers 2.4
+release: its builds play with stock 2.4 servers and clients, and it is the
+base of the coming alpha.
+
+- `ringracers-win64-release-<sha>`: Windows. Put the executable in an
+  existing Ring Racers 2.4 folder.
+- `ringracers-linux64-release-<sha>`: a Linux tarball, unpacked into a 2.4
+  data folder; it uses the system's SDL2.
+- `ringracers-flatpak-<sha>`: a Flatpak, which reads the data of the official
+  Ring Racers Flatpak from Flathub: install that one first.
 
 The `-release` builds carry real version numbers; the others are development
-builds, which can only meet the very same build.
+builds, which can only meet the very same build. A feature in progress lives
+on a side branch named after it (`dubs-2.4`, `photo-2.4`...) until it is
+tried and merged.
 
 **To host in WORLDWIDE mode**, just host: it is on by default. **To host
 for stock 2.4 players**, turn off *Options > Server Options > Advanced... >
@@ -366,7 +367,7 @@ The console, the chat and the menus' text boxes type with your system's
 keyboard layout -- AZERTY and the others -- as SRB2 2.2.15 does; the game's
 controls do not change. *Options > HUD > Online Chat Options... > Use System
 Keyboard Layout* (`textinput`), on by default. ASCII only: the game's fonts
-stop there. In the builds of both branches.
+stop there.
 
 ### WORLDWIDE's title screen
 
@@ -387,31 +388,40 @@ bugs to Kart Krew.
 
 ## Building from source
 
-Ring Racers Worldwide builds like upstream Ring Racers: CMake, a C17/C++20
-toolchain (GCC, Clang, MinGW), and SDL among its dependencies -- SDL3 on
-`rollback-netcode`, SDL2 on `worldwide-2.4`, as in the 2.4 release. The
-recipes below are the ones the CI runs for `rollback-netcode`.
+Ring Racers Worldwide builds like Ring Racers 2.4: CMake, a C17/C++20
+toolchain (GCC, Clang, MinGW), and SDL2 among its dependencies. The recipes
+below are the ones the CI runs.
 
 ### Linux
 
-On Alpine Linux (3.24), which packages every dependency, SDL3 included:
+On Ubuntu 22.04, the recipe of the playable Linux builds:
 
-    apk add build-base cmake ninja-build ninja-is-really-ninja \
-        zlib-dev libpng-dev curl-dev libvpx-dev libogg-dev libvorbis-dev \
-        libyuv-dev opus-dev sdl3-dev git
-    cmake -B build -S . -G Ninja -DCMAKE_BUILD_TYPE=Debug -DSRB2_CONFIG_DEV_BUILD=ON
+    apt-get install build-essential cmake ninja-build git pkg-config \
+        libsdl2-dev libpng-dev zlib1g-dev libcurl4-openssl-dev libopus-dev
+    cmake -B build -S . -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+        -DSRB2_CONFIG_ENABLE_WEBM_MOVIES=OFF -DSRB2_CONFIG_DEV_BUILD=OFF
+    cmake --build build
+
+On Alpine Linux (3.20), the CI's compile check:
+
+    apk add build-base cmake samurai zlib-dev libpng-dev curl-dev opus-dev \
+        sdl2-dev git
+    cmake -B build -S . -G Ninja -DCMAKE_BUILD_TYPE=Debug \
+        -DSRB2_CONFIG_DEV_BUILD=ON -DSRB2_CONFIG_ENABLE_WEBM_MOVIES=OFF \
+        -DSRB2_CONFIG_EXECINFO=NO
     cmake --build build/
 
-Other distributions need the same libraries: libcurl, zlib, libpng, libogg,
-libvorbis, libvpx, libyuv, libopus and **SDL3** (absent from Ubuntu 24.04
-LTS, for one).
+The Flatpak is built from Kart Krew's Flathub manifest, in
+[.github/flatpak/](.github/flatpak/).
 
 ### Windows
 
 The CI cross-compiles from Linux with [llvm-mingw](https://github.com/mstorsjo/llvm-mingw)
 against Kart Krew's prebuilt Windows dependencies (the `rrsdk-msys2-clang64`
-package, checked against a known SHA-256); the toolchain file and the exact
-flags are in [.github/workflows/build.yml](.github/workflows/build.yml).
+package, checked against a known SHA-256), and against SDL2 built with the
+same toolchain and linked statically, since that package carries SDL3; the
+toolchain file and the exact flags are in
+[.github/workflows/build.yml](.github/workflows/build.yml).
 
 Upstream documents another route, not tried on this fork: install
 [vcpkg](https://vcpkg.io/en/), set `VCPKG_ROOT`, and use a

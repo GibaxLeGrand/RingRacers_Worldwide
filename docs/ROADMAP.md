@@ -133,8 +133,8 @@ audit's, kept because `WORLDWIDE.md` and the harness cite them; items 12 and
    the title in place of the development revision. Before a WORLDWIDE
    server advertises on the public list, read Kart Krew's server-list rules
    for modified builds (the game shows them before hosting publicly).
-   `worldwide-2.4` is brought up to date again first if `rollback-netcode`
-   has moved on.
+   The kit is built from `worldwide-2.4`, the main branch since 2026-10-06
+   (*Branches*, below).
    **Linux** (8.138, `b6745014b`): the CI builds it on `worldwide-2.4` two
    ways -- a tarball, dev and release, dropped into a 2.4 data folder like
    the Windows exe, checked on three distributions; and a Flatpak, Kart
@@ -278,16 +278,20 @@ loopback note); 7; 5, with 14 and 15 (the Steam Deck run is done, 8.143);
 16, 17 and 18; then the announcement. The teaser can come as soon as
 the Discord exists, for it to point somewhere.
 
-**Branches** (Gibax, 2026-10-01). Work goes on `rollback-netcode`.
-`worldwide-2.4` is the public alpha's branch, on the 2.4 release, brought up
-to date from `rollback-netcode` for the alpha rather than as work goes on --
-done once on 2026-10-02, on Gibax's word ("oui, l'étape 4"), at `8c9dd904e`
-(8.135), and again before the kit if `rollback-netcode` has moved on. Side
-work reaches it the same way: `azerty`, tested by Gibax (AZERTY in the
-console), is merged into `rollback-netcode` (`1fcef131b`); its 2.4 build
-(`0a9877dd1`) was merged into `worldwide-2.4` on Gibax's word. Since
-`68f5eb582`, `worldwide-2.4` starts in a stock 2.4 folder, which is 32-bit,
-without `-noexchndl` (8.117). **Proposed scope** (the audit's, not decided):
+**Branches** (Gibax, 2026-10-06). **`worldwide-2.4` is the main branch**,
+on the 2.4 release, and the public repository's default: work goes there,
+or on a side branch from it (`dubs-2.4`, `splitv-2.4`, `photo-2.4`,
+`gyro-2.4`, `pilotdubs-2.4`, `azerty-2.4`), merged on Gibax's word once he
+has tried it -- the way every feature of 2026-10-05 went (§9).
+`rollback-netcode`, where the netcode was developed until the port to 2.4
+(8.114) and resynced into `worldwide-2.4` from (8.135, 8.137), is retired:
+it and its side branches `azerty`, `feature-b2` and `localdelay` left the
+public repository on 2026-10-06 for a private archive, their commits
+unchanged, so every SHA this file and `WORLDWIDE.md` cite from them still
+names the same commit there. `localdelay` (9.3), never merged, is to be
+ported onto `worldwide-2.4` if it is wanted. Since `68f5eb582`,
+`worldwide-2.4` starts in a stock 2.4 folder, which is 32-bit, without
+`-noexchndl` (8.117). **Proposed scope** (the audit's, not decided):
 Race only, Windows, eight players at most unless 6 says sixteen, and the
 known-broken list stated up front.
 

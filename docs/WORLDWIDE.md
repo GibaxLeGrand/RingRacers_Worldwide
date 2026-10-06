@@ -9101,6 +9101,19 @@ first (the notes' session of 2026-10-06).
   removed head's `hnext` there -- and `P_RunOverlays`). Next: a hardware
   breakpoint on `overlaycap` in `cdb`, each write logged with its short
   stack, the last before the crash naming the writer.
+- **One writer, one object** (Gibax: "Tu peux continuer"; prediction
+  -- `P_RemoveOverlay` -- wrong): a hardware breakpoint on `overlaycap`,
+  the non-zero writes logged with their stack. All 699 came from
+  `P_AddOverlay` (from the overlay's own thinker, `P_MobjSceneryThink`),
+  all with **the same value**: one overlay, added every tic since the
+  join. The crash's `mo` is that value. So the overlay was there and
+  read in the crashing tic -- its thinker ran and added it -- and its
+  memory could no longer be read when `P_RunOverlays` came, later in
+  the same tic. A block freed to the Windows heap can be decommitted, so
+  freed is not ruled out: an overlay freed (or its thinker run after it
+  was freed) inside the tic, its head reference not counted in. Next:
+  breakpoints on that object's own thinker fields -- its removal, its
+  unlinking from the thinker list -- to name who removes and frees it.
 
 ### 9.16 Jitter and loss in the harness
 

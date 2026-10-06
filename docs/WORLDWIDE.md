@@ -8935,3 +8935,12 @@ mettant dans un autre pk3/wad dans dubs"; a "SegaSonic" dub for Sonic from
   (the limiter takes the gloat's last 2 dB), peaks -0.9 to -2.4 dBFS.
   Both SegaSonic and `cdsonic`'s "Japanese" rebuilt so. Heard again by
   Gibax: "c'est bien".
+- **Then** a "Japanese" for `sonicbeat` (an addon's Sonic Beat), and a
+  dub of Gibax's own naming for Sonic and the addons' Super Sonic, both
+  from `CKV_Super_Sonic_Japanese_Voice.pk3`, an SRB2Kart addon: 11 lines
+  named by the S_SKINs' two-letter codes (`DSSUPRWI`, `DSSUPRH1`...),
+  which `convert_folder.py` now reads too. Measured -7.9 to -14.8 LUFS,
+  -12.3 on average, already beside the others: kept as they are.
+  `dubs/build_packs.sh` (notes) rebuilds every pack from its sources,
+  the same bytes each time (ffmpeg's `bitexact`: no random Ogg serial):
+  five WADs, the base characters' and the addons' apart for each dub.

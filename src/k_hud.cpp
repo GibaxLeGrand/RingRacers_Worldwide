@@ -4515,6 +4515,26 @@ static boolean K_drawKartLaps(void)
 		row.text("{:03}", displayEXP);
 	}
 
+	// WORLDWIDE: in 2P the lives go on this row, beside the laps and the EXP,
+	// rather than on the ring counter's, where the speedometer now is (Gibax:
+	// "les vies tu pourrais les mettre a cote du track count"). A face and a
+	// number on a sticker, about 32 wide: after the block, or before it for
+	// P2 side by side, whose block is against the right edge.
+	if (!quarter && r_splitscreen == 1 && G_GametypeUsesLives())
+	{
+		patch_t *end = static_cast<patch_t*>(W_CachePatchName("K_STIKEN", PU_CACHE));
+		const INT32 blockend = lapsx + 13 + 25 + bump + SHORT(end->width);
+		const INT32 lx = (r_splitvertical && (R_GetViewNumber() & 1)) ? lapsx - 6 - 32 : blockend + 6;
+		UINT8 *colormap = R_GetTranslationColormap(stplyr->skin, static_cast<skincolornum_t>(stplyr->skincolor), GTC_CACHE);
+		const SINT8 livescount = (stplyr->lives > 0) ? std::min<SINT8>(stplyr->lives, 10) : 0;
+
+		K_DrawSticker(lx+8, lapsy+5, 22, V_HUDTRANS|V_SLIDEIN|splitflags, false);
+		V_DrawMappedPatch(lx, lapsy+2, V_HUDTRANS|V_SLIDEIN|splitflags, faceprefix[stplyr->skin][FACE_RANK], colormap);
+
+		using srb2::Draw;
+		Draw(lx+19, lapsy+3).flags(V_HUDTRANS|V_SLIDEIN|splitflags).font(Draw::Font::kThinTimer).text("{}", livescount);
+	}
+
 	return drewsticker;
 }
 
@@ -4721,6 +4741,10 @@ static void K_drawRingCounter(boolean gametypeinfoshown)
 		// below it, as in 2P (K_drawKartLaps).
 		INT32 ringlx = LAPS_X;
 
+		// WORLDWIDE: in 2P the lives go beside the laps (K_drawKartLaps), and
+		// the counter is drawn as without them.
+		const boolean ringlives = (uselives && r_splitscreen != 1);
+
 		fy = LAPS_Y;
 
 		if (r_splitvertical)
@@ -4734,7 +4758,7 @@ static void K_drawRingCounter(boolean gametypeinfoshown)
 				// And 6 more: the super rings' "+20" goes to the counter's
 				// right, and its last digit fell past the edge (Gibax; 10
 				// was "un poil" too far).
-				ringlx = (BASEVIDWIDTH/2) - (uselives ? 92 : 62);
+				ringlx = (BASEVIDWIDTH/2) - (ringlives ? 92 : 62);
 				splitflags = V_SNAPTOBOTTOM|V_SNAPTORIGHT|V_SPLITSCREEN;
 			}
 			else
@@ -4760,7 +4784,7 @@ static void K_drawRingCounter(boolean gametypeinfoshown)
 		Draw(ringlx+7, fy+1)
 			.flags(V_HUDTRANS|V_SLIDEIN|splitflags)
 			.align(Draw::Align::kCenter)
-			.width(uselives ? (stplyr->lives >= 10 ? 70 : 64) : 33)
+			.width(ringlives ? (stplyr->lives >= 10 ? 70 : 64) : 33)
 			.small_sticker();
 
 		if (stplyr->overdrive)
@@ -4823,7 +4847,7 @@ static void K_drawRingCounter(boolean gametypeinfoshown)
 		}
 
 		// Lives
-		if (uselives)
+		if (ringlives)
 		{
 			UINT8 *colormap = R_GetTranslationColormap(stplyr->skin, static_cast<skincolornum_t>(stplyr->skincolor), GTC_CACHE);
 			V_DrawMappedPatch(ringlx+46, fy-5, V_SLIDEIN|splitflags|greyout, faceprefix[stplyr->skin][FACE_RANK], colormap);

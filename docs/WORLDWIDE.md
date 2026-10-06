@@ -9192,6 +9192,19 @@ first (the notes' session of 2026-10-06).
   which never took the server's map change. 8.39's "up to 34" was the
   input history's limit, not the ring's. **So the cap must stay under
   the ring**: 18 covers 428 ms (17 in flight) with one tic to spare.
+- **Merged and checked** (Gibax: "fusionne et pousse, et puis on
+  lance"): `specauth-2.4` into `worldwide-2.4` (`fbfd77ddf`, CI run
+  37496878026), its development build installed. `join`, unattended,
+  under `cdb`: at 6 tics, the race to its end, depth 8.1, no pass cut,
+  0 stranded; at 15 tics, the race to its end, the map change taken,
+  depth 12.0 for 17 in flight, every pass cut (the cap of 12, as
+  `wwcap`'s 12 windows), 0 stranded, no rebuild. No access violation in
+  either. The 6-tic race rebuilt 23 to 27% of its passes -- 107 for this
+  machine's input and 780 for another's, against 4 and 0 in
+  `specauth-2.4`'s same race: asked whether someone drove it.
+- **Then** `histcap18-2.4` (`7f93b458a`, CI run 37497831924): the cap at
+  18, and `rollback_history` held under the ring
+  (`ROLLBACK_HISTORY_MAX`, `ROLLBACK_TICS - 2`) whatever is asked.
 
 ### 9.16 Jitter and loss in the harness
 

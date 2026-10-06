@@ -1,14 +1,15 @@
 name: Build
 
-# Compile check for the rollback netcode work, plus a playable Windows build.
+# Compile check for Ring Racers Worldwide, plus playable Windows and Linux builds.
 #
 # Both recipes are lifted from the upstream .gitlab-ci.yml, which is the CI that
 # actually works for this project. Simplifications versus upstream: no ccache, no
 # GitLab code-quality report, no release/tag handling. The question being asked
 # here is only "does it build, and can I play it".
 #
-# On worldwide-2.4 (the work ported onto the 2.4 release, WORLDWIDE.md 8.114)
-# the dependencies are 2.4's: SDL2, not the SDL3 upstream moved to after 2.4,
+# worldwide-2.4 is the main branch (the work ported onto the 2.4 release,
+# WORLDWIDE.md 8.114; rollback-netcode, where it began, is retired). The
+# dependencies are 2.4's: SDL2, not the SDL3 upstream moved to after 2.4,
 # and WebM recording off, as 2.4's own CI built it.
 #
 # Linux, playable, two ways: a tarball for the harness (built as upstream 2.4's
@@ -20,12 +21,11 @@ on:
   # A push or pull request that touches only docs and Markdown files builds
   # nothing new, so it does not run. The harness accepts the last build as long
   # as nothing but those paths changed since its commit -- the same rule. Run by
-  # hand from the Actions tab when a build is wanted anyway.
+  # hand from the Actions tab when a build is wanted anyway. A side branch
+  # (dubs-2.4, photo-2.4...) builds the same way, run by hand or through a pull
+  # request.
   push:
     branches:
-      - master
-      - rollback-netcode
-      # The same work ported onto the 2.4 release (WORLDWIDE.md 8.114).
       - worldwide-2.4
     paths-ignore:
       - 'docs/**'

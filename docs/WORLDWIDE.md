@@ -9008,3 +9008,48 @@ first (the notes' session of 2026-10-06).
   cap 24 instead of 12 -- the same below about 340 ms, where the depth never
   reaches 12. Not merged: a driven race at `lag=15` first, for the deeper
   rebuild's cost and the feel.
+
+### 9.16 Jitter and loss in the harness
+
+ROADMAP item 3: `rollback_lag` only delays. `netsim-2.4` (`35c5bb78a`, CI
+run 37468225081): `rollback_jitter N` holds each peer packet 0 to N tics
+more than `rollback_lag`, at random, on reception -- two can arrive out of
+order -- and `rollback_loss P` throws P% of them away, left to the
+netcode's acks and resends; draws from a generator of their own, never
+P_Random; each counts what it did. Scenarios `wwjitter` (0, 3, 0, 3) and
+`wwloss` (0, 2, 0, 2): four windows of 750 tics at `rollback_lag 6`, the 0
+windows the control; `playtest.sh <mode> join`, unattended, the client in
+the race. Prediction written first (the notes' session of 2026-10-06).
+
+| window | noise | of ~1030 packets: held longer / out of order / lost | depth | in flight | drawn world moved (tics) | rebuilt |
+|---|---|---|---|---|---|---|
+| jitter 0 | -- | 0 / 2 / 0 | 8.1 | 7.4 | 9 (12) | 0 |
+| jitter 1 | 0-3 tics | 758 / 419 / 0 | 10.6 | 11.7 | **241 (357)** | **6** |
+| jitter 2 | -- | 0 / 9 / 0 | 8.0 | 7.4 | 5 (9) | 0 |
+| jitter 3 | 0-3 tics | 761 / 440 / 0 | 10.0 | 10.6 | **153 (228)** | **3** |
+| loss 0 | -- | 0 / 4 / 0 | 8.0 | 7.4 | 6 (8) | 0 |
+| loss 1 | 2% | 0 / 5 / 26 | 8.0 | 7.5 | 12 (18) | 0 |
+| loss 2 | -- | 0 / 5 / 0 | 8.0 | 7.3 | 0 | 0 |
+| loss 3 | 2% | 0 / 2 / 26 | 8.0 | 7.4 | 12 (18) | 0 |
+
+(Depth and in flight per window, from the cumulative averages.)
+
+- **Loss, 2%, is absorbed**: 26 packets of about 1030 thrown away a window,
+  no rebuild, the depth and the inputs in flight unchanged, the applied
+  input found in 100% of the passes; the drawn world moved about twice as
+  often as without, 12 times a window.
+- **Jitter is what costs**: 0 to 3 tics more (about 3 packets in 4 held
+  longer, 4 in 10 out of order) put 3 to 4 more inputs in flight and 2 to
+  2.5 tics more depth -- the worst case's, not the mean's 1.5 as predicted;
+  the drawn world moved on 241 and 153 passes of 750 against 9 and 5, and 6
+  and 3 rebuilds against none. **Not explained yet**: the lead over the
+  clock was neither raised nor lowered in any race window, so these moves
+  do not come from the lead; R1 laid no pass out differently either (the
+  prediction's point 2 for R1 was wrong). To read next: where the drawn tic
+  moves against the clock under jitter (the frontier's steps, a pass with
+  no confirmed tic).
+- **And `rollback_lag` alone reorders**: 2 to 9 packets a window come out
+  of order with no jitter -- packets due on the same tic go out by their
+  slot in the queue, not by their arrival. Small, but every latency
+  measure since 8.105 had it.
+- No crash. Not merged: `netsim-2.4` is harness only, off at 0.

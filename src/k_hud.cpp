@@ -5009,14 +5009,15 @@ static void K_drawKartSpeedometer(boolean gametypeinfoshown)
 	// counter's row -- 2P's LAPS_Y, moved as the counter is below -- P1's to
 	// its right, P2's to its left, the counter against the edge (Gibax: "a
 	// droite du ringcount cote P1 ... gauche cote P2"). The block, sticker to
-	// label, spans about sx-14 to sx+43.
+	// label, spans about sx+2 to sx+54 (measured on Gibax's capture), so P2's
+	// mirror of P1's sx is 160 - sx - 54 - 2.
 	if (r_splitvertical)
 	{
 		fy = (BASEVIDHEIGHT/2) - 24;
 
 		if (R_GetViewNumber() & 1)
 		{
-			sx = (BASEVIDWIDTH/2) - 64 - 29; // P1's, mirrored
+			sx = (BASEVIDWIDTH/2) - 64 - 54 - 2; // P1's, mirrored
 			splitflags = V_SNAPTOBOTTOM|V_SNAPTORIGHT|V_SPLITSCREEN;
 		}
 		else

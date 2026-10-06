@@ -29,6 +29,10 @@ menuitem_t OPTIONS_HUD[] =
 	{IT_STRING | IT_CVAR, "2P Splitscreen", "Two players: one above the other, or side by side.",
 		NULL, {.cvar = &cv_split2p}, 0, 0},
 
+	// WORLDWIDE: the race's rankings once in 2P, both players always shown.
+	{IT_STRING | IT_CVAR, "2P Rankings", "Two players: show the race's rankings, with both of you always in.",
+		NULL, {.cvar = &cv_2prankings}, 0, 0},
+
 	{IT_SPACE | IT_NOTHING, NULL,  NULL,
 		NULL, {NULL}, 0, 0},
 

@@ -463,6 +463,10 @@ consvar_t cv_showhud = Player("showhud", "Yes").yes_no().onchange(R_SetViewSize)
 // (WORLDWIDE.md 9.4). R_ExecuteSetViewSize reads it, which R_SetViewSize asks for.
 consvar_t cv_split2p = Player("split2p", "Horizontal").values({{0, "Horizontal"}, {1, "Vertical"}}).onchange(R_SetViewSize);
 
+// WORLDWIDE: the race's rankings drawn once in 2P, 5 lines with both local
+// players always in (k_hud.cpp, K_draw2PRankings).
+consvar_t cv_2prankings = Player("2prankings", "On").on_off();
+
 consvar_t cv_skybox = Player("skybox", "On").on_off();
 
 // Display song credits

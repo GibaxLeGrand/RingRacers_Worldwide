@@ -2754,6 +2754,7 @@ struct PositionFacesInfo
 	PositionFacesInfo();
 	void draw_1p();
 	void draw_4p_battle(int x, int y, INT32 flags);
+	void draw_2p(INT32 x, INT32 y, INT32 flags, boolean frombottom);
 
 	player_t* top() const { return &players[rankplayer[0]]; }
 	UINT32 top_score() const { return G_TeamOrIndividualScore( top() ); }
@@ -3116,6 +3117,135 @@ void PositionFacesInfo::draw_4p_battle(int x, int y, INT32 flags)
 	// Draw top 2 players
 	head(row.xy(2, 31), 1);
 	head(row.xy(2, 18), 0);
+}
+
+// WORLDWIDE: the race's rankings once in 2P (cv_2prankings), five lines with
+// both of this machine's players always in (Gibax: "les 2 joueurs voient tjr
+// leur placement sur la grille de 5"). Five or fewer racers: all of them.
+// More: five in a row holding both players if they are four places apart at
+// most; farther, the better placed one and the three around him, and the
+// other on the last line. Drawn on the whole screen's coordinates, from y
+// down -- or up to it, frombottom -- face, place and highlight as in 1P.
+void PositionFacesInfo::draw_2p(INT32 x, INT32 y, INT32 flags, boolean frombottom)
+{
+	INT32 show[5];
+	INT32 n = 0, i, k;
+	INT32 lp[2] = {-1, -1}; // P1's and P2's lines
+	INT32 best, other;
+
+	for (i = 0; i < ranklines; i++)
+	{
+		for (k = 0; k < 2 && k <= r_splitscreen; k++)
+		{
+			if (rankplayer[i] == displayplayers[k])
+				lp[k] = i;
+		}
+	}
+
+	best = (lp[0] != -1 && (lp[1] == -1 || lp[0] < lp[1])) ? lp[0] : lp[1];
+	other = (best == lp[0]) ? lp[1] : lp[0];
+
+	if (ranklines <= 5)
+	{
+		for (i = 0; i < ranklines; i++)
+			show[n++] = i;
+	}
+	else if (best != -1 && other != -1 && other - best > 4)
+	{
+		INT32 start = std::clamp(best - 1, 0, ranklines - 4);
+
+		for (i = start; i < start + 4; i++)
+			show[n++] = i;
+		show[n++] = other;
+	}
+	else
+	{
+		const INT32 lo = (best != -1) ? best : 0;
+		const INT32 hi = (other != -1) ? other : lo;
+		const INT32 start = std::clamp((lo + hi) / 2 - 2, std::max(0, hi - 4), std::min(lo, ranklines - 5));
+
+		for (i = start; i < start + 5; i++)
+			show[n++] = i;
+	}
+
+	if (frombottom)
+		y -= (n * 18) - 2;
+
+	for (k = 0; k < n; k++, y += 18)
+	{
+		const INT32 r = show[k];
+		player_t *p = &players[rankplayer[r]];
+		INT32 xoff = 0, yoff = 0, flipflag = 0;
+		UINT16 workingskin;
+		UINT8 *colormap;
+
+		if (rankplayer[r] < 0 || !playeringame[rankplayer[r]] || p->spectator || !p->mo)
+			continue;
+
+		const UINT32 skinflags = (demo.playback)
+			? demo.skinlist[demo.currentskinid[rankplayer[r]]].flags
+			: skins[p->skin]->flags;
+
+		// As draw_1p: SF_IRONMAN portraits flipped once transformed.
+		if (skinflags & SF_IRONMAN && !(p->charflags & SF_IRONMAN))
+		{
+			flipflag = V_FLIP|V_VFLIP;
+			xoff = yoff = 16;
+		}
+
+		if (p->mo->color)
+		{
+			workingskin = (p->mo->skin) ? ((skin_t*)p->mo->skin)->skinnum : p->skin;
+			colormap = (p->mo->colorized)
+				? R_GetTranslationColormap(TC_RAINBOW, static_cast<skincolornum_t>(p->mo->color), GTC_CACHE)
+				: R_GetTranslationColormap(workingskin, static_cast<skincolornum_t>(p->mo->color), GTC_CACHE);
+
+			V_DrawMappedPatch(x + xoff, y + yoff, V_HUDTRANS|V_SLIDEIN|flags|flipflag, faceprefix[workingskin][FACE_RANK], colormap);
+		}
+
+		// The highlight in each player's colour: red P1, blue P2 (Gibax).
+		for (i = 0; i < 2; i++)
+		{
+			if (r != lp[i])
+				continue;
+
+			V_DrawMappedPatch(x, y, V_HUDTRANS|V_SLIDEIN|flags, kp_facehighlight[(leveltime / 4) % 8],
+				R_GetTranslationColormap(TC_RAINBOW, (i == 0) ? SKINCOLOR_RED : SKINCOLOR_BLUE, GTC_CACHE));
+		}
+
+		if (!K_Cooperative())
+		{
+			INT32 pos = p->position;
+			if (pos < 0 || pos > MAXPLAYERS)
+				pos = 0;
+			V_DrawScaledPatch(x - 5, y + 10, V_HUDTRANS|V_SLIDEIN|flags, kp_facenum[pos]);
+		}
+	}
+}
+
+/** Whether the 2P rankings are drawn: two players, a race (not Battle, whose
+  * splitscreen has its own), cv_2prankings on. */
+static boolean K_2PRankingsShown(void)
+{
+	return (r_splitscreen == 1 && cv_2prankings.value
+		&& (gametyperules & GTR_CIRCUIT) && !(gametyperules & GTR_POINTLIMIT)
+		&& !K_InRaceDuel() && LUA_HudEnabled(hud_minirankings));
+}
+
+/** The 2P rankings, once over both views: side by side at the bottom in
+  * the middle, one above the other against the right edge, centred on the
+  * split (Gibax's choice). The minimap makes room (K_drawKartMinimap). */
+static void K_draw2PRankings(void)
+{
+	PositionFacesInfo state{};
+
+	if (state.numplayersingame <= 1)
+		return;
+
+	if (r_splitvertical)
+		state.draw_2p((BASEVIDWIDTH/2) - 8, BASEVIDHEIGHT - 8, V_SNAPTOBOTTOM, true);
+	else
+		state.draw_2p(BASEVIDWIDTH - 9 - 16, (BASEVIDHEIGHT/2) + 45, V_SNAPTORIGHT, true);
 }
 
 static boolean K_drawKartPositionFaces(void)
@@ -4873,6 +5003,24 @@ static void K_drawKartSpeedometer(boolean gametypeinfoshown)
 	UINT8 numbers[3];
 	INT32 splitflags = V_SNAPTOBOTTOM|V_SNAPTOLEFT|V_SPLITSCREEN;
 	INT32 fy = LAPS_Y-14;
+	INT32 sx = LAPS_X;
+
+	// WORLDWIDE: side by side (WORLDWIDE.md 9.6, 9.12), where 2P puts it, above
+	// the 1P/2P ring counter; P2's against the right edge, as the laps are.
+	if (r_splitvertical)
+	{
+		fy = (BASEVIDHEIGHT/2) - 24 - 14; // 2P's LAPS_Y
+
+		if (R_GetViewNumber() & 1)
+		{
+			sx = (BASEVIDWIDTH/2) - 9 - 14;
+			splitflags = V_SNAPTOBOTTOM|V_SNAPTORIGHT|V_SPLITSCREEN;
+		}
+		else
+		{
+			sx = 9; // 1P/2P's LAPS_X
+		}
+	}
 
 	if (battleprisons)
 	{
@@ -4931,11 +5079,11 @@ static void K_drawKartSpeedometer(boolean gametypeinfoshown)
 	}
 
 	using srb2::Draw;
-	Draw(LAPS_X+7, fy+1).flags(V_HUDTRANS|V_SLIDEIN|splitflags).align(Draw::Align::kCenter).width(42).small_sticker();
-	V_DrawScaledPatch(LAPS_X+7, fy, V_HUDTRANS|V_SLIDEIN|splitflags, kp_facenum[numbers[0]]);
-	V_DrawScaledPatch(LAPS_X+13, fy, V_HUDTRANS|V_SLIDEIN|splitflags, kp_facenum[numbers[1]]);
-	V_DrawScaledPatch(LAPS_X+19, fy, V_HUDTRANS|V_SLIDEIN|splitflags, kp_facenum[numbers[2]]);
-	V_DrawScaledPatch(LAPS_X+29, fy, V_HUDTRANS|V_SLIDEIN|splitflags, kp_speedometerlabel[labeln]);
+	Draw(sx+7, fy+1).flags(V_HUDTRANS|V_SLIDEIN|splitflags).align(Draw::Align::kCenter).width(42).small_sticker();
+	V_DrawScaledPatch(sx+7, fy, V_HUDTRANS|V_SLIDEIN|splitflags, kp_facenum[numbers[0]]);
+	V_DrawScaledPatch(sx+13, fy, V_HUDTRANS|V_SLIDEIN|splitflags, kp_facenum[numbers[1]]);
+	V_DrawScaledPatch(sx+19, fy, V_HUDTRANS|V_SLIDEIN|splitflags, kp_facenum[numbers[2]]);
+	V_DrawScaledPatch(sx+29, fy, V_HUDTRANS|V_SLIDEIN|splitflags, kp_speedometerlabel[labeln]);
 
 	/*
 	// debug for Speed Assist
@@ -6258,6 +6406,16 @@ static void K_drawKartMinimap(void)
 
 		x = MINI_X;
 		y = MINI_Y;
+
+		// WORLDWIDE: room for the 2P rankings -- up, clear of them at the
+		// bottom side by side; left, clear of them at the right edge.
+		if (K_2PRankingsShown())
+		{
+			if (r_splitvertical)
+				y -= 40;
+			else
+				x -= 24;
+		}
 
 		workingPic = minimapinfo.minimap_pic;
 
@@ -8283,6 +8441,12 @@ void K_drawKartHUD(void)
 				K_drawKartPositionFaces();
 			}
 		}
+
+		// WORLDWIDE: the race's rankings once in 2P, over both views.
+		if (viewnum == r_splitscreen && K_2PRankingsShown())
+		{
+			K_draw2PRankings();
+		}
 	}
 
 	if (!stplyr->spectator && !freecam) // Bottom of the screen elements, don't need in spectate mode
@@ -8378,7 +8542,8 @@ void K_drawKartHUD(void)
 			}
 
 			// Draw the speedometer and/or accessibility icons
-			if (cv_kartspeedometer.value && !K_HudSplits() && (LUA_HudEnabled(hud_speedometer)))
+			// WORLDWIDE: in 2P too, each view its own (Gibax).
+			if (cv_kartspeedometer.value && (!K_HudSplits() || r_splitscreen == 1) && (LUA_HudEnabled(hud_speedometer)))
 			{
 				K_drawKartSpeedometer(gametypeinfoshown);
 			}

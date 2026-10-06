@@ -8510,8 +8510,7 @@ boolean P_LoadLevel(boolean fromnetsave, boolean reloadinggamestate)
 	TracyCZone(__zone, true);
 
 	P_NoteOverlayHead("a level load"); // diagnostic, WORLDWIDE.md 9.15
-	CONS_Printf("level_load: gametic %u, leveltime %u, %s, overlay head %p
-", // diagnostic, 9.15
+	CONS_Printf("level_load: gametic %u, leveltime %u, %s, overlay head %p\n", // diagnostic, 9.15
 		(unsigned)gametic, (unsigned)leveltime,
 		K_RollbackSpeculating() ? "speculated" : (K_RollbackReplaying() ? "replayed" : "live"),
 		(void *)*P_OverlayCapHead());

@@ -9205,6 +9205,23 @@ first (the notes' session of 2026-10-06).
 - **Then** `histcap18-2.4` (`7f93b458a`, CI run 37497831924): the cap at
   18, and `rollback_history` held under the ring
   (`ROLLBACK_HISTORY_MAX`, `ROLLBACK_TICS - 2`) whatever is asked.
+- **Cap 18, measured** (Gibax: "lance quand la CI est verte", "je vais
+  piloter"; prediction written first). (1) `histcap18-2.4` (`7f93b458a`,
+  CI run 37497831924), 15 tics, `join`, **driven by Gibax**: the race to
+  its end, the map change taken, **0 stranded**, no access violation;
+  depth 17.1 for 16.8 in flight, **no pass cut, the drawn world never
+  moved** (8.107, driven at 12: every pass cut, 49 moves in a window).
+  The cost: 20 to 22% of the passes rebuilt -- 706 for another kart's
+  input, 98 for this machine's: the bots answering a driver, as in the
+  driven 6-tic check at 12 (780 and 107) -- each rebuild running 16
+  tics more; a pass 5.2 to 5.6 ms on average, a fifth of a tic on this
+  machine. A smaller one is item 13's question (`rollback_rebuildbudget`).
+  (2) `wwjitter18` (the `netsim-2.4` build, 18 set after the join), 6
+  tics and 0-3 of jitter, hardly driven (7 rebuilds for this machine's
+  input in the race): the drawn world moved on **23 and 34** passes of
+  750 in the jitter windows, 17 and 26 passes cut -- against 241 and 153
+  at 12 and none at 24; 0 stranded. Predicted: "hardly" -- about a
+  tenth of the cap of 12's.
 
 ### 9.16 Jitter and loss in the harness
 

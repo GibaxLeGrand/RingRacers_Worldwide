@@ -8933,4 +8933,5 @@ mettant dans un autre pk3/wad dans dubs"; a "SegaSonic" dub for Sonic from
   each line to -10 LUFS through ffmpeg (gain +6.1 to +10.0 dB, a limiter
   at -1.5 dBFS, Vorbis quality 7): measured after, -10.1 to -12.1 LUFS
   (the limiter takes the gloat's last 2 dB), peaks -0.9 to -2.4 dBFS.
-  Both SegaSonic and `cdsonic`'s "Japanese" rebuilt so.
+  Both SegaSonic and `cdsonic`'s "Japanese" rebuilt so. Heard again by
+  Gibax: "c'est bien".

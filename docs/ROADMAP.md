@@ -110,7 +110,11 @@ audit's, kept because `WORLDWIDE.md` and the harness cite them; items 12 and
    `rollback_ontime` stops this machine's own stalls doing it (8.131); the
    network's jitter is left. Then R2, the samples filed by sequence number --
    a change to what a WORLDWIDE server does with a WORLDWIDE client, which
-   the compatibility policy allows -- if R1 slips under it.
+   the compatibility policy allows -- if R1 slips under it. **Harness
+   written and run** (9.16, `netsim-2.4`): `rollback_jitter`, `rollback_loss`;
+   2% loss is absorbed, 0-3 tics of jitter moves the drawn world on a fifth
+   to a third of the passes and rebuilds a few times, from somewhere other
+   than the lead -- to read next.
 4. **The release base and its compatibility cases** (*Compatibility*,
    below): `worldwide-2.4`, ported onto `v2.4` (8.114), built by the CI, dev
    and release (8.115), starting in a stock 2.4 folder since `68f5eb582`
@@ -159,7 +163,9 @@ audit's, kept because `WORLDWIDE.md` and the harness cite them; items 12 and
    `rollback_history 12` leaves the drawn world behind the newest input
    (about 5 tics at 428 ms). Raise it (up to 34) or set it from the round
    trip; a rebuild then goes deeper. A worldwide lobby will have such
-   players.
+   players. **Measured at 428 ms** (9.15): at 24 the depth
+   reaches the round trip, 17, no pass cut, the pass's cost the same;
+   `histcap-2.4` sets 24 -- a driven race at `lag=15` before it is merged.
 8. **Breadth, as far as the alpha's scope** (Phase C): items used on purpose
    (the roulette under speculation), and two or three more maps driven --
    water, polyobjects, executors. Battle, Grand Prix and Encore stay out of

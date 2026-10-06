@@ -9060,6 +9060,19 @@ first (the notes' session of 2026-10-06).
   both: this machine's player entering the game, and a speculation as
   deep as 17 tics or more, which at that latency only the cap of 24
   allows. A join run in a shallow speculation is fine.
+- **The head itself** (Gibax: "oui"; prediction written first, right):
+  the crashing race again, `cdb` printing at the access violation
+  `overlaycap` and `P_RunOverlays`' locals -- `overlaycap` held
+  `0x27637d24d30`, the very `mo` read (r15): the crash is on the list's
+  first element, the head pointing at memory no longer mapped. The head
+  is emptied at the end of every tic (`P_RunOverlays`) and counts its
+  reference (`P_SetTarget`), so either a tic before did not reach its
+  end and the world was replaced (a load, a restore) with the head
+  still set, or an overlay was put at the head this tic and its memory
+  released wholesale under it -- a pool's, a level's, not one object's
+  free. Next, measured: a check at each tic's start that the head is
+  empty, saying which run (speculated or not, which pass, after which
+  load) left it set.
 
 ### 9.16 Jitter and loss in the harness
 

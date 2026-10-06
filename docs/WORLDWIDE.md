@@ -8978,3 +8978,33 @@ mettant dans un autre pk3/wad dans dubs"; a "SegaSonic" dub for Sonic from
   driving. The applied input found in 100% of the passes.
 - So ROADMAP's *done when* holds (no packet asks for a delay, speculations
   held back). Not merged: its feel is Gibax's to try.
+
+### 9.15 The history's cap at 428 ms: 12 against 24
+
+ROADMAP item 7 (8.107: past about 340 ms, `rollback_history 12` cut every
+pass). New scenario `wwcap`: four windows of 750 tics, the cap at 12, 24,
+12, 24 set from the console after the join, the 12 windows the control.
+`playtest.sh wwcap dedicated lag=15 join`, unattended, `worldwide-2.4`'s
+development build of `03ec1b2`; the client in the race. Prediction written
+first (the notes' session of 2026-10-06).
+
+| window | cap | depth | passes cut by the cap | inputs in flight | drawn world moved | rebuilt | tics run, 750 passes |
+|---|---|---|---|---|---|---|---|
+| 0 | 12 | 12.00 | 750 | 16.75 | 0 | 0 | 750 |
+| 1 | 24 | **17.00** | **0** | 17.00 | 0 | 0 | 755 |
+| 2 | 12 | 12.00 | 750 | 17.00 | 4 | 0 | 745 |
+| 3 | 24 | **17.00** | **0** | 17.00 | 0 | 0 | 755 |
+
+- **As predicted**, (1) and (2): at 12 every pass is cut, 12 deep for 17 in
+  flight -- the drawn world 5 tics behind the newest input; at 24 none is,
+  the depth exactly the inputs in flight (17.00, not the +1 predicted). At
+  each switch the drawn world moved by the difference, 5 tics (755, 745).
+  (3) A pass about 1 ms in every window, rising slowly with the race
+  whatever the cap (0.94, 1.05, 1.12, 1.13 ms). (4) The drawn world moved
+  0 times at 24, 0 and 4 at 12 -- far below 8.107's 49, which was driven.
+  (5) Not measured: no rebuild in any window, nobody driving. A rebuild at
+  24 goes as deep as the round trip, 17 tics here against 12.
+- **So** `histcap-2.4` (`8be7c363b`, CI run 37469034374): WORLDWIDE mode's
+  cap 24 instead of 12 -- the same below about 340 ms, where the depth never
+  reaches 12. Not merged: a driven race at `lag=15` first, for the deeper
+  rebuild's cost and the feel.

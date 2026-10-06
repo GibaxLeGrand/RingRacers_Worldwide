@@ -9180,6 +9180,18 @@ first (the notes' session of 2026-10-06).
   failed at the cutoff (20 s): the authoritative signature check works.
   So the fix holds and takes the crash's path away at any cap; the cap
   of 24 stays out, now for the map change.
+- **The map change, explained** (read, then checked in the logs): the
+  rollback's snapshot ring has **20** slots (`ROLLBACK_TICS`), one per
+  tic modulo 20. A speculation 20 tics deep or more writes over the
+  confirmed tic's slot; `K_RollbackUnspeculate` then cannot load the
+  confirmed world and says so -- "left the world stranded", the
+  authoritative loop running on from the guessed one. Counted: `wwcap`,
+  24 set only after the join (depth 17): **0** stranded; `histcapfix`,
+  24 from the join, whose catch-up takes the depth to 24: **74** before
+  the first window, then 121, 162 -- a client living in its own future,
+  which never took the server's map change. 8.39's "up to 34" was the
+  input history's limit, not the ring's. **So the cap must stay under
+  the ring**: 18 covers 428 ms (17 in flight) with one tic to spare.
 
 ### 9.16 Jitter and loss in the harness
 

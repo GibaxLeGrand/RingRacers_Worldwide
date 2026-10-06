@@ -9222,6 +9222,18 @@ first (the notes' session of 2026-10-06).
   750 in the jitter windows, 17 and 26 passes cut -- against 241 and 153
   at 12 and none at 24; 0 stranded. Predicted: "hardly" -- about a
   tenth of the cap of 12's.
+- **The feel, and the frames** (Gibax drove both: "la 2e avait un bien
+  meilleure feeling, la 1ère pas mal de sutters mais bon ... c'est aussi
+  du au lag"). `rollback_frames` counts the loop's iterations that ran
+  past a tic, each skipping the frame after: **62, 99, 109** a window in
+  the driven 428 ms race at 18; 0, 0, 0 in the undriven one at 12 at the
+  same latency; 1, 1, 0 in the driven 6-tic check at 12; 0, 0, 1, 0 in
+  the driven jitter race at 18. So the stutters are not the latency
+  alone: a rebuild at 428 ms runs 16 tics in one pass, past a tic on
+  this machine, where one at 171 ms runs 8 and passes unseen. Item 13's
+  trade, met head on; `rollback_rebuildbudget` (8.134) spreads a long
+  rebuild over passes. Not merged: a driven comparison at 428 ms first --
+  the cap of 12 against 18 with a rebuild budget.
 
 ### 9.16 Jitter and loss in the harness
 

@@ -257,7 +257,10 @@ game's rules do not change.
     kart speaks with it -- offline, in splitscreen, and online in
     WORLDWIDE mode only (`XD_PILOTDUB` -- a new net command, so the
     builds before it can no longer join: an internal compatibility
-    counter, not a version of the fork); online not yet tried.
+    counter, not a version of the fork); online not yet tried. **The
+    packs** (9.13): the base characters' and the addons' apart, built by
+    the notes' `dubs/build_packs.sh` -- Japanese for 14 base and 10 addon
+    characters, and two more dubs for Sonic; heard by Gibax.
 21. **Steering with the gyroscope** (Steam Deck, DualSense, Switch Pro):
     turning by tilting the controller -- an input like a stick. 2.4 has no
     sensor code. **Tried by Gibax and merged into `worldwide-2.4`**
@@ -288,8 +291,10 @@ has tried it -- the way every feature of 2026-10-05 went (§9).
 it and its side branches `azerty`, `feature-b2` and `localdelay` left the
 public repository on 2026-10-06 for a private archive, their commits
 unchanged, so every SHA this file and `WORLDWIDE.md` cite from them still
-names the same commit there. `localdelay` (9.3), never merged, is to be
-ported onto `worldwide-2.4` if it is wanted. Since `68f5eb582`,
+names the same commit there. `localdelay` (9.3), never merged, is ported
+onto `worldwide-2.4` as `localdelay-2.4` (`7c5adfef1`, CI green), with the
+*Profiles > Accessibility* list made to slide, which the gyroscope's two
+lines had pushed past the screen's bottom: not yet tried. Since `68f5eb582`,
 `worldwide-2.4` starts in a stock 2.4 folder, which is 32-bit, without
 `-noexchndl` (8.117). **Proposed scope** (the audit's, not decided):
 Race only, Windows, eight players at most unless 6 says sixteen, and the

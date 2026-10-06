@@ -8944,3 +8944,4 @@ mettant dans un autre pk3/wad dans dubs"; a "SegaSonic" dub for Sonic from
   `dubs/build_packs.sh` (notes) rebuilds every pack from its sources,
   the same bytes each time (ffmpeg's `bitexact`: no random Ogg serial):
   five WADs, the base characters' and the addons' apart for each dub.
+  Heard by Gibax: "ça marche niquel".

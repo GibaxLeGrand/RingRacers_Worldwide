@@ -4731,7 +4731,9 @@ static void K_drawRingCounter(boolean gametypeinfoshown)
 			{
 				// As far from the right edge as P1's from the left: 10 units,
 				// the counter 45 wide (Gibax's capture, 1920x1080).
-				ringlx = (BASEVIDWIDTH/2) - (uselives ? 86 : 56);
+				// And 10 more: the super rings' "+20" goes to the counter's
+				// right, and its last digit fell past the edge (Gibax).
+				ringlx = (BASEVIDWIDTH/2) - (uselives ? 96 : 66);
 				splitflags = V_SNAPTOBOTTOM|V_SNAPTORIGHT|V_SPLITSCREEN;
 			}
 			else
@@ -5017,7 +5019,7 @@ static void K_drawKartSpeedometer(boolean gametypeinfoshown)
 
 		if (R_GetViewNumber() & 1)
 		{
-			sx = (BASEVIDWIDTH/2) - 64 - 54 - 2; // P1's, mirrored
+			sx = (BASEVIDWIDTH/2) - 64 - 54 - 2 - 10; // P1's mirrored, and 10 more as P2's ring counter (K_drawRingCounter)
 			splitflags = V_SNAPTOBOTTOM|V_SNAPTORIGHT|V_SPLITSCREEN;
 		}
 		else

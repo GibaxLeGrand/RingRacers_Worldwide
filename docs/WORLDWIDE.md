@@ -8924,4 +8924,13 @@ mettant dans un autre pk3/wad dans dubs"; a "SegaSonic" dub for Sonic from
   `DSKSSATTK1.ogg`, `sfx_dksshitem` for `DSKSHITEM.ogg`). The new
   `dubs/convert_folder.py` reads the line from the end of each file's name
   instead: all 11 found, `ktalk` none.
-- Not yet heard in the game.
+- **Heard** by Gibax with `03ec1b20f`'s release build: "c'est bon ça
+  marche" -- the 24 DUBDEFs loaded, no warning -- and SegaSonic "bien
+  trop ettoufé" beside the others. **Measured** (EBU R128, integrated):
+  its lines -16.1 to -20.0 LUFS, -17.7 on average, peaks near -7.5 dBFS;
+  the Japanese Sonic's -6.0 to -12.4, -9.2 on average; the game's own
+  Sonic -11.8 to -16.5. So `convert_folder.py --loudness -10` brings
+  each line to -10 LUFS through ffmpeg (gain +6.1 to +10.0 dB, a limiter
+  at -1.5 dBFS, Vorbis quality 7): measured after, -10.1 to -12.1 LUFS
+  (the limiter takes the gloat's last 2 dB), peaks -0.9 to -2.4 dBFS.
+  Both SegaSonic and `cdsonic`'s "Japanese" rebuilt so.

@@ -8945,3 +8945,36 @@ mettant dans un autre pk3/wad dans dubs"; a "SegaSonic" dub for Sonic from
   the same bytes each time (ffmpeg's `bitexact`: no random Ogg serial):
   five WADs, the base characters' and the addons' apart for each dub.
   Heard by Gibax: "ça marche niquel".
+
+### 9.14 The client-local input delay, ported and measured
+
+- **Ported** (Gibax: "porte le localdelay sur worldwide-2.4"): `localdelay-2.4`,
+  `df8e2e8b0` taken over (`f74483b51`), one conflict (`cvars.cpp`, beside the
+  gyroscope's cvars). With it `7c5adfef1`: *Profiles > Accessibility* drew
+  its lines 11 apart from y 31 with no scrolling -- stock's 15 end at 185,
+  the gyroscope's two (9.10) had put *Input Display* at 207, under a
+  200-high screen, the delay's line put an 18th at 218 (computed, not seen);
+  the list now slides a line at a time. CI run 37452849683.
+- **Measured**, unattended, `playtest.sh wwdelay join` (9.3's prediction),
+  the development build of `7c5adfef1`, `rollback_lag 6`, four windows of
+  750 tics, `localdelay` 0, 3, 0, 3. A first run without `join` left the
+  client a spectator: a 2.4 client nobody drives does not enter the race
+  (the harness says so; 2.4 prints "entered the game" when one does).
+
+| window | localdelay | held back | tics run, 750 passes | history's depth | moved against the clock | rebuilt |
+|---|---|---|---|---|---|---|
+| 0 | 0 | 0 | 750 | ~8.0 | 0 | 0 |
+| 1 | 3 | 750, 2250 tics | 747 | ~8.0 | 3 (3 tics) | 0 |
+| 2 | 0 | 0 | 753 | ~8.0 | 1 (3 tics) | 0 |
+| 3 | 3 | 750, 2250 tics | 747 | ~8.0 | 3 (3 tics) | 0 |
+
+- **As predicted**: (1) the server's `rollback_relabel`: 0 of 4405 remote
+  packets in the race asked for a delay -- `localdelay` never reaches the
+  wire; (2) one speculation held back a pass in the 3 windows, three tics
+  each, none in the 0 windows; (3) the depth the history asks for the same,
+  about 8.0, 7.2 to 7.3 inputs in flight; raised, the drawn world stood
+  still 3 tics (3 passes ran nothing), lowered, it jumped 3 tics on. (4) The
+  rebuild's length is not measured: no rebuild in any race window, nobody
+  driving. The applied input found in 100% of the passes.
+- So ROADMAP's *done when* holds (no packet asks for a delay, speculations
+  held back). Not merged: its feel is Gibax's to try.

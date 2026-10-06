@@ -4177,9 +4177,16 @@ static boolean K_drawKartLaps(void)
 
 	boolean drawinglaps = (numlaps != 1 && !K_InRaceDuel() && displayEXP != UINT16_MAX);
 
+	// Side by side (WORLDWIDE.md 9.6), the laps and the EXP in their 1P/2P
+	// size, where 2P puts them: under the 1P/2P ring counter
+	// (K_drawRingCounter), the same rule (Gibax: "même regle que pour le
+	// compteur de ring"). 3P/4P's small ones otherwise, as K_HudSplits says.
+	const boolean quarter = (K_HudSplits() > 1 && !r_splitvertical); // not "small": a macro in Windows' headers
+	INT32 lapsx = LAPS_X, lapsy = LAPS_Y;
+
 	if (drawinglaps)
 	{
-		if (K_HudSplits() > 1)
+		if (quarter)
 			bump = 27;
 		else
 			bump = 40;
@@ -4187,12 +4194,29 @@ static boolean K_drawKartLaps(void)
 		basebump = bump;
 
 		if (numlaps > 9)
-			bump += (K_HudSplits() > 1) ? 6 : 8;
+			bump += (quarter) ? 6 : 8;
+	}
+
+	if (r_splitvertical)
+	{
+		lapsx = 9;                      // 1P/2P's LAPS_X
+		lapsy = (BASEVIDHEIGHT/2) - 24; // 2P's LAPS_Y
+
+		if (R_GetViewNumber() & 1)
+		{
+			// P2's against the right edge, as far from it as P1's from the
+			// left: the lap sticker, then a sticker 25+bump wide from 13 in,
+			// between its two ends (K_DrawSticker).
+			patch_t *end = static_cast<patch_t*>(W_CachePatchName("K_STIKEN", PU_CACHE));
+
+			lapsx = (BASEVIDWIDTH/2) - 9 - (13 + 25 + bump + SHORT(end->width));
+			splitflags = V_SNAPTOBOTTOM|V_SNAPTORIGHT|V_SPLITSCREEN;
+		}
 	}
 
 	if (drawinglaps)
 	{
-		if (K_HudSplits() > 1)
+		if (quarter)
 		{
 
 			INT32 fx = 0, fy = 0, fr = 0;
@@ -4247,14 +4271,14 @@ static boolean K_drawKartLaps(void)
 		}
 		else
 		{
-			K_DrawSticker(LAPS_X+13, LAPS_Y+5, 25+bump, V_HUDTRANS|V_SLIDEIN|splitflags, false);
+			K_DrawSticker(lapsx+13, lapsy+5, 25+bump, V_HUDTRANS|V_SLIDEIN|splitflags, false);
 			drewsticker = true;
 
 			// Laps
-			V_DrawScaledPatch(LAPS_X, LAPS_Y, V_HUDTRANS|V_SLIDEIN|splitflags, kp_lapsticker);
+			V_DrawScaledPatch(lapsx, lapsy, V_HUDTRANS|V_SLIDEIN|splitflags, kp_lapsticker);
 
 			using srb2::Draw;
-			Draw row = Draw(LAPS_X+25, LAPS_Y+3).flags(V_HUDTRANS|V_SLIDEIN|splitflags).font(Draw::Font::kThinTimer);
+			Draw row = Draw(lapsx+25, lapsy+3).flags(V_HUDTRANS|V_SLIDEIN|splitflags).font(Draw::Font::kThinTimer);
 
 			if (numlaps < 10)
 				row.text("{:01}/{:01}", std::min(stplyr->laps, numlaps), numlaps);
@@ -4274,7 +4298,7 @@ static boolean K_drawKartLaps(void)
 	{
 		;
 	}
-	else if (K_HudSplits() > 1)
+	else if (quarter)
 	{
 		INT32 fx = 0, fy = 0, fr = 0;
 		INT32 flipflag = 0;
@@ -4340,24 +4364,24 @@ static boolean K_drawKartLaps(void)
 	else
 	{
 		if (!drewsticker)
-			K_DrawSticker(LAPS_X+13, LAPS_Y+5, 25+bump, V_HUDTRANS|V_SLIDEIN|splitflags, false);
+			K_DrawSticker(lapsx+13, lapsy+5, 25+bump, V_HUDTRANS|V_SLIDEIN|splitflags, false);
 
 
 		if (franticitems)
 		{
-			V_DrawMappedPatch(LAPS_X+bump, LAPS_Y, V_HUDTRANS|V_SLIDEIN|splitflags, kp_exp[0], R_GetTranslationColormap(TC_RAINBOW, SKINCOLOR_PURPLE, GTC_CACHE));
+			V_DrawMappedPatch(lapsx+bump, lapsy, V_HUDTRANS|V_SLIDEIN|splitflags, kp_exp[0], R_GetTranslationColormap(TC_RAINBOW, SKINCOLOR_PURPLE, GTC_CACHE));
 		}
 		else
 		{
-			V_DrawMappedPatch(LAPS_X+bump, LAPS_Y, V_HUDTRANS|V_SLIDEIN|splitflags, kp_exp[0], R_GetTranslationColormap(TC_RAINBOW, SKINCOLOR_MUSTARD, GTC_CACHE));
+			V_DrawMappedPatch(lapsx+bump, lapsy, V_HUDTRANS|V_SLIDEIN|splitflags, kp_exp[0], R_GetTranslationColormap(TC_RAINBOW, SKINCOLOR_MUSTARD, GTC_CACHE));
 			auto transflag = K_GetTransFlagFromFixed(K_EffectiveGradingFactor(stplyr), true);
 			skincolornum_t overlaycolor = K_EffectiveGradingFactor(stplyr) < FRACUNIT ? SKINCOLOR_RUBY : SKINCOLOR_ULTRAMARINE ;
 			auto colormap = R_GetTranslationColormap(TC_RAINBOW, overlaycolor, GTC_CACHE);
-			V_DrawMappedPatch(LAPS_X+bump, LAPS_Y, transflag|V_SLIDEIN|splitflags, kp_exp[0], colormap);
+			V_DrawMappedPatch(lapsx+bump, lapsy, transflag|V_SLIDEIN|splitflags, kp_exp[0], colormap);
 		}
 
 		using srb2::Draw;
-		Draw row = Draw(LAPS_X+23+bump, LAPS_Y+3).flags(V_HUDTRANS|V_SLIDEIN|splitflags|danceflag).font(Draw::Font::kThinTimer).colorize(dancecolor);
+		Draw row = Draw(lapsx+23+bump, lapsy+3).flags(V_HUDTRANS|V_SLIDEIN|splitflags|danceflag).font(Draw::Font::kThinTimer).colorize(dancecolor);
 		row.text("{:03}", displayEXP);
 	}
 
@@ -4563,8 +4587,8 @@ static void K_drawRingCounter(boolean gametypeinfoshown)
 	else
 	{
 		// Side by side, the 1P/2P counter at the 3P/4P corner, P2's
-		// against the right edge (K_SideItemCorner); the laps below it
-		// stay where 3P/4P put them.
+		// against the right edge (K_SideItemCorner); the 1P/2P laps
+		// below it, as in 2P (K_drawKartLaps).
 		INT32 ringlx = LAPS_X;
 
 		fy = LAPS_Y;
@@ -4702,7 +4726,23 @@ static void K_drawKartAccessibilityIcons(boolean gametypeinfoshown, INT32 fx)
 
     fx += LAPS_X;
 
-    if (K_HudSplits() < 2) // adjust to speedometer height
+    // Side by side (WORLDWIDE.md 9.6): where 2P puts them, above the 1P/2P
+    // ring counter -- 3P/4P's place, beside its small laps, is the big
+    // laps' now (K_drawKartLaps). P2's from the right edge, mirrored.
+    if (r_splitvertical)
+    {
+        fx += 9 - LAPS_X;                 // 1P/2P's LAPS_X
+        fy = (BASEVIDHEIGHT/2) - 24 - 14; // 2P's LAPS_Y
+
+        if (R_GetViewNumber() & 1)
+        {
+            splitflags ^= (V_SNAPTOLEFT|V_SNAPTORIGHT);
+            fx = (BASEVIDWIDTH/2) - fx;
+            mirror = true;
+        }
+    }
+
+    if (K_HudSplits() < 2 || r_splitvertical) // adjust to speedometer height
     {
 		if (battleprisons)
 		{
@@ -4745,7 +4785,7 @@ static void K_drawKartAccessibilityIcons(boolean gametypeinfoshown, INT32 fx)
 	// Adjust for Lua disabling things underneath or to the left of the speedometer.
 	if (!LUA_HudEnabled(hud_rings))
 	{
-		if (K_HudSplits() < 2)
+		if (K_HudSplits() < 2 || r_splitvertical)
 		{
 			fy += 14;
 		}

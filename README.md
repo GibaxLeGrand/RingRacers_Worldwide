@@ -109,13 +109,15 @@ block first.
 | Diagnostics: snapshot and leak soaks, drift and blame logs, cost per pass, unattended test races | `rollback_test`, `rollback_soak`, `rollback_drift`, ... | in use |
 | Not netcode: typing with the system's keyboard layout (AZERTY and others) | `textinput` | checked |
 | Not netcode: WORLDWIDE's title screen, window title and icon | -- | in use |
-| Not netcode: character dubs -- each pilot's voice set per character, "Japanese" say; online in WORLDWIDE mode only | `pilotdubs`, `voicelanguage`, `dublist` | played, 2.4 builds |
+| Not netcode: character dubs -- each pilot's voice set per character, "Japanese" say; online in WORLDWIDE mode only | `pilotdubs`, `voicelanguage`, `dublist` | played offline and in splitscreen, 2.4 builds |
 | Not netcode: two-player splitscreen side by side | `split2p` (*Options > HUD*) | played, 2.4 builds |
 | Not netcode: photo mode -- the game held, the HUD hidden, a free camera | the pause menu | played, 2.4 builds |
 | Not netcode: steering by tilting a controller with motion sensors, each profile's | `profilegyro` (*Profiles > Accessibility*) | played, 2.4 builds |
 
-Every switch, with what it does, is in [docs/COMMANDS.md](docs/COMMANDS.md).
-The order of the work left is in [docs/ROADMAP.md](docs/ROADMAP.md).
+What the *Not netcode* features do, and how to set them, is under
+[Beyond the netcode](#beyond-the-netcode). Every switch, with what it does,
+is in [docs/COMMANDS.md](docs/COMMANDS.md). The order of the work left is in
+[docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Where it's going
 
@@ -263,14 +265,118 @@ join**, just connect: a WORLDWIDE client switches its prediction on by
 itself. A WORLDWIDE build meets the same WORLDWIDE builds only: an older
 or newer one is told which side to update.
 
-**Dubs**: a dub is a WAD or PK3 of voice lines with `DUBDEF` lumps, one per
-character (`skin = sonic`, `name = Japanese`, then the S_SKIN's sound
-lines). Packs in the `dubs` folder, next to the downloaded `addons`, load
-at start-up, on this machine alone: the game's folder on Windows,
+## Beyond the netcode
+
+Features of the `worldwide-2.4` builds that have nothing to do with the
+netcode. Each is a setting saved in the game's config.
+
+### Character dubs
+
+A character can have more than one voice -- Sonic in Japanese, say -- and
+each pilot chooses theirs.
+
+- **Choosing.** At character select, a character that has dubs gets one more
+  step before the colours: *Default*, the game's voice, then each dub
+  loaded, each heard as it comes up. The choice is kept, for that character,
+  with the profile you race with (`pilotdubs`).
+- **Everyone else.** *Options > Sound > Voice Language* (`voicelanguage`,
+  `Default` by default) is the voice heard for bots, replays and pilots who
+  chose none.
+- **Checking.** The console command `dublist` lists the dubs loaded, your
+  choices, and what the other pilots' machines said.
+
+**Installing a pack.** Put it in the `dubs` folder, next to `addons`: the
+game's folder on Windows,
 `~/.var/app/io.github.ringracers_worldwide.RingRacersWorldwide/.ringracers/dubs`
-with the Flatpak -- the game makes it at its first start. Each player
-picks a dub at character select, and *Options > Sound > Voice Language*
-sets the one heard for bots.
+with the Flatpak -- the game makes the folder at its first start. The packs
+there load at start-up, on this machine alone: a dub pack never enters a
+server's file list, is never sent to anyone, and does not make the game
+count as modified, so you can join any server with your dubs loaded, a stock
+one included. A pack holding anything but sounds and `DUBDEF` lumps is left
+out, with a warning in the console.
+
+**Online.** In WORLDWIDE mode, your choice -- the character's and the dub's
+names, never the sounds -- reaches the other players: they hear your kart in
+your dub if they have the same pack, and in the character's own voice if they
+don't. On a stock server nothing is sent: your kart speaks with your dub, the
+others with your *Voice Language*. A voice is not part of the game's state,
+so different dubs cannot desync anyone. Not yet tried online.
+
+**Making a pack.** A WAD or PK3 of sounds, with one `DUBDEF` lump per
+character and dub, written as an S_SKIN's sound lines:
+
+    skin = sonic
+    name = Japanese
+    DSKWIN = DSSNJWIN
+    DSKLOSE = DSSNJLOS
+
+- The twelve voice lines are `DSKWIN`, `DSKLOSE`, `DSKHURT1`, `DSKHURT2`,
+  `DSKATTK1`, `DSKATTK2`, `DSKBOST1`, `DSKBOST2`, `DSKSLOW`, `DSKHITEM`,
+  `DSKGLOAT` and `DSKTALK`. A line the dub leaves out stays the character's
+  own.
+- A sound lump's name is `DS` and six characters at most, as for any sound.
+- A dub's name is a single word, without spaces.
+- Up to 128 dubs, under 32 different names.
+
+**Dubs for addon characters.** A `DUBDEF` can name a character that is not
+loaded yet: the dub waits in memory, under the character's name, and applies
+as soon as the character is loaded -- by `addfile`, or downloaded from a
+server -- its step at character select included. Two things to get right:
+
+- `skin =` is the addon's internal name, the `name` of its S_SKIN, not the
+  one shown in the menus (case does not matter). A dub whose name matches no
+  character stays unused; `dublist` still shows it.
+- Give the dub's sound lumps names of their own: the game plays the most
+  recently loaded lump of a name, so an addon loaded after the pack with a
+  lump of the same name would be heard instead.
+
+Read in the code; not yet tried with an addon character.
+
+### Two players side by side
+
+*Options > HUD > 2P Splitscreen* (`split2p`): `Horizontal`, the game's one
+view above the other, or `Vertical`, side by side. Side by side, each view
+takes the 3P/4P layout of the HUD, with the item box, the ring counter and
+the position at their 2P size in its corners. Not looked at yet: OpenGL,
+Battle, the end-of-race tally.
+
+### Photo mode
+
+*PHOTO MODE*, in the pause menu, holds the game, hides the HUD and lets the
+camera go free; *LEAVE PHOTO MODE*, in the same menu, puts everything back.
+Offline and in replays only: nothing can hold a netgame.
+
+### Gyro steering
+
+For a controller with motion sensors: tilt it like a wheel to steer. It is
+each profile's own, under *Options > Profile Setup*, the profile,
+*Accessibility*:
+
+- *Gyro Steering*: `Off`, `On` or `Inverted`.
+- *Gyro Range*: how far to tilt for a full turn, 30 degrees by default.
+
+The stick and the d-pad come first: tilting steers only while they are left
+alone. The log says, for each controller opened, whether the game sees an
+accelerometer and a gyroscope; one that Steam Input shows as a plain
+controller has none.
+
+### Your keyboard layout
+
+The console, the chat and the menus' text boxes type with your system's
+keyboard layout -- AZERTY and the others -- as SRB2 2.2.15 does; the game's
+controls do not change. *Options > HUD > Online Chat Options... > Use System
+Keyboard Layout* (`textinput`), on by default. ASCII only: the game's fonts
+stop there. In the builds of both branches.
+
+### WORLDWIDE's title screen
+
+An optional `worldwide.pk3` gives the title screen WORLDWIDE's Earth and
+ring, and removes a stray pixel above Sonic's head in 19 of his frames; the
+game runs the same without it. The Flatpak carries it; for Windows and the
+Linux tarball, put
+[assets/worldwide.pk3](https://github.com/GibaxLeGrand/RingRacers_Worldwide/blob/worldwide-2.4/assets/worldwide.pk3)
+from the `worldwide-2.4` branch in the game's `data` folder. The window's
+title and icon are WORLDWIDE's in every build.
 
 ## Reporting a problem
 

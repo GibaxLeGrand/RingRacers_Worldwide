@@ -753,6 +753,8 @@ void P_Ticker(boolean run)
 	quake_t *quake = NULL;
 	INT32 i;
 
+	P_NoteOverlayHead("a tic's start"); // diagnostic, WORLDWIDE.md 9.15
+
 	thinkersCompleted = false;
 
 	// Increment jointime and quittime even if paused

@@ -15907,6 +15907,21 @@ mobj_t **P_OverlayCapHead(void)
 	return &overlaycap;
 }
 
+void P_NoteOverlayHead(const char *where)
+{
+	static UINT32 noted = 0;
+
+	if (overlaycap == NULL || noted >= 40)
+		return;
+
+	noted++;
+	// The head only, never what it points at: that may be released memory.
+	CONS_Printf("overlay_head: set at %s -- gametic %u, leveltime %u, %s, head %p\n",
+		where, (unsigned)gametic, (unsigned)leveltime,
+		K_RollbackSpeculating() ? "speculated" : (K_RollbackReplaying() ? "replayed" : "live"),
+		(void *)overlaycap);
+}
+
 //
 // P_InitTIDHash
 // Initializes mobj tag hash array

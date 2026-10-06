@@ -8852,6 +8852,8 @@ dboolean P_LoadNetGame(savebuffer_t *save, dboolean reloading, dboolean local)
 {
 	TracyCZone(__zone, true);
 
+	P_NoteOverlayHead(reloading ? "a network load (reloading)" : "a network load"); // diagnostic, 9.15
+
 	current_savebuffer = save;
 	localrestore = local;
 
@@ -9403,6 +9405,8 @@ static void P_ForgetRawDead(void)
 
 dboolean P_LoadNetGameRaw(savebuffer_t *save)
 {
+	P_NoteOverlayHead("a raw load"); // diagnostic, WORLDWIDE.md 9.15
+
 	thinker_t *th;
 	size_t recorded = 0;
 	uint32_t i;

@@ -8509,6 +8509,8 @@ boolean P_LoadLevel(boolean fromnetsave, boolean reloadinggamestate)
 {
 	TracyCZone(__zone, true);
 
+	P_NoteOverlayHead("a level load"); // diagnostic, WORLDWIDE.md 9.15
+
 	// use gamemap to get map number.
 	// 99% of the things already did, so.
 	// Map header should always be in place at this point

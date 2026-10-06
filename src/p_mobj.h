@@ -548,6 +548,10 @@ extern mobj_t *waypointcap;
 mobj_t **P_TIDHashChains(size_t *count);
 mobj_t **P_OverlayCapHead(void);
 
+// Diagnostic (WORLDWIDE.md 9.15): the overlay list's head should be empty
+// between tics; says where it was found set, the first 40 times.
+void P_NoteOverlayHead(const char *where);
+
 void P_InitCachedActions(void);
 void P_RunCachedActions(void);
 void P_AddCachedAction(mobj_t *mobj, INT32 statenum);

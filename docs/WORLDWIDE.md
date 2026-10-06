@@ -9161,6 +9161,25 @@ first (the notes' session of 2026-10-06).
   reaches outside the simulation ... should sit the replay out"). Cap 12
   only kept the speculation short of the cutoff in this race; a map
   restart or late results within 12 tics of it would do the same.
+- **The fix, measured** (Gibax: "lance du coup les 2"; prediction
+  written first). `specauth-2.4` (`a9dc1aaa6`, from `worldwide-2.4`):
+  `UpdateChallenges` only when neither speculating nor replaying -- run
+  once, when the authoritative loop reaches the tic, as sounds are.
+  `histcapfix-2.4` (`1d43f2d81`): the same on `histcap-2.4`. Both CI
+  green; `harnais/cdb_run.sh` runs any build under `cdb`.
+  (1) `histcapfix-2.4`, 15 tics, `join`: **no crash** (no access
+  violation), no signature failure, the client in the game. **But it
+  never followed the server to `RR_SkyscraperLeaps`**: it stayed on
+  `RR_TESTRUN` the whole session (leveltime 34 to 4532), its world
+  drifting from the server's -- 2192 karts put back, every pass rebuilt
+  in the last window. At 12 at that latency the map change came through
+  (`wwcap`): a second defect of the deep speculation, at a map change,
+  separate from the first. (2) `specauth-2.4`, 6 tics, `join`: as before
+  -- depth 8.0, no pass cut, the drawn world never moved, no rebuild,
+  the client in the race to its end, not kicked as unverified (10 s) nor
+  failed at the cutoff (20 s): the authoritative signature check works.
+  So the fix holds and takes the crash's path away at any cap; the cap
+  of 24 stays out, now for the map change.
 
 ### 9.16 Jitter and loss in the harness
 

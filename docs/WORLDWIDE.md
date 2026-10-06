@@ -9138,6 +9138,29 @@ first (the notes' session of 2026-10-06).
   a sound tried as a WAV first, the exception caught, the next format
   tried. Normal flow, as frequent at 12. The prediction (one in a
   speculated tic, from a sound or ACS) was wrong in what mattered.
+- **Found** (Gibax: "lance"): breakpoints on `PoolAllocator::release`,
+  `P_FreeLevelState`, `D_ClearState`, `Z_FreeTags`, and at the crash the
+  large pool dumped -- **empty**: no chunk, no spare, 0 blocks out. Its
+  chunks were released, in a speculated tic:
+  `K_RollbackSpeculate` > `K_KeepExtend` > `K_RunSpeculatedTic` >
+  `G_Ticker` > `P_Ticker` > **`UpdateChallenges` > `HandleSigfail` >
+  `Command_ExitGame_f` > `D_ClearState` > `P_FreeLevelState`**, then
+  back in `P_Ticker`, `P_RunOverlays` on the released overlay. 2.4's
+  client-to-client signature check: a client in the game before
+  `CHALLENGEALL_START` (5 s) expects the server's results, and past
+  `CHALLENGEALL_CLIENTCUTOFF` (20 s) without them it leaves the game
+  ("Signature check failed"). `UpdateChallenges` runs inside every
+  `P_Ticker` -- speculated tics too: a speculation deep enough runs the
+  level past the cutoff before the packet or the map restart that would
+  have cleared it reaches this machine, and the guessed future quits the
+  game for real. The prediction (a `release()` in the crashing tic, by a
+  path `3bd3eb084` did not cover) was right; `!address` printed nothing
+  (no ntdll symbols). **So**: not a memory defect, not the cap -- a
+  network side effect run in a speculation, against the rule the code
+  already states for sounds (`K_RollbackReplaying`: "Anything that
+  reaches outside the simulation ... should sit the replay out"). Cap 12
+  only kept the speculation short of the cutoff in this race; a map
+  restart or late results within 12 tics of it would do the same.
 
 ### 9.16 Jitter and loss in the harness
 

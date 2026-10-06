@@ -5005,20 +5005,23 @@ static void K_drawKartSpeedometer(boolean gametypeinfoshown)
 	INT32 fy = LAPS_Y-14;
 	INT32 sx = LAPS_X;
 
-	// WORLDWIDE: side by side (WORLDWIDE.md 9.6, 9.12), where 2P puts it, above
-	// the 1P/2P ring counter; P2's against the right edge, as the laps are.
+	// WORLDWIDE: side by side (WORLDWIDE.md 9.6, 9.12), on the 1P/2P ring
+	// counter's row -- 2P's LAPS_Y, moved as the counter is below -- P1's to
+	// its right, P2's to its left, the counter against the edge (Gibax: "a
+	// droite du ringcount cote P1 ... gauche cote P2"). The block, sticker to
+	// label, spans about sx-14 to sx+43.
 	if (r_splitvertical)
 	{
-		fy = (BASEVIDHEIGHT/2) - 24 - 14; // 2P's LAPS_Y
+		fy = (BASEVIDHEIGHT/2) - 24;
 
 		if (R_GetViewNumber() & 1)
 		{
-			sx = (BASEVIDWIDTH/2) - 9 - 14;
+			sx = (BASEVIDWIDTH/2) - 64 - 29; // P1's, mirrored
 			splitflags = V_SNAPTOBOTTOM|V_SNAPTORIGHT|V_SPLITSCREEN;
 		}
 		else
 		{
-			sx = 9; // 1P/2P's LAPS_X
+			sx = 64; // past the counter, about 50 wide from the edge
 		}
 	}
 
@@ -5713,6 +5716,18 @@ static void K_DrawRivalTagForPlayer(fixed_t x, fixed_t y, player_t *p, UINT32 fl
 	{
 		INT32 barx = 0, bary = 0;
 
+		if (r_splitvertical)
+		{
+			// Side by side (WORLDWIDE.md 9.4): the item box goes in pixels, the
+			// tag in its view's frame -- half the width, a quarter lower --
+			// which the hand-made centring below does not know: the box sat at
+			// the top of the screen. Placed as the tag is, V_AdjustXYWithSnap.
+			barx = ((x / FRACUNIT) + 16) * vid.dupx;
+			bary = ((y / FRACUNIT) - (P_MobjFlip(p->mo) * 25)) * vid.dupy;
+			V_AdjustXYWithSnap(&barx, &bary, V_SPLITSCREEN, vid.dupx, vid.dupy);
+		}
+		else
+		{
 		barx = (x * vid.dupx) / FRACUNIT;
 		bary = (y * vid.dupy) / FRACUNIT;
 
@@ -5728,6 +5743,7 @@ static void K_DrawRivalTagForPlayer(fixed_t x, fixed_t y, player_t *p, UINT32 fl
 		if (vid.height != BASEVIDHEIGHT * vid.dupy)
 		{
 			bary += (vid.height - (BASEVIDHEIGHT * vid.dupy)) / 2;
+		}
 		}
 
 		K_DrawNameTagItemSpy(barx, bary, p, flags);
@@ -5744,6 +5760,18 @@ static void K_DrawCPUTagForPlayer(fixed_t x, fixed_t y, player_t *p, UINT32 flag
 	{
 		INT32 barx = 0, bary = 0;
 
+		if (r_splitvertical)
+		{
+			// Side by side (WORLDWIDE.md 9.4): the item box goes in pixels, the
+			// tag in its view's frame -- half the width, a quarter lower --
+			// which the hand-made centring below does not know: the box sat at
+			// the top of the screen. Placed as the tag is, V_AdjustXYWithSnap.
+			barx = ((x / FRACUNIT) + 16) * vid.dupx;
+			bary = ((y / FRACUNIT) - (P_MobjFlip(p->mo) * 25)) * vid.dupy;
+			V_AdjustXYWithSnap(&barx, &bary, V_SPLITSCREEN, vid.dupx, vid.dupy);
+		}
+		else
+		{
 		barx = (x * vid.dupx) / FRACUNIT;
 		bary = (y * vid.dupy) / FRACUNIT;
 
@@ -5759,6 +5787,7 @@ static void K_DrawCPUTagForPlayer(fixed_t x, fixed_t y, player_t *p, UINT32 flag
 		if (vid.height != BASEVIDHEIGHT * vid.dupy)
 		{
 			bary += (vid.height - (BASEVIDHEIGHT * vid.dupy)) / 2;
+		}
 		}
 
 		K_DrawNameTagItemSpy(barx, bary, p, flags);

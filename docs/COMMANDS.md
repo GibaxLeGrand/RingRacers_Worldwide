@@ -835,6 +835,9 @@ server (`WORLDWIDE.md` §9):
   machines said.
 - `split2p Horizontal|Vertical`: two players one above the other, or side
   by side; *Options > HUD > 2P Splitscreen*.
+- `2prankings On|Off`: in a 2P race, the rankings drawn once, both
+  players always in (`WORLDWIDE.md` 9.17); *Options > HUD > 2P Rankings*.
+  On by default.
 - `profilegyro`: each profile's steering by tilting the controller
   (`GIBAX=1:30`, the mode and the range in degrees), written by
   *Profiles > Accessibility*, "This Profile only".

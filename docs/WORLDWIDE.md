@@ -9308,3 +9308,45 @@ the race. Prediction written first (the notes' session of 2026-10-06).
   slot in the queue, not by their arrival. Small, but every latency
   measure since 8.105 had it.
 - No crash. Not merged: `netsim-2.4` is harness only, off at 0.
+
+### 9.17 The 2P HUD: the rankings, the speedometer, the lives
+
+Gibax, 2026-10-06, on two captures: 1P's rankings at the left, "en option
+2P du coup : Au milieu en vertical, et maybe à droite en horizontal", and
+1P's speedometer in 2P. Asked how to fit five lines to two players, he
+chose: side by side at the bottom in the middle, one above the other
+against the right edge; both players always on the five lines, and when
+they are more than four places apart, the better placed one with the three
+around him and the other on the last line, no rule between; the
+speedometer in each view, by its existing setting.
+
+- **The rankings** (`eabee15e4`, `hud2p-2.4`): drawn once over both views,
+  in a race only -- not Battle, whose splitscreen has its own, nor a duel --
+  and as the Lua HUD's `minirankings` allows; five racers or fewer, all of
+  them. Face, place and highlight as in 1P, the highlight red for P1 and
+  blue for P2 (Gibax: "le cadre qui entoure soit Rouge pour J1 et Bleu pour
+  J2"). The minimap makes room: 40 up side by side, 24 left one above the
+  other. `2prankings`, On by default, *Options > HUD > 2P Rankings*. Gibax:
+  "c'est bien parfait".
+- **The opponents' held item side by side** (`a5ea62de2`), on his capture
+  of the same build: the box over a rival's or a CPU's tag sat at the top
+  of the screen. It is placed in pixels with a centring of its own, which
+  does not know the view's frame -- half the width, a quarter lower -- the
+  tag is drawn in (9.11); side by side, it is placed as the tag is,
+  `V_AdjustXYWithSnap`. Gibax: "C'est bon pour les items".
+- **The speedometer side by side** (`a5ea62de2` to `a885ba44e`): on the
+  ring counter's row, to its right for P1 and to its left for P2 (Gibax).
+  P2's overlapped the counter on his capture: the block, sticker to label,
+  measured on it at `sx+2` to `sx+54`, so P2's mirrors P1's. P2's ring
+  counter went 10 further left, the super rings' "+20" losing its last
+  digit at the edge, then 4 back ("un poil plus vers la droite, pas trop"),
+  the speedometer with it.
+- **The lives in Grand Prix** (`3d0b85afc`): in 2P, either split, they
+  leave the ring counter, where the speedometer now is, for the laps' row:
+  after the laps and the EXP, before them for P2 side by side, whose block
+  is against the right edge (Gibax: "les vies tu pourrais les mettre à côté
+  du track count"). The ring counter is drawn as without lives. 1P is
+  unchanged.
+- Each build was the branch's release build (CI runs 37502752967 to
+  37509486349). Gibax: "c'est bon, fusionne". Merged into `worldwide-2.4`
+  (`089be225f`). On this machine alone, as 9.4: nothing sent.

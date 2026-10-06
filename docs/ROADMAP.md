@@ -283,7 +283,9 @@ game's rules do not change.
     other, and a vertical one, each player on half the screen's width. On
     this machine alone, as 20 to 22. **Raced by Gibax and merged into
     `worldwide-2.4`** (`1ed058fed`, 9.4, 9.6): *Options > HUD > 2P
-    Splitscreen*.
+    Splitscreen*. Its HUD and 2P's (9.11, 9.12, 9.17): the race's
+    rankings once with both players in, the speedometer, the lives
+    beside the laps; tried by Gibax and merged (`089be225f`).
 
 **Order of work:** 19 is done (8.141); 4's cases, 6, 12 and 13's measurement are done (8.134 to
 8.136); then 3; 2(b) to 2(d) with a second person, a LAN first (8.135's

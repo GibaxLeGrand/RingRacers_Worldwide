@@ -9088,6 +9088,19 @@ first (the notes' session of 2026-10-06).
   `G_InitNew`). The lead now: **a level load run inside a speculated
   tic**, the level's memory released under it. `3bd3eb084` prints every
   level load and whether it is speculated, replayed or live.
+- **Not a level load either** (Gibax: "ui"; prediction written first,
+  wrong): `3bd3eb084`'s crashing race printed one `level_load`, the
+  join's, live, then crashed as before -- no level load before it. And
+  the client's "... next round" lines are not the map command's: they
+  are the cvars' `OnChange` (`TimeLimit_OnChange`...), run when the
+  server's settings reach the joining client. Objects live in the level
+  pools, where a freed one goes back to the pool and stays readable;
+  the head points at memory that cannot be read at all -- perhaps never
+  a valid object: a value written into the head inside the tic (the
+  head's writers are `P_AddOverlay`, `P_RemoveOverlay` -- which puts the
+  removed head's `hnext` there -- and `P_RunOverlays`). Next: a hardware
+  breakpoint on `overlaycap` in `cdb`, each write logged with its short
+  stack, the last before the crash naming the writer.
 
 ### 9.16 Jitter and loss in the harness
 

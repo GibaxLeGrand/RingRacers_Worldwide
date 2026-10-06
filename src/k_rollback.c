@@ -3855,7 +3855,9 @@ static uint32_t g_driftsame;        // ... and karts already where the server ha
 // after it has joined.
 #define WORLDWIDE_CORRECTRATE 4   // tics between corrections: every driven race since 8.44
 #define WORLDWIDE_TWOCLOCK 4      // the speculation's floor; rollback_history lifts it
-#define WORLDWIDE_HISTORY 12      // how deep the history may take it (8.47, 8.48, 8.78)
+#define WORLDWIDE_HISTORY 24      // how deep the history may take it (8.47, 8.48, 8.78);
+                                  // 12 cut every pass past ~340 ms of round trip and left
+                                  // the drawn world 5 tics behind at 428 ms (8.107, 9.15)
 
 static dboolean g_wwclient;       // this client's switches were set by joining a WORLDWIDE server
 static dboolean g_wwkeepingwas;   // the snapshot keeper's switch before that join turned it on

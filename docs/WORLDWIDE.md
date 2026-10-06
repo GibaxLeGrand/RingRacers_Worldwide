@@ -9129,6 +9129,15 @@ first (the notes' session of 2026-10-06).
   and catches in its audio (`audio/chunk_load.cpp`), its ACS
   serialisation (`acs/interface.cpp`), its gamedata; one caught high
   enough would cut a tic short. Next: the stack of each.
+- **Not the exceptions** -- Gibax's control: "vérifie ça dans la version
+  qui marche (donc à 12)". The same race, `cdb` stacking every C++
+  exception, at 24 (`overlaydiag-2.4`, crashes) and at 12 (`03ec1b2`, no
+  crash, the race to its end) in the same session: all of them, 6 before
+  the crash at 24 and 104 over the whole race at 12, are the same --
+  `I_GetSfx` > `try_load_chunk` > `try_load_wav` > `Wav::Wav` throwing:
+  a sound tried as a WAV first, the exception caught, the next format
+  tried. Normal flow, as frequent at 12. The prediction (one in a
+  speculated tic, from a sound or ACS) was wrong in what mattered.
 
 ### 9.16 Jitter and loss in the harness
 

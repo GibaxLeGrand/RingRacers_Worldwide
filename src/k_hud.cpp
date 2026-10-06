@@ -4731,9 +4731,10 @@ static void K_drawRingCounter(boolean gametypeinfoshown)
 			{
 				// As far from the right edge as P1's from the left: 10 units,
 				// the counter 45 wide (Gibax's capture, 1920x1080).
-				// And 10 more: the super rings' "+20" goes to the counter's
-				// right, and its last digit fell past the edge (Gibax).
-				ringlx = (BASEVIDWIDTH/2) - (uselives ? 96 : 66);
+				// And 6 more: the super rings' "+20" goes to the counter's
+				// right, and its last digit fell past the edge (Gibax; 10
+				// was "un poil" too far).
+				ringlx = (BASEVIDWIDTH/2) - (uselives ? 92 : 62);
 				splitflags = V_SNAPTOBOTTOM|V_SNAPTORIGHT|V_SPLITSCREEN;
 			}
 			else

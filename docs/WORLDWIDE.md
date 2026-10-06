@@ -8891,3 +8891,37 @@ compteur de ring".
 - **Tried** by Gibax with that branch's release build (CI run
   37453218896): "c'est bon ça marche". Merged into `worldwide-2.4`
   (`8937d0ff3`, on his word).
+
+### 9.13 The dub packs: the addons' characters apart, and SegaSonic
+
+Gibax, 2026-10-06: the Japanese pack he gave "avec tous les persos" -- "tu
+pourrais les faire ?"; "sépare les persos dans RR de base des addons, en les
+mettant dans un autre pk3/wad dans dubs"; a "SegaSonic" dub for Sonic from
+`KL_SegaSonic.pk3`, and its voices for `cdsonic`, as its "Japanese".
+
+- **Why 14 characters only**: `dubs/convert_replacement.py` (notes) read the
+  S_SKINs of `chars.pk3` alone. The pack (`KL_JapDub_v1_RR.wad`, 231 lumps)
+  also holds addon characters' lines, under their addons' lump names.
+- **Measured**: with the S_SKINs of the measuring machine's addons
+  (`--skins`), 8 more -- gamma, miku, omega, sa2sonic, supersonic, ulala,
+  vector, vyse. Four of Miku's lines are named for an older release of its
+  addon (`DSMIKUA1` where `DCF_BONUSCHARS_V2.2.pk3` says `DSBCMHA1`), given
+  by hand (`--add`). All 231 lumps then serve a dub (11, `DS1…`, are byte
+  for byte copies of others). Two copies of the pack differ: the one among
+  the loaded addons was re-encoded by ffmpeg on 2026-09-08 (224 kbit/s, an
+  `Lavf` vendor), the author's is in `_backup_audio` (256 kbit/s,
+  libVorbis): the dubs come from the author's, as the first did -- rebuilt,
+  the base characters' WAD is byte for byte the one Gibax tried (8.142).
+- **So, three WADs in `dubs/`** (none in this repository: they are the
+  pack authors' sounds): `JapDub_Worldwide.wad`, the game's own 14
+  (`--only base`); `JapDub_Addons_Worldwide.wad`, the 8 addon characters
+  (`--only addons`), and `cdsonic`'s "Japanese" from `KL_SegaSonic.pk3`;
+  `SegaSonic_Worldwide.wad`, Sonic's "SegaSonic". An addon character's dub
+  is kept by its skin name and applies once that addon is loaded.
+- `KL_SegaSonic.pk3` keeps one file a line (`Sounds/sonic/DSKSWIN.ogg`...)
+  and plays them through a Lua script of its own (KL_CharDub), whose table
+  names three of them otherwise than the files (`sfx_dsksattk1` for
+  `DSKSSATTK1.ogg`, `sfx_dksshitem` for `DSKSHITEM.ogg`). The new
+  `dubs/convert_folder.py` reads the line from the end of each file's name
+  instead: all 11 found, `ktalk` none.
+- Not yet heard in the game.

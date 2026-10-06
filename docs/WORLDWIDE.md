@@ -9020,6 +9020,24 @@ first (the notes' session of 2026-10-06).
   difference -- one run, not yet a cause. **Not to be merged** until it
   is understood: a second run, then the crash's place (a debugger, or the
   cap raised at the join on `03ec1b2` by the console).
+- **Again, and placed** (2026-10-06, Gibax's "tu peux relancer"): the
+  same race crashed the same way -- the client's log the same 205713
+  bytes, on the waiting map `RR_TESTRUN` ("join from leveltime 33"), the
+  race map never loaded. A third run with `cdb` attached to the client
+  (its `.pdb` beside it, `sxe av`): a first-chance access violation in
+  a **speculated tic** -- `TryRunTics` > `K_RollbackSpeculate` >
+  `K_KeepExtend` > `K_RunSpeculatedTic` > `G_Ticker` > `P_Ticker` >
+  `P_RunOverlays` > `P_MobjWasRemoved` (inlined), reading
+  `thinker.function` of an overlay that is no longer mapped. The overlay
+  list is `overlaycap` chained through `hnext`, built as MT_OVERLAY
+  thinks (`P_AddOverlay`) and emptied by `P_RunOverlays`; the rollback's
+  archive keeps `overlaycap` as a raw pointer (`p_saveg.cpp`, its put and
+  get). So a speculation 24 deep at the join walks an overlay freed under
+  it; 12 deep it did not get there. **Not the cause yet**: why the list
+  holds a freed overlay -- the archive's `overlaycap` and `hnext` against
+  a removal inside the speculation -- is to be read, and any change
+  measured, not guessed from this stack. The default cap stays 12 till
+  then.
 
 ### 9.16 Jitter and loss in the harness
 

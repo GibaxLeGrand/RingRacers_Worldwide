@@ -127,6 +127,7 @@ extern struct RenderStats g_renderstats;
 
 extern consvar_t cv_showhud;
 extern consvar_t cv_split2p;
+extern consvar_t cv_2prankings; // WORLDWIDE: the 2P rankings (k_hud.cpp)
 extern consvar_t cv_homremoval;
 extern consvar_t cv_chasecam[MAXSPLITSCREENPLAYERS];
 

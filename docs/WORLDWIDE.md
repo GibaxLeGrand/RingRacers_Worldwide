@@ -9038,6 +9038,20 @@ first (the notes' session of 2026-10-06).
   a removal inside the speculation -- is to be read, and any change
   measured, not guessed from this stack. The default cap stays 12 till
   then.
+- **Not the raw restore** (Gibax: "lance les"; prediction written first):
+  the same race with `rollback_rawsnap 0` (network snapshots only) and
+  with `2` (raw, each restore checked against the full archive). Both
+  crashed at the same place, the same stack; the verify mode reported
+  nothing, and both logs stop at the same line as before (4639). The
+  prediction (no crash at 0) was wrong: the raw snapshots are not the
+  cause. The log's last lines, every time: the savegame loaded on
+  `RR_TESTRUN`, the join at leveltime 33, the harness's two
+  `rollback_join` (the pause menu's Enter Game), the server's settings
+  printed -- then the crash. At 15 tics of lag the round trip is 17: a
+  cap of 24 lets the speculation reach the tics where this machine's own
+  join takes effect (its spectator body removed, a body spawned), 12 did
+  not. A lead, not a finding: to be told apart by a race without `join`
+  and one at a lag the cap of 12 already covers.
 
 ### 9.16 Jitter and loss in the harness
 

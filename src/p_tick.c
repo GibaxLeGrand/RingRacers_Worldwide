@@ -1094,7 +1094,14 @@ void P_Ticker(boolean run)
 		ps_lua_thinkframe_time = I_GetPreciseTime() - ps_lua_thinkframe_time;
 	}
 
-	if (run)
+	// WORLDWIDE: the signature check reaches outside the simulation -- past
+	// its cutoff it quits the game (HandleSigfail) -- so, as sounds do, it
+	// sits out the tics a speculation guesses and a correction re-runs, and
+	// runs once, when the authoritative loop reaches the tic. Run inside a
+	// speculation deep enough to pass the cutoff before the server's results
+	// arrived, it quit the game in the middle of a tic, the level's memory
+	// released under P_RunOverlays (WORLDWIDE.md 9.15).
+	if (run && !(K_RollbackSpeculating() || K_RollbackReplaying()))
 		UpdateChallenges();
 
 	// Run shield positioning

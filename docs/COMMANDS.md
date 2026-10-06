@@ -12,7 +12,7 @@ This file, `WORLDWIDE.md` and `ROADMAP.md` are kept **identical** in the
 public code repository and in the private notes repository (`docs/` on both
 sides).
 
-**Up to date as of 2026-09-30** — 30 commands, checked against
+**Up to date as of 2026-10-04** — 38 commands, checked against
 `K_RegisterRollbackStuff` in `k_rollback.c`, and one server variable,
 `worldwide` (`cvars.cpp`). Two commands are **obsolete** (`rollback_loop`,
 `rollback_pace`) and are kept only for comparison. `worldwide` and
@@ -20,7 +20,14 @@ sides).
 `rollback_poolcopy` from `df8ed24e9` (8.82); `rollback_rawsnap` from
 `371ca7419` (8.88, merged as `49daf1196`); `rollback_histreal` from
 `7a455f6fe` (8.89); `rollback_keepearly` from `6209f1786` (8.98), off by
-default from `771bec680` (8.100).
+default from `771bec680` (8.100); `rollback_join` (8.119) and
+`rollback_botsashuman` (8.120) from 2026-10-01; `rollback_stall` and
+`rollback_cascadelog` from `85ccac6e2` (8.129), `rollback_ontime` from
+`aa9629fdf` (8.130, on the live clock from `df4b3e2b7`, 8.131, its stamps
+stepped from `70814ebc0`, 8.132). `rollback_rebuildbudget` and
+`rollback_slowtic` from `f9e76d65b` (8.134); `rollback_soundreset` from
+`f367fa6cc` (8.141). `rollback_fill` (8.129) came out of the code once
+measured worse (`07e4040d8`).
 
 ⚠ Reminder: **none of these commands is ever launched in a race without the
 project owner's explicit go-ahead**, every time (rule 1 of the docs entry
@@ -198,8 +205,9 @@ coins, mace chains, braziers), not the karts.
 ### `rollback_rawsnap [0|1|2]`
 **Client side, and the tests** (`WORLDWIDE.md` 8.88; merged as
 `49daf1196`). How snapshots are taken:
-- `0` (default): network snapshots, as before.
-- `1`: **raw snapshots** -- the level pools copied whole, the heads pointing
+- `0`: network snapshots, as before.
+- `1` (**default since `WORLDWIDE.md` 8.125**): **raw snapshots** -- the
+  level pools copied whole, the heads pointing
   into them, and an archive of the rest (players, world, ACS, Lua...).
   Restored at their own addresses; every reference count is rebuilt. The
   tests and soaks refuse to start in this mode, and a running soak waits:
@@ -221,9 +229,13 @@ leakraw`, `soak.sh wwraw` (mode 2), `playtest.sh keepraw` (mode 1).
 Measured on Opulence (`WORLDWIDE.md` 8.94, 8.95): a save 1.1 ms against 2.5
 to 2.9, a restore 1.9 ms against about 6.5, a kept pass 5.6 to 6.4 ms
 driven; soaks 0 failures, the archive identical after all but 9 of 2805
-verified restores. **Stays off by default** until the players-block
-difference and the double claim of 8.94 are understood; `floorspriteslope`
-and the level interpolators are not put back (8.88, 8.93).
+verified restores. **On by default since 8.125**: the players-block
+difference is the item list's capacity, harmless (8.124); the double claim
+is counted once; a snapshot taken while an object has a Lua
+`floorspriteslope` goes the network way, and the report counts them; the
+level interpolators are not rebuilt by either restore. The harness's
+scenarios that run the tests set `rollback_rawsnap 0`, so they measure what
+they always measured.
 
 ### `rollback_poolcopy [times]`
 **Diagnostic, in a level** (`WORLDWIDE.md` 8.82). Times a raw copy of the four
@@ -242,6 +254,36 @@ client adds to its join request, as a stock client would: a server running
 `worldwide: refused node`. Off by default. The `vanillajoin` scenario of
 `playtest.sh` uses it.
 
+### `rollback_join`
+**Client side: the pause menu's *Enter Game*, from the console.** A client
+nobody drives stays a spectator, so a scenario run unattended never ran the
+join's path (`WORLDWIDE.md` 8.113). It sends the same request as the menu
+(`XD_SPECTATE`, join) for this machine's first player, and only when that
+player is a spectator who has not already asked: the same request for a
+player in the race would make them spectate. Otherwise it sends nothing and
+says why. `playtest.sh <scenario> join` calls it from a generated copy of
+the client scenario, the windows unmoved.
+
+### `rollback_stall [ms] [every]`
+**Client side, for testing: holds this machine's loop**, `ms` milliseconds,
+once at the next tic of a level, or every `every` tics of a level from
+leveltime `every` on (`WORLDWIDE.md` 8.129). The hold is at the end of
+`NetUpdate`, outside any pass: the busy machine that sets off a cascade of
+rebuilds, on demand. Each hold prints a line (`rollback_stall: the loop held
+...`, with the leveltime and the real tic); `rollback_history` counts them.
+`0` stops it; at most 2000 ms. The `wwstall` scenarios of `playtest.sh` run
+`rollback_stall 100 500` from the windows' start.
+
+### `rollback_cascadelog [0|1]`
+**Client side: a dated line for each gap and each rebuild for this
+machine's own input** (`WORLDWIDE.md` 8.129). A gap is a sample made after
+more than one real tic (`rollback_cascade: real tic ..., leveltime ... -- a
+sample after N real tics`); a rebuild line gives the tic, its distance from
+the frontier, the stamps run and applied (and whether either was a repeat),
+and the applied sample against the replayed one ("older by 1", "newer by
+2", "not in the history"). Off by default. `cascade.py` in the notes'
+harness lays these out stall by stall.
+
 ### `rollback_lagcheck` — not a command
 Looked for as a command, it is not one: it is an **automatic print**, edge
 triggered, inside `UpdatePingTable` (`d_clisrv.c`). It emits a line
@@ -256,7 +298,9 @@ the line shows up in the `latest-log.txt` of the machine in question.
 ### `worldwide [On|Off]` — server variable
 **Server side. The one switch of WORLDWIDE mode** (`WORLDWIDE.md` 8.80): the
 compatibility policy says the server decides. A console variable, not a
-debug command, `Off` by default. **In the menus** since `89aba69fb`:
+debug command, **`On` by default** since `WORLDWIDE.md` 9.2 (`Off` before,
+and a config saved by an earlier build keeps that `Off`). **In the menus**
+since `89aba69fb`:
 *Options > Server Options > Advanced... > Network Connection > WORLDWIDE
 Mode*, and the host screen shows `(WORLDWIDE: On/Off)` under
 `(Public: ...)` (`WORLDWIDE.md` 8.113). **Saved** in the config since then;
@@ -285,8 +329,9 @@ A server hosting in WORLDWIDE mode:
 A WORLDWIDE client reads the bit when it joins. Against a server that has
 it, it switches on what the driven `keep` race ran (`WORLDWIDE.md` 8.78):
 `rollback_twoclock 4`, `rollback_cleancmds 1`, `rollback_history 12`,
-`rollback_keepspec 1`, and the corrections applied (`rollback_drift 1`);
-its log says `worldwide: this server runs WORLDWIDE mode`. Against any other
+`rollback_keepspec 1`, the corrections applied (`rollback_drift 1`), and,
+since `8c9dd904e`, `rollback_ontime 1` (`WORLDWIDE.md` 8.133); its log says
+`worldwide: this server runs WORLDWIDE mode`. Against any other
 server it switches all of them off and plays the stock netcode. Leaving the
 server undoes what the join switched on, and nothing else. The switches
 can still be moved by hand after joining, for measuring.
@@ -353,7 +398,11 @@ itself.
     against the kart's speed and the time between the two frames -- even,
     short (under half), long (over one and a half) or backwards -- split by
     whether the frame carried a pass. Counted with prediction on or off, so a
-    race without it is the control;
+    race without it is the control. Since 2026-10-01 (`WORLDWIDE.md` 8.121),
+    two lines more: **the other karts** as drawn, the same classes for every
+    kart but this machine's, one line for the bots and one for the people.
+    A kart is followed by its slot, so a load that gives it a new body is
+    still measured;
   - `rollback_hits` — of the passes that confirmed tics the speculation had
     run, how many had every input right, the first wrong tic, whose input
     was wrong (this machine, bots, people) and in which ticcmd fields. ⚠ It
@@ -618,6 +667,71 @@ anything. Isolates a single question: does the plain round trip through the
 archive, on its own, inside the real game loop, suffice to make the server
 react — with none of the speculation's own noise.
 
+### `rollback_botsashuman [0|1]`
+**Client side: the bots guessed as remote people are**, a stand-in for a
+second human (`WORLDWIDE.md` 8.120, ROADMAP item 2(a)). The speculation
+guesses a remote person by repeating their last input, but computes a bot's
+from this machine's world (`K_BuildBotTiccmd`), so a race of bots shows
+none of the rebuilds a person brings. With `1`, each bot is guessed like a
+person: its last input, repeated. Only what the speculation guesses
+changes; the server still sends every bot's real input, and a human who
+finished the race and drives on bot movement is still computed. Off by
+default. `rollback_drift`'s grid line says when it is on. The `wwbots`
+scenario of `playtest.sh` turns it on (run it with `join`).
+
+### `rollback_ontime [0|1]`
+**Client side: a long pass still sends a sample each real tic**
+(`WORLDWIDE.md` 8.130 to 8.132). A client makes and sends one sample a
+`NetUpdate`, at the top of a pass; a pass that runs past a tic -- a rebuild
+re-runs about eight -- left the tics it ran over without one, the server's
+filing lost its step, the replay of this machine's input ran one off, and
+the rebuilds that followed left the next gap: the cascade of 8.126. With
+`1`:
+- between two tics a pass runs, confirmed or speculated, a sample is made
+  from the controls as they stand and sent as soon as a real tic has gone
+  by, on the live clock (`I_GetTimeNow`; `I_GetTime` stands still during a
+  pass), without reading the network;
+- a sample made in a speculation is on the frontier's clock, and the
+  applied sample's age in the history moves on by one;
+- **no sample's stamp is the same as the one before**: a stamp at or up to
+  seven tics behind the one before is moved on to the one after it (twins
+  to the anchor made a normal race go over the gate, 8.131).
+
+`rollback_history` reports the samples made between two tics of a pass and
+the stamps moved on. **Off by default; WORLDWIDE mode turns it on at the
+join** (since `8c9dd904e`, 8.133) and off on leaving. Measured on: seven
+stalls of 100 ms leave no chain (8.131), and the race to its end on
+Opulence at fifteen karts holds Phase B's gate in every window (8.132,
+8.133). The `wwstall` control turns it off after the join.
+
+### `rollback_rebuildbudget [ms]`
+**Client side: a budget on a rebuild's cost** (`WORLDWIDE.md` 8.134). A
+rebuild re-runs about eight tics, a hitch the size of eight of a machine's
+tics. With a budget, a speculation loop stops once it has run this many
+milliseconds -- at least one tic -- and leaves the tics it did not run to
+the passes after. `0`, the default: no budget. Measured on a machine made 4
+ms a tic slower: 20 ms took the frames over 50 ms from 45 to 15, for 187
+moves of the drawn world back against 8. Off until eyes on a really smaller
+machine say which is better (ROADMAP item 13).
+
+### `rollback_slowtic [us]`
+**Testing only, client side: a smaller machine on this one** (`WORLDWIDE.md`
+8.134). Every tic the client runs, confirmed or speculated, is made this
+many microseconds longer, by a busy wait. Up to 50000; `0`, the default,
+off. The `wwslow` and `wwslowbudget` scenarios use 4000.
+
+### `rollback_soundreset [0|1]`
+**Client side: the sound horizon taken to the server's clock at a join**
+(`WORLDWIDE.md` 8.141). With the speculation kept, a level's tic sounds
+the first time this machine runs it; the tics below the horizon are held
+back as reruns. A client takes the server's clock at its join, and a
+horizon left past it by this machine's earlier tics -- offline, on another
+server -- silenced the whole level but its music. `1`, the default: the
+horizon goes to the server's clock at the join, with a console line when it
+was ahead. `0` leaves it where it was, for a control (`soundjoin.sh
+control`). The command's line, and `rollback_keepspec`'s report, count a
+level's sounds, played and held back.
+
 ### `rollback_lag [tics]`
 **Testing only.** Delays every packet received from a peer by this many tics.
 A local loopback has no latency at all, so without this command a client never
@@ -705,6 +819,25 @@ depth would cost against a tic's budget — based on the times measured by
 nothing has been measured yet.
 
 ---
+
+## Not netcode: the 2.4 builds' own settings
+
+On `worldwide-2.4` only, all saved in the config, none sent to a stock
+server (`WORLDWIDE.md` §9):
+
+- `voicelanguage <name>`: the dub this machine hears when a pilot chose
+  none -- bots, replays -- also *Options > Sound > Voice Language*.
+  `Default`, the game's voices, by default.
+- `pilotdubs`: each profile's dub for each character, written by
+  character select (`GIBAX/sonic=Japanese,...`). Online, a pilot's choice
+  reaches the others in WORLDWIDE mode only.
+- `dublist`: the dubs loaded, `pilotdubs`, and what the other pilots'
+  machines said.
+- `split2p Horizontal|Vertical`: two players one above the other, or side
+  by side; *Options > HUD > 2P Splitscreen*.
+- `profilegyro`: each profile's steering by tilting the controller
+  (`GIBAX=1:30`, the mode and the range in degrees), written by
+  *Profiles > Accessibility*, "This Profile only".
 
 ## Usage cheat sheet
 

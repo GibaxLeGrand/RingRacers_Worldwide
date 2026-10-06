@@ -13,7 +13,7 @@ rest lives in the private notes only -- `README.md`, the entry point (working
 rules, decisions, environment); `ROLLBACK.md`, the closed journal from before
 the pivot; and `AUDIT_20260909.md`, the comparison with SRB2 NetPlus and Odamex.
 
-## Current state (2026-09-30, evening) -- read this first
+## Current state (2026-10-05) -- read this first
 
 This block is the only part of this file that is rewritten to stay current.
 Everything after it is a dated journal: when a later section overturns an
@@ -38,30 +38,32 @@ chat lines are heard the first time this machine runs it, never again on a
 rebuild (8.73), and the rule holds inside a tic only, so the menus are heard
 (8.108, 8.109).
 
-**Switches.** One server switch, `worldwide On` (8.80), advertises the mode,
-sends light corrections in place of resends and refuses clients that do not
-declare themselves WORLDWIDE; a client that joins such a server switches on
-`rollback_twoclock 4`, `rollback_history 12`, `rollback_keepspec` and applied
-corrections, and puts its settings back when it leaves (8.80; the join and a
-race run end to end in 8.97, the leave never checked).
+**Switches.** One server switch, `worldwide On` (8.80), on by default since
+9.2, advertises the mode, sends light corrections in place of resends and
+refuses clients that do not declare themselves WORLDWIDE; a client that joins
+such a server switches on `rollback_twoclock 4`, `rollback_history 12`,
+`rollback_keepspec` and applied corrections, and puts its settings back when
+it leaves (8.80; the join and a race run end to end in 8.97, the leave never
+checked).
 Outside that mode every piece is off by default except `rollback_cleancmds`
-(8.36) and `rollback_histreal` (8.89). Off by default and waiting:
-`rollback_rawsnap` (open item 7), `rollback_keepearly` (8.99, 8.100),
-`rollback_smooth` (never measured).
+(8.36), `rollback_histreal` (8.89) and B2's `rollback_rawsnap`, on by default
+since `c24d8d205` (8.125). Off by default and waiting: `rollback_keepearly`
+(8.99, 8.100), `rollback_smooth` (never measured), `rollback_rebuildbudget`
+(8.134). WORLDWIDE mode also turns on `rollback_ontime` (8.133).
 
-**Builds.** Installed on the measuring machine: `093a79aeb` (sha256
-`ce744500…`, CI run 36833865387), with the private notes' `titre/worldwide.pk3`. It
-carries:
-- the fix for the join's `MT_PLAYER` alerts (`0412e7760`, 8.112), **not yet
-  measured** (8.113);
-- the `WORLDWIDE Mode` menu entry, saved, and its state on the host screen
-  (`89aba69fb`, seen in the game in 8.113);
-- the title's second pass: flash at 0.6 s, and space behind the globe,
-  over the level the stock title runs behind its art (8.113).
-
-The previous measuring build is kept as `.bak_04db0cf`, and `89aba69fb` and
-`2209b7130` as `.bak_89aba69` and `.bak_2209b71`. Gibax's own release-config build of `04db0cf` sits beside
-them as `ringracers_release_rollback_netcode.exe`.
+**Builds** (2026-10-05). On the measuring machine:
+`ringracers_rollback-netcode.exe` is `526de71e6` (sha256 `7be7ac85…`, 8.136),
+the last build the harness ran; `ringracers_worldwide-2.4-release.exe` is the
+release build of `1963b654b` (sha256 `c4102c29…`, 8.141), the WORLDWIDE
+server of the LAN races from a Steam Machine, has since been replaced by
+the release build of `e74f03d3e` (sha256 `57fb3253…`): `worldwide-2.4`
+with the alpha's features merged, each tried by Gibax first -- WORLDWIDE
+mode on by default (9.2), dubs per pilot (9.5, 9.8), two players side by
+side (9.6, 9.11), photo mode (9.9), the gyroscope (9.10). The tags' fix of
+9.11 came after it (`46da12bf2`). The Linux builds of `worldwide-2.4` are
+the CI's tarball and Flatpak (8.138, 8.140), those of `e74f03d3e` in the
+measuring machine's `linux-builds`. Older builds are kept as `.bak_<sha>`; the dedicated server's dump of
+8.121 was read in 8.128.
 
 **Measured and holding.**
 
@@ -80,74 +82,39 @@ them as `ringracers_release_rollback_netcode.exe`.
 | a save / a restore, Opulence | network archive: 2.5 to 2.9 ms / about 6.5 ms; **raw: 1.1 ms / 1.9 ms** (8.95) |
 | raw snapshots, exactness | Opulence soaks 0 of 278 and 0 of 379 failures; the archive identical after 1668 of 1668 and 1128 of 1137 restores (8.94) |
 | WORLDWIDE mode | the declared client joins and switches on, an undeclared one is refused, a race runs to its end at 0.000 with no full-state resend, and a predicting client records no replay (8.97) |
-| sounds, WORLDWIDE mode | a tic's sounds heard once, the first time this machine runs it (8.73); the menus and the title card heard again since the rule holds inside a tic only (8.109) |
+| sounds, WORLDWIDE mode | a tic's sounds heard once, the first time this machine runs it (8.73); the menus and the title card heard again since the rule holds inside a tic only (8.109); after a join, from the server's clock, not this machine's earlier one -- heard on a Steam Machine (8.141) |
 | listen-server host's input delay | 170-200 ms, now **0** (8.27) |
 | restore, relink step | 4.7 ms before the index, **under 0.1 ms** after (8.34) |
 
-**Open, in priority order** -- the audit of 2026-09-30 of what an alpha still
-needs; `ROADMAP.md`, *Next, in order*, has the order of work and the proposed
-scope.
+**Open, in ROADMAP's numbers** (2026-10-05) -- `ROADMAP.md`, *Next, in
+order*, has the order of work. Closed since the audit of 2026-09-30: 1, the
+join's `MT_PLAYER` alerts (8.118); 4, the release base and its
+compatibility cases (8.135, 8.139); 6, sixteen karts -- **Phase B
+validated** (8.137); **9, R1's gaps -- negligible since
+`rollback_ontime`, closed without code (8.144)**; 12, the join's chat line
+(8.136); 19, the sound after a join (8.141).
 
-1. **The `MT_PLAYER` alerts at the join: explained (8.112).**
-   - On the client, 1 to 18 kart bodies a race went to -1 (8.97, 8.110):
-     the joiner's old body, a bot removed to make room, and now and then
-     one in a race.
-   - The load of the network archive claims each body for `players[].mo`,
-     then its caller's `P_AddThinker` sets the count back to 0.
-   - Every body a rebuild or the join's load brings back is one reference
-     short, which can end in a use after free.
-   - Fix pushed as `0412e7760`, installed, **not yet measured**: a client
-     nobody drives never joins the race, so the bench cannot reach the path
-     (8.113). It needs a driven pair with a control in the same session, or
-     a console command that joins (8.113).
-2. **A second human on two machines**: never run, the largest unknown. A
-   remote human is guessed by repeating their last input, which may multiply
-   rebuilds and make their kart shake. A cheap stand-in, not written: a
-   switch that guesses the bots as if they were remote humans. Then a person
-   driving on the host.
-3. **A real network**: `rollback_lag` only delays, with no jitter and no
-   loss. R1 is exact only in that case; R2 (samples filed by sequence number)
-   is the remedy for a real one, and the harness needs jitter first.
-4. **Vanilla compatibility**, against the policy below: a release base -- CI
-   builds a release-config exe, but the branch still sits on upstream's
-   development line (8.30); a WORLDWIDE client on a real vanilla server,
-   which needs that base; a stock client refused by a WORLDWIDE server (so
-   far `rollback_vanillajoin` stands in for one); the leave. The savegame
-   misread of 8.28 is fixed in code (8.29), never checked against a stock
-   build.
-5. **Sixteen karts** late in a race, Phase B's gate: measured up to nine. A
-   speculated tic on Opulence is 3.4 to 4 ms, 83% of it the map's
-   decorations (8.66, 8.69) -- the tic itself is now most of a kept pass
-   (8.95).
-6. **The history's cap** past about 340 ms of round trip (8.107): raise it
-   (up to 34) or set it from the round trip; a rebuild then goes deeper.
-7. **B2, before `rollback_rawsnap` goes on by default**: the players-block
-   difference after 9 of 1137 raw restores on Opulence (8.90, 8.94), not
-   explained; the double claim, one kart rebuilt at 67 references against 66
-   live (8.94); `floorspriteslope`, which after a raw restore may point at a
-   freed plane (only Lua creates one, 8.93); the level interpolators, which a
-   raw restore does not rebuild (8.88, drawing only).
-8. **R1's two gaps** (⚠ under 8.89): the depth is taken from the samples in
-   flight, not from the tics R1 gives them, so the newest input may reach the
-   drawn world a tic or two late; and the instrument counts some replayed
-   tics as guessed. The measuring machine's local `wip/histgaps` is a
-   reference for both.
-9. **Never run under prediction**: Battle, Grand Prix, Encore; items used on
-   purpose; a driven race on any map but Skyscraper Leaps and Opulence
-   (soaks ran on seven maps, 8.51-8.62, 8.94).
-10. **Small, seen, not blocking**: "`*Guest entered the game.`" printed 1 to 5
-    times a join on the client, 17 at 15 tics -- each copy in a new world
-    where the join, driven by this machine's input, landed later, each
-    rebuild moving it (8.109, 8.112). The drawn kart's extra long steps (above). `rollback_keepearly`,
-    off, to remove or keep. A predicting client records no replay (8.96).
-11. **Older, left open**: the Garden Top ride (Carnival Night resim, 2 of 347,
-    8.56); Coastal Temple's 6 resim failures, not analysed (8.57);
-    `chainorder_block` (8.59); an object removed in a speculated tic stops its
-    sounds (8.73); the cameras put back by every restore, a lead for the
-    camera's stutter on rebuilds, not checked (8.78); the one divergence in
-    2000 history tics (8.46), not seen since (8.50); the network load not
-    counting a delayed executor's caller (8.88); the relabel histogram's `+2`
-    cluster, probably harmless (8.27, 8.44).
+**This file's §8 is closed** (2026-10-05), the netcode's journal to Phase B
+validated and the builds of the alpha's base; **§9** is the journal from
+there, toward the public alpha.
+
+- **8. Breadth**: items used on purpose and more maps; Robotnik Coaster and
+  Crimson Core driven over a LAN (8.141). Battle, Grand Prix and Encore out
+  of the alpha unless run.
+
+- **2. A second human**: one person on two machines has raced over a LAN
+  (8.141); two people, then over the Internet, then one driving on the
+  host, are left.
+- **3. A real network in the harness**: `rollback_lag` only delays, with no
+  jitter and no loss.
+- **5. The alpha kit**, with Linux built (8.138) and the Flatpak on a Steam
+  Deck (8.143); **14 to 18**, what announces the public alpha.
+- **7. The history's cap** past about 340 ms of round trip (8.107).
+- **10 and 11**: the small things seen, and the older ones left open
+  (ROADMAP).
+- **13. Smaller machines**: C measured, off by default; eyes on real ones.
+- **20 to 22**: the alpha's features -- dubs, gyro steering, photo mode --
+  on branches of their own until tried and merged.
 
 **Compatibility policy, decided by Gibax on 2026-09-21: the server decides.** A
 server in WORLDWIDE mode runs client-side prediction and accepts WORLDWIDE
@@ -6789,3 +6756,2111 @@ so **nothing was driven**. He approved each launch.
     the same session;
   - a console command that sends the pause menu's *Enter Game*, called by
     the client scenarios, so that a race nobody drives joins too.
+
+### 8.114 The branch ported onto the 2.4 release: read, not built
+
+Gibax's ask: rebase the whole work onto the 2.4 release, on another branch,
+to see how it goes, so that at worst this exe can be offered with the 2.4
+game. Nothing was launched.
+
+- **What the branch sits on.** Not `05cca02c9` as 8.30 read it: the August
+  merges in its history are Kart Krew's. Its upstream base is `4bad15a40`,
+  upstream master on 2026-08-31 and still its head. That is **137 commits
+  past `v2.4`** (`7f895c9a7`, the last release; no tag after it). Ours on
+  top: 364 commits, 39 files outside `docs/`, +14369/-271 lines, most of it
+  `k_rollback.c` (9077) and `p_saveg.cpp` (+2217). Since 2.4, upstream
+  touched 32 of those 39 files -- often only for type names.
+- **The port.** A local branch `worldwide-2.4` from `v2.4`, in a separate
+  worktree. The whole branch was squashed and applied by a three-way merge
+  (`36a986f6f`). 15 files conflicted, in 37 regions:
+  - 30 differed only by the type names upstream changed after 2.4
+    (`INT32`/`UINT8`/`boolean` to `int32_t`/`uint8_t`/`dboolean`): our side
+    taken.
+  - 2 in `d_clisrv.c` differed by `SHORT`, renamed `LSBF_SHORT` after 2.4:
+    our side, with `SHORT`.
+  - 5 in `core/memory` and `z_zone` are the raw snapshots' (B2). They rely
+    on the pool allocator's count of blocks in use, which came upstream
+    after 2.4 (`d8b4e8a39`, memory statistics). Our side taken, with that
+    counter's member and its initialisation.
+  - `doomtype.h`: `dboolean` defined as `boolean`. Windows' `boolean` there
+    is `BOOL`, so a macro, not a typedef.
+- **Checked.** Every touched file, with and without PARANOIA: no error
+  except upstream's own, in lines the port does not touch, under a check
+  configuration without CURL, OpenGL or the ACSVM path. Not built: the CI's
+  prebuilt SDK and toolchain are the development line's, and 2.4's CMake
+  differs.
+- **The wire, read against stock.** Since 8.28 the network savegame must
+  keep the stock grammar. Of the 88 archive reads and writes the branch adds
+  to `p_saveg.cpp`, each is one of three kinds:
+  - gated to local snapshots (`localsnapshot`/`localrestore`, in the code
+    or at the top of a helper);
+  - in the raw snapshot path, local by nature;
+  - the same bytes on the wire. `followerskin` is signed now; a polyobject's
+    flags fall back to their spawn values; `onconveyor` is now read where
+    every writer puts it, 2.4's included, which upstream's reader did not.
+
+  So a WORLDWIDE client should read a stock 2.4 server's join savegame. Not
+  run.
+- **A stock 2.4 server is at hand.** The game folder's `ringracers.exe` is
+  exactly `v2.4` (it carries the tag's commit).
+- **Next.** Push `worldwide-2.4` (it touches `src/`: asked first) and make
+  CI build it. Then run the bench on it as on the development line. Then
+  run the compatibility cases against that stock exe: a WORLDWIDE client on
+  a stock server, a stock client refused, a WORLDWIDE build hosting in
+  vanilla mode, the leave.
+
+### 8.115 `worldwide-2.4` builds
+
+Pushed on Gibax's go-ahead, with the CI adjusted for the branch. Nothing was
+launched.
+
+- **The CI follows 2.4's dependencies.** 2.4 finds SDL2
+  (`find_package(SDL2 CONFIG)`). Upstream moved to SDL3 after 2.4, and so had
+  this workflow, its Alpine image and Kart Krew's prebuilt Windows SDK. The
+  first run failed at configure in all three jobs. On this branch only:
+  - Linux on Alpine 3.20, which still ships the real SDL2;
+  - Windows with the same llvm-mingw toolchain and SDK, plus SDL2 2.30.9
+    built from its repository, static;
+  - WebM recording off, as 2.4's own CI built it.
+- **Windows then failed after linking.** 2.4 copies the executable's DLLs
+  next to it after the link. A fully static build has none, and
+  `cmake -E copy_if_different` refuses a destination alone. Upstream
+  dropped that step after 2.4. `25a580e96` adds
+  `SRB2_CONFIG_COPY_RUNTIME_DLLS`, on by default, and the CI turns it off.
+- **Run 36839857285 (`d822760ec`): green in all three jobs.** Linux (GCC)
+  compiles and links the whole port. The Windows artefacts are
+  `ringracers-win64-d822760ec…` (dev) and `ringracers-win64-release-…`
+  (release-config, so version 2.4).
+- **Next** is the same as 8.114's: the bench on this build, then the
+  compatibility cases against the stock 2.4 exe.
+
+### 8.116 The second ring, on the title and in the logo
+
+Not netcode. Gibax drew a second ring (`ring_worldwide_v2.png`, in the code
+repo's ignored `etc/`) and asked for it on the title and in
+`docs/RRW_logo.png`. Nothing was launched.
+
+- **What the picture is, measured.** It is his empty ring with three pieces
+  of pixel art over it: the WORLDWIDE lettering and a chequered flag,
+  mirrored on the left. Each piece is enlarged exactly 9 times: every run
+  of colour is a multiple of 9, 116x17 and 14x14 pixels at the game's size.
+  Rebuilt from the empty ring and the pieces, the picture is the same:
+  the same opaque pixels, a mean difference of 0.18, the rest on single
+  source columns at the flags' edges, a ninth of a game pixel. The empty
+  ring itself is smoothed, on no grid (52,000 colours).
+- **The title.** The notes' `titre/build_pk3.py` has a new default,
+  `--ring-method parts`. It finds the pieces in the picture, brings the
+  empty ring down on the lettering's grid (each game pixel the majority
+  colour of its 9x9 cell, as 8.113's ring), then pastes the pieces pixel for
+  pixel. The ring is 236x58. Gibax's flags sit 3.67 and 3.44 game pixels
+  from the lettering; both are put at 4, symmetric. Its gold and its
+  lettering share one centre, put at 152.5: between the first ring's
+  lettering (152) and gold (153), measured on that ring's pk3. Its bottom
+  is where the first ring's gold ended, row 190. Installed in the game
+  folder (sha256 `d95906fe…`; the first ring's pk3 kept as
+  `.bak_1001b`).
+- **The logo.** Gibax's logo turned out to be three layers, each found in
+  it with no difference over every pixel of theirs left visible:
+  - `Worldwide_Earth.png` at 130x131, nearest neighbour, at (53, 0);
+  - the game's own logo (`KTSBUMPR1`) at 210x78, nearest neighbour, at
+    (15, 16);
+  - the ring, its far half under the game's logo and its near half over it.
+
+  The notes' `logo/build_logo.py` rebuilds it around the title's ring, at
+  the game's size. Its witness rebuilds it with the first ring: identical
+  over rows 0 to 63, and different only within that ring (rows 64 to 114),
+  the layer replaced. The new ring is centred where the first was, on 119,
+  and ends on the same row, 114.
+- **Then, the same evening, Gibax asked for everything a few pixels lower
+  and space a little faster.** Neither needs a new exe: `KTSWWSET`
+  carries the lifts and the speeds. `build_pk3.py --drop 4`, the new
+  default, lowers everything 4 px from the flash on. The logo and the
+  characters (Tails, his tails, Eggman, the lightning) rise 20 and 8
+  instead of 24 and 12. The globe and the ring go 4 px down in the pk3,
+  with the ring's bottom on row 194. f_finale.c clamps the lifts at 0, so
+  the game cannot draw them below their stock place: the script refuses a
+  larger drop. Space scrolls at -2 instead of -1, twice as fast. Witnesses:
+  `--drop 0 --sky-x -1` rebuilds the installed pk3, and `--ring-method logo`
+  with those rebuilds the first ring's, both with identical contents. Built
+  (sha256 `171b240b…`), and installed once the game was closed.
+
+### 8.117 The system's keyboard layout, tested; the 2.4 install is 32-bit
+
+Not netcode. The branches `azerty` (on `rollback-netcode`, SDL3) and
+`azerty-2.4` (on `worldwide-2.4`, SDL2) type with the system's keyboard
+layout, as SRB2 2.2.15 does: SDL's text input, on only while the console,
+the chat or a menu text box is open, so the game's controls do not change.
+Only ASCII is kept, since the game's fonts stop at `~`. The cvar
+`textinput` turns it off ("Use System Keyboard Layout", in the HUD's online
+options). Both built green on all three jobs (runs 36841739858 and
+36841743401). `worldwide-2.4` was fast-forwarded to `azerty-2.4`
+(`0a9877dd1`, run 36861427929 green).
+
+- **The first launch stopped at start-up**, before any window.
+  `ringracers_azerty-2.4.exe` (`b53ffebb…`) is 64-bit. The game folder's
+  stock 2.4 is 32-bit (x86): its `ringracers.exe`, `exchndl.dll` and
+  `mgwhelp.dll`. A 64-bit process cannot load them: `LoadLibraryA` fails
+  with error 193, measured by loading them from that folder. 2.4 makes that
+  fatal (`I_Error` in `init_exchndl`, then a SIGSEGV on the way out). After
+  2.4, upstream only loads them in 32-bit MinGW builds
+  (`__MINGW32__ && !__MINGW64__`, `src/sdl/i_main.cpp`), which is why the
+  `rollback-netcode` builds never hit it. A second, clean copy of 2.4 had
+  the same 32-bit files.
+- **Relaunched with `-noexchndl`**, which skips that load and costs only the
+  `.rpt` crash reports: it runs. **Gibax: AZERTY works in the console.**
+  The menu text boxes, the chat and the cvar turned off are not tried yet.
+- **Then, on Gibax's go-ahead** (both touch `src/`):
+  - `azerty` merged into `rollback-netcode` (`1fcef131b`). It touches 12
+    files of `src/`, and `rollback-netcode` had only moved in `docs/` since
+    they split. CI run 36901738576: green, all three jobs. Not installed.
+  - `worldwide-2.4` takes upstream's guard (`68f5eb582`). Only 32-bit MinGW
+    loads the crash handler, and only there does the crash box ask for its
+    `.rpt`. Upstream's commit (`c85a7e83b`) also turns on a DbgHelp
+    handler for 64-bit through cpptrace, which 2.4's CI does not have: not
+    taken. CI run 36901699571: green. The dev exe no longer holds the
+    "exchndl.dll or mgwhelp.dll is missing" message, which `0a9877dd1`'s
+    did. It holds its revision (`68f5eb5`) and the keyboard option.
+    Installed as `ringracers_worldwide-2.4.exe` (`2c53237e…`) and launched
+    in the same stock 2.4 folder, **without `-noexchndl`: it starts**, its
+    window open and responding, and Gibax confirms.
+
+### 8.118 The `MT_PLAYER` fix measured at the join, against its control
+
+The fix of 8.112 (`0412e7760`), measured as 8.113 asked: driven by Gibax,
+with the build before it as the control in the same session. Both runs:
+`playtest.sh wwwindows dedicated`, 6 tics of lag, RR_SkyscraperLeaps,
+driven by Gibax ("oui j'ai piloté"), no crash. Prediction written and
+pushed before the first race (notes `aff5b50`): 0 bodies below zero and 0
+`MT_PLAYER` alerts with the fix, worth something only if the join happens
+and the control shows at least one.
+
+- **The fix**: `093a79aeb` (sha256 `ce744500…`), which also carries
+  `04db0cf`'s instrument. The code repository's HEAD is further on, but
+  only by `azerty`'s 12 files (text input), so the harness's "not HEAD"
+  warning does not apply. At 19:59
+  (`playlog_wwwindows_20261001-195908_093a79a.txt`):
+  - the client entered the game, on the waiting map (RR_TESTRUN), around
+    tic 107;
+  - **0 PARANOIA lines**, client and server;
+  - **0 bodies below zero**, over 33 loads of the archive.
+- **The control**: `04db0cf` (`65be9958…`), in place of the measuring exe
+  for that run only, then put back (`ce744500…` checked in both folders).
+  At 20:03 (`playlog_wwwindows_20261001-200333_04db0cf.txt`):
+  - the client entered the game, around tic 87;
+  - **2 bodies below zero** at the join, over the same 33 loads, with 4
+    PARANOIA lines on the client and none on the server;
+  - the same two as 8.112's: a bot's body removed to make room for the
+    joiner (`d_clisrv.c:2683`), and the joiner's spectator body, let go at
+    the join (`p_user.c:3840`). Both were first seen in a load, removed in
+    a confirmed tic, and let go of a tic later at `p_mobj.c:10831` by their
+    last holder (`MT_AMPAURA`, `MT_TRIPWIREAPPROACH`).
+- **What it shows.** At the join, the fix holds: the same path, run in both
+  races, leaves no count below zero with the fix, and two without it.
+- **What it does not show.** 8.112's third body came in the middle of a
+  race, removed in a speculated tic (tic 1337). Neither race reached that
+  case. On Skyscraper Leaps, both rebuilt only before the first window,
+  then ran some 3,000 tics with no rebuild at all. The fix covers every
+  load of the archive, so that case should be gone too, but it has not
+  been seen.
+
+### 8.119 `rollback_join`: a client scenario that enters the race by itself
+
+Written on Gibax's go-ahead ("écris la commande de jonction, pousse le"), so
+that the join's path (8.112, 8.118) and anything else a racing client does
+can be run with nobody driving.
+
+- **What the menu does.** *Enter Game* in the pause menu sends `XD_SPECTATE`
+  with the player and "join" (`M_HandleSpectateToggle`,
+  `menus/transient/pause-game.c`). It sends it only for a spectator who has
+  not already asked: the server's `Got_Spectate` first makes any player
+  who is not a spectator spectate, then sets `PF_WANTSTOJOIN`.
+- **`rollback_join`** (`k_rollback.c`) sends the same request for this
+  machine's first player, under the same conditions as the menu: in a
+  game, a spectator, not already asking, a gametype with spectators, team
+  changes allowed. Otherwise it sends nothing and prints why. It changes
+  nothing else, and nothing when it is not called.
+- **`playtest.sh <scenario> join`** (notes, `harnais/`) writes a copy of the
+  client scenario that calls it twice after its `rollback_lag` line (after
+  105 tics, then 70 more), and takes those 175 tics off the next `wait`, so
+  the windows fall where they did. The logs carry `_join`. The first `wait`
+  after `rollback_lag` is at least 400 tics in every client scenario; only
+  `vanillajoin`, which has no `rollback_lag` and whose join is refused, gets
+  no call.
+- Checked before pushing: the syntax, with the local gcc (`-fsyntax-only`,
+  which caught an error put in on purpose); the generated
+  copy of `wwwindows`, whose waits still add up to 1600.
+- **Built and run.** CI run 36904726784 green (`656ab3c73`, dev sha256
+  `b87157f5…`, which also carries the fix and `azerty`), installed on
+  Gibax's go-ahead with `093a79aeb` kept as `.bak_093a79a`.
+  `playtest.sh wwwindows dedicated join`, prediction pushed before (notes
+  `143b95d`):
+  - **21:15, not a test of the command.** Gibax joined by hand with his
+    controller ("j'ai juste rejoins", "pas joué"). The client entered at tic
+    60, before the first call. Both calls answered "player 9 is already in
+    the game -- nothing sent", so the guard held, but nothing was sent.
+  - **21:21, hands off** ("je touche à rien"). The first call sent
+    ("player 9 asked to join the game"), and the second found the player
+    already in. The server printed "*Guest entered the game.". On the race
+    map the grid had 7 bots and the local kart, where the morning's
+    spectating runs had 8: the bot removed to make room for a joiner
+    (`d_clisrv.c:2683`), as in the evening's three runs joined by hand.
+    **So `rollback_join` makes an unattended client race.** 0 bodies below
+    zero over 93 loads of the archive, 0 PARANOIA lines, client and server:
+    a third join with the fix, and a third 0.
+- **The client printed no "entered the game" line**, so the harness took it
+  for a spectator. Joined by hand, the line comes 2 or 3 times, each from a
+  speculated tic (item 10 of the ROADMAP). Joined through the server
+  command, it never comes, presumably because the join then happens in a
+  confirmed tic, whose chat lines are not printed: not read yet. Since
+  then, `playtest.sh` takes the server's log as the proof when the client's
+  is silent: the client log gives the joiner's name, and the server's log
+  must say that name entered the game. Checked on three past logs: this
+  run, a run joined by hand, and a morning run that spectated, which it
+  still flags.
+- **Noted, not read.** A kart that has joined but is not driven made far
+  more rebuilds than Gibax's two driven races of the evening. On Skyscraper
+  Leaps, for its own input: 125 when joined by hand (21:15), 31 when joined
+  by the command (21:21), against 4 to 5 driven. For the bots' inputs: 54
+  and 24, against 0. Loads of the archive: 214 and 93, against 33.
+
+### 8.120 `rollback_botsashuman`: the bots guessed as remote people
+
+ROADMAP item 2(a), written on Gibax's go-ahead ("écris le mode bots prédits,
+pousse-le"). Nobody else can drive on this machine. The bench has bots, and
+the speculation never guesses a bot.
+
+- **How each kart is guessed today** (`K_RollbackPredictInputs`). This
+  machine's own input is not a guess: it is what is held now. A remote
+  person's is their last input, repeated, with the received flag cleared. A
+  bot's is computed from this machine's world by `K_BuildBotTiccmd`, which
+  draws no random number. That was chosen because repeating a bot's input
+  made every predicted tic wrong on a grid of bots. So a race of bots shows
+  none of the rebuilds, nor the shaking, that a person's changes of input
+  would bring, and the largest unknown (item 2) cannot be looked at
+  unattended.
+- **`rollback_botsashuman 1`** sends the bots, and only them, down the
+  person's path: their last input, repeated. A human who finished the race
+  and drives on bot movement keeps the computed one. Only the guess
+  changes: the server sends every bot's real input as before, the
+  confirmed world is the same, and the rebuilds count under "bots" as they
+  did. `rollback_drift`'s grid line says when it is on.
+- **The scenario `wwbots`** (notes, `harnais/`) is `wwwindows` with the
+  switch on, and nothing else changed. Run it with `join`, and with
+  `wwwindows join` as its control in the same session:
+  `playtest.sh wwbots dedicated join`.
+- **What to expect.** A bot recomputes its angle and its confirmations
+  every tic, so far more wrong guesses than a person who holds a button:
+  an upper bound, not a person's figure. The point is to see how the
+  rebuilds and the drawn karts behave when the guesses are wrong often.
+  The prediction proper is written before the first run.
+- Checked before pushing: the syntax, with the local gcc, which caught an
+  error put in on purpose; the scenario differs from `wwwindows` by the
+  one line.
+- **Built and run.** CI run 36924532419 green (`2c48c8105`, dev sha256
+  `51f4deb7…`), installed on Gibax's go-ahead ("oui installe et lance les
+  deux"), `656ab3c` kept as `.bak_656ab3c`. Nobody drove; the client joined
+  through `rollback_join` in both (the server's log says so). Prediction
+  pushed before (notes `942322c`). On Skyscraper Leaps, at 22:59 and
+  23:01; the first four rows are the race phase, the rest count from the
+  join:
+
+  | | `wwbots join` | `wwwindows join`, the control |
+  |---|---|---|
+  | passes | 3787 | 3792 |
+  | kept | 430 (11%) | 3786 (99.8%) |
+  | rebuilt for a bot's input | 3351 | 0 |
+  | rebuilt for this machine's input | 4 | 4 |
+  | loads of the archive | 3384 | 30 |
+  | bots' wrong inputs on the first wrong tic | 22056 | 0 |
+  | the first wrong tic is the frontier's | 3377 of 3378 | 24 of 24 |
+  | a pass | 7999 us, 28% of a tic | 1120 us, 4% |
+  | frames drawn | 13083 | 18856 |
+  | frames 16.7 to 28.6 ms apart | 3215 | 25 |
+  | loop iterations past a tic, the next frame skipped | 16 | 0 |
+  | bodies below zero, PARANOIA lines | 0, 0 | 0, 0 |
+
+  The grid line said "the bots guessed as people" in `wwbots` only.
+- **The prediction held**: over a thousand rebuilds for the bots (3351),
+  under half the passes kept (11%), over a thousand loads (3384), passes
+  dearer. The switch acts, and only on the bots: this machine's own input
+  rebuilt 4 times in both.
+- **What it says, as an upper bound.** With seven bots guessed by
+  repetition, almost every pass rebuilds, always from the frontier. A pass
+  then costs 8 ms at eight karts, seven times the control's. About 30%
+  fewer frames are drawn, many of them over 16.7 ms apart, and 16 times the
+  loop ran past a tic. A person holds a button for several tics where a bot
+  changes its angle every tic, so a real second human should sit far below
+  this. The cost of always rebuilding is still worth knowing for Phase B:
+  28% of a tic at eight karts, against the 30% the gate allows at sixteen.
+- **What it does not say.** The shaking: `rollback_frames` measures the
+  local kart and the view, and the local kart never moved (0 counted in
+  both races). How the remote karts are drawn, the part a second human
+  would see, has no instrument yet. Next: such an instrument, or
+  `wwbots` driven by Gibax, looking at the bots.
+
+### 8.121 The other karts as drawn; races of up to sixteen karts
+
+Written on Gibax's go-ahead ("écris l'instrument pour les karts distants,
+pousse-le"), after 8.120: `rollback_frames` measured only the local kart and
+the view, and the local kart is never a guess, so nothing measured how a
+wrong guess is drawn. Gibax also asked whether sixteen karts could be run.
+
+- **`rollback_frames` gains two lines**, "the other karts as drawn", one for
+  the bots and one for the people. Every drawn frame, each kart but this
+  machine's is taken at the place the renderer draws it
+  (`R_InterpolateMobjState` at `rendertimefrac`), and its step from the
+  frame before is classed against its speed and the time between the two
+  frames, as the local kart's is (8.100): even, short (under half), long
+  (over one and a half) or backwards, and whether the frame carried a pass.
+  The same filters apply: moving over 2 units a tic, a step under 512 units,
+  frames under 100 ms apart.
+  - A kart is followed by its slot, not its body. A load of the archive may
+    hand it a new body, and that frame is the one a rebuild could make
+    shake.
+  - Reset and printed with the rest of `rollback_frames`, by
+    `rollback_twoclock`.
+- **Sixteen karts.** A Match Race fills to `maxplayers` (`k_bot.cpp`), capped
+  by `maxconnections` online, 16 by default and as saved here; the engine's
+  `MAXPLAYERS` is 16. `bots 6` in the scenarios is the bots' level, not
+  their number. `playtest.sh <scenario> karts=<n>` (notes, `harnais/`)
+  runs a copy of the server scenario with `maxplayers n`, 2 to 16, and the
+  logs carry `_k<n>`. No race measured before had more than nine.
+- Checked before pushing: the syntax, with the local gcc and `-Wall -Wextra`,
+  which caught an error put in on purpose; the substitution of `maxplayers`
+  on `wwbots`'s server scenario.
+- **Sixteen on a dedicated server stopped it.** CI run 36927812194 green
+  (`d56763ca0`, dev sha256 `3cb778b6…`), installed on Gibax's go-ahead
+  ("lance les trois, installe quand c'est vert"). With `maxplayers 16` the
+  dedicated server stopped when the client connected: "assert failed:
+  newplayernum < MAXPLAYERS" (`d_clisrv.c:4163`, upstream's code), then a
+  segmentation fault, in both 16-kart races.
+  - The bots take every slot they can. A dedicated server keeps slot 0 for
+    itself (`SV_AddWaitingPlayers` searches from 1), so 15 slots, and
+    sixteen bots' worth of room leaves none for a connecting player.
+  - The function's fallback, "overwrite bots if there are NO other slots
+    available", starts its search where the first one ended, past the last
+    slot, so it never overwrites anything.
+  - Upstream's behaviour, not this branch's, and worth knowing for any
+    server that fills with bots. The third race was stopped by hand.
+  - `playtest.sh karts=<n>` now runs `maxplayers n-1` until the race map,
+    then n, so the client takes the slot left free and the race map's bots
+    fill the grid around it. It refuses more than 15 on a dedicated server;
+    sixteen needs a host.
+- **Run, nobody driving, the client joined by `rollback_join` in each**, all
+  on `d56763ca0` so they compare (HEAD had moved on by the title and icon
+  only, 8.122). Prediction pushed before (notes `97a784b`, `4986331`).
+  Skyscraper Leaps; passes and rebuilds are the race phase, the rest count
+  from the join; "a pass" is `rollback_cost`'s whole pass, Phase B's
+  measure:
+
+  | | A: `wwbots`, 8 | T: `wwwindows`, 8 | B': `wwwindows`, 16 | C': `wwbots`, 16 |
+  |---|---|---|---|---|
+  | when | 23:25 | 23:38 | 23:41 | 23:44 |
+  | server | dedicated | dedicated | with a host | with a host |
+  | grid | 7 bots, local | 7 bots, local | host, 14 bots, local | host, 14 bots, local |
+  | passes kept | 774 of 3774 (21%) | 3785 of 3791 (99.8%) | 3458 of 3796 (91%) | 1530 of 3794 (40%) |
+  | rebuilt for another's input | 2994 | 0 | 331 | 2249 |
+  | loads of the archive | 3023 | 32 | 762 | 2680 |
+  | a pass | 12.7 ms (45%) | 2.6 ms (9%) | **6.2 ms (22%)** | 16.6 ms (58%) |
+  | frames drawn | 13945 | 18859 | 17403 | 10755 |
+  | iterations past a tic, a frame skipped | 22 | 0 | 21 | 866 |
+  | bots drawn, frames with a pass: short | 55.6% | 1.2% | 3.8% | 51.3% |
+  | ... long | 2.6% | 0.2% | 0.6% | 11.2% |
+  | ... backwards | 1.2% | 0.08% | 0.16% | 1.8% |
+  | bots drawn, frames without one: long | 51.7% | 18.8% | 31.3% | 45.8% |
+  | bodies below zero, PARANOIA | 0, 0 | 0, 0 | 0, 0 | 0, 0 |
+
+- **How a wrong guess is drawn: it shakes.** A against T, the same eight
+  karts, the bots guessed or computed. In the frames that carry a pass the
+  bots step short more than half the time (55.6% against 1.2%) and
+  backwards fifteen times as often (1.2% against 0.08%). In the frames
+  between, they make up the ground with long steps (51.7% against 18.8%):
+  a short step, then a long one, the judder of a kart put back and run
+  forward again. Some long steps without a pass are ordinary frame pacing,
+  18.8% in the control.
+- **Sixteen karts fit, with the bots computed.** B': 6.2 ms a pass, 22% of a
+  tic, under the 30% gate. 91% of passes kept, against 99.8% at eight: the
+  bots' computed inputs are wrong more often on a fuller grid (331
+  rebuilds against 0). The bots drawn stay close to the control (3.8%
+  short, 0.16% backwards with a pass). Not yet the gate's whole condition:
+  the first 1:48 of the race, not late in it; Skyscraper Leaps, not a heavy
+  map like Opulence (8.62); the host drawing its own window on the same
+  machine.
+- **Sixteen karts with every guess wrong do not.** C': 16.6 ms, 58% of a
+  tic, and 866 frames skipped. That is the upper bound of 8.120 at sixteen.
+- **Sixteen karts on Opulence do not fit either, bots computed** (Gibax's
+  ask, "lance la 1, 16 karts sur Opulence"; `20cb1f2`, with a host, nobody
+  driving, 23:56; prediction in the notes' session note, before it). Pass
+  by pass, from the differences of the cumulative reports: 10.2, 10.7 and
+  10.3 ms in the three windows, **36 to 37% of a tic, over the gate**; in
+  the last window a save takes about 4.6 ms and the speculation about 5.5
+  (about one tic a pass). 94.6% of the race's passes kept; the 195
+  rebuilds for another's input all in the first window. 14126 frames, 2347
+  of them 16.7 to 28.6 ms apart and 147 over 50; 200 loop iterations past
+  a tic. 0 bodies below zero, 0 PARANOIA. Predicted 8 to 12 ms and over the
+  gate: held; "later windows dearer" did not (flat).
+- **Gibax saw the client stutter at sixteen karts**, under 144 frames a
+  second. Read from B': the frames that carry a tic, 35 a second, cost 9.9
+  ms on average at sixteen against 6.2 at eight, for 6.9 ms a frame at 144
+  Hz; 529 of 4600 over 16.7 ms against 5. The frames between tics cost 2.9
+  ms and are not the problem. The rest is the rebuilds (8.123) and the host
+  drawing its own window on the same machine.
+- **Against the prediction.** Held: T (99.8% kept, 1.07 ms of restore and
+  speculation, the bots far steadier than A's); the 16-kart grid; B' under
+  the gate; C' over it, with fewer frames and more skipped than B', and
+  the bots' uneven steps over twice B''s; 0 below zero and 0 PARANOIA
+  everywhere. Wrong: B' kept 91%, not over 95%, and its restore and
+  speculation took 3.5 ms, not 2 to 3. C' kept 40%, not under 15%, and its
+  restore and speculation took 10.5 ms, not about 15. A's backwards steps
+  reached 1% only in the frames with a pass (0.44% in all).
+
+### 8.122 The window's title and the icon
+
+Gibax's asks: the window's title, in development and release builds alike,
+and his icon (`etc/RRW_icon.png`, 40x34) in place of the game's. Pushed on
+his go-ahead (`20cb1f21f`). CI run 36929724979 green; the dev exe (sha256
+`4f6cfeea…`) holds the new title and every size of the .ico byte for byte.
+Installed in both folders on Gibax's go-ahead, `d56763c` kept as
+`.bak_d56763c`. Launched on his go-ahead: the window reads "Dr. Robotnik's
+Ring Racers Worldwide Development EXE", and Gibax confirms the icon and
+the name ("ça marche, l'icône s'affiche bien et bon nom").
+
+- **The title** comes from `SDL_CreateWindow` (`sdl/i_video.cpp`): "Dr.
+  Robotnik's Ring Racers Worldwide" before `VERSIONSTRING`, which is
+  "Development EXE" or the version. The exe's `FileDescription` and
+  `ProductName` (`win32/Srb2win.rc`, what the task manager and the file's
+  properties show) say the same; Kart Krew's company name and copyright
+  stay.
+- **The icon.** On Windows the window and the taskbar take the exe's icon,
+  `win32/Srb2win.ico`, built into it by `Srb2win.rc`; `sdl/SDL_icon.xpm` is
+  compiled only on Unix (`USE_XPM_ICON`). Both are remade from Gibax's
+  picture by the notes' `logo/make_icons.py`: the art enlarged six times
+  pixel for pixel, whole multiples where they fit (128, 256), brought down
+  smoothly below; the .ico laid out as the original (BMP to 128, PNG at
+  256), each size read back as written; the XPM at 64x64, 243 colours.
+
+### 8.123 The sixteen-kart rebuilds are the host's: a guessed person's latency stamp
+
+Gibax asked for the 331 rebuilds of 8.121's sixteen-kart race (B') to be
+explained ("fait les 331 rebuild à 16 karts"). Read in the logs, nothing
+launched for it.
+
+- **Not the bots.** B': "wrong inputs on it -- this machine 18, bots 2,
+  people 753"; on Opulence (16 karts, 23:56): bots 0, people 621. The person
+  is the host, p0, who is only there in the races with a host; the eight-kart
+  races ran dedicated, with no person but this machine, hence 0. So not the
+  grid's size but who is on it.
+- **Only at the start.** Every one of them falls on the waiting map and in the
+  race map's first 800 tics or so; the counts then do not move for 3000 tics.
+  The host never spectated (nothing in the server's log), and its real inputs
+  in the race are all zero.
+- **Two kinds**: latency 753, angle 468, received 285, and 753 = 468 + 285.
+  468 differ in the angle -- the host's camera through the intro and the
+  countdown -- and 285 in **the latency stamp alone** (the received flag is
+  left out of the decision to rebuild).
+- **The stamp.** `G_BuildTiccmd` writes the sender's leveltime into
+  `latency` (`g_build_ticcmd.cpp:171`), `G_Ticker` turns it into a lag
+  (`g_game.c:1911`), and the game reads that lag: drift and angle leniency
+  (`p_user.c:2394`, `2416`) and the roulette's fudge (`k_roulette.c:2041`).
+  A person is guessed by repeating the last input, stamp included, so the
+  lag simulated was a tic off on every guessed tic, and `K_SameInput`, a
+  memcmp, rebuilt for it. A bot's stamp stays 0 (`K_BuildBotTiccmd` clears
+  the command and never sets it).
+- **The fix** (`K_RollbackPredictInputs`): a person guessed by repetition has
+  the stamp moved on by one per guessed tic, as their machine stamps each
+  tic. Not for bots, so `rollback_botsashuman` keeps its meaning. Wrong
+  only where the server itself repeats a person's sample (R1, 8.92), which
+  keeps the stamp.
+- **Still open**: why nothing is guessed wrong after the start. Unchecked
+  hypothesis: later, the client has already received the inputs for every
+  tic it speculates (below `neededtic`), and guesses nothing, for anybody.
+- **Prediction for the measurement** (B''s setup, the fix against
+  `20cb1f2` in the same session): the 285 rebuilds for the stamp alone gone,
+  so about 200 rebuilds for another's input instead of 331, and the
+  latency field near 0 among people's wrong inputs; the angle's 468 stay.
+  For a real second human, every guessed tic had the wrong stamp: this
+  matters more there than with an idle host.
+- Checked before pushing: the syntax, with the local gcc, which caught an
+  error put in on purpose.
+- **Measured** (Gibax: "oui pousse et lance la mesure"): CI run
+  36932690677 green, `1b808d1e6` installed (sha256 `97db00ab…`, `20cb1f2`
+  kept as `.bak_20cb1f2`). B''s setup, nobody driving, the control first,
+  on `20cb1f2`, at 00:06, then the fix at 00:11:
+
+  | | control `20cb1f2` | fix `1b808d1` |
+  |---|---|---|
+  | the person's wrong inputs | 743 | **450** |
+  | ... differing in angle / latency / received | 465 / 741 / 278 | 449 / 448 / **1** |
+  | rebuilt for another's input, waiting map | 410 | **143** |
+  | ... race map | 314 | 299 |
+  | loads of the archive | 752 | **476** |
+  | a pass | 6.6 ms | **5.3 ms** |
+  | bodies below zero, PARANOIA | 0, 0 | 0, 0 |
+
+  - **The stamp-only guesses are gone**: those wrong in "received" and not
+    in the angle, 278, down to 1. The person's wrong inputs fall by 39%,
+    the archive's loads by 37%, the pass by 1.2 ms.
+  - **Not where predicted.** The race map's rebuilds hardly move (314 to
+    299, predicted about 200): there the host's wrong guesses are the
+    angle's, the camera turning through the start. The gain is on the
+    waiting map (410 to 143).
+  - **Wrong in the prediction**: the latency field does not vanish from the
+    remaining wrong guesses -- 448 of the 450 differ in it too, all of them
+    the angle's. Those tics' stamps are not the previous one plus one; not
+    read yet (the server repeating a sample, R1, would do it).
+
+### 8.124 B2 toward on by default: the field named, the claim that stays, the Lua slope
+
+Gibax: "Fait B2" -- raw snapshots on by default, which 8.95 left off until
+its open points were understood (current state, open item 7). The save is
+the pass's largest part at sixteen karts on Opulence (about 4.6 of 10.3 ms,
+8.121), and B2 took it from 2.9 to 1.1 ms at nine (8.95). Step 1, written
+on 2026-10-02, nothing launched for it:
+
+- **The players-block difference (9 of 1137 restores, 8.94) gets named.**
+  The verify mode said only "byte 2832, in the players block". The players
+  block has no markers, but `rollback_test` already reads such an offset as
+  a player and a field (`P_LocatePlayerField`, `P_NamePlayerField`). The
+  raw restore's check now does the same, with the two byte values, so the
+  next `wwraw` soak names the field instead of a byte.
+- **The double claim: counted once, for the body that stays.** After a raw
+  restore, every synced object carrying a player claimed its body, and
+  counted a reference for it. Two objects can carry the same player; the
+  later one becomes `players[].mo`, as in the network load, but the earlier
+  one kept a reference the live game does not hold: 8.94's one kart at 67
+  against 66. The raw load now points each player at its body first, then
+  counts one reference per player, for the body that stays. If the live
+  game held the earlier one instead, the verify will say so, with two
+  counts off rather than one.
+- **`floorspriteslope`: that snapshot goes the network way.** Only Lua makes
+  one (`P_CreateFloorSpriteSlope`); the network archive saves and rebuilds
+  it, and the raw copy would bring back a pointer to a plane that may be
+  freed. A snapshot taken while any object has one is now a network one,
+  restored the network way (each slot says which it is), and the report
+  counts them. A race with no Lua never takes that path.
+- **The level interpolators are not B2's gap.** The network load does not
+  rebuild them either: they are made only when an effect starts
+  (`p_floor.c`, `p_ceilng.c`, `p_polyobj.c`), and `p_saveg.cpp` makes none.
+  Drawing only, as 8.88 said, and the same with or without raw snapshots.
+- Checked before pushing: the syntax, `k_rollback.c` with the local gcc and
+  `p_saveg.cpp` as C++20 with `PARANOIA`, each catching an error put in on
+  purpose.
+- **Soaked** (Gibax: "oui pousse et lance le soak"): CI run 36933711043
+  green, `94c7bd4f9` installed (sha256 `56812887…`, `1b808d1` kept as
+  `.bak_1b808d1`), `soak.sh wwraw map=RR_Opulence` unattended, 00:22
+  (`soaklog_wwraw_RR_Opulence_20261002-002213_94c7bd4.txt`). Prediction in
+  the notes before it.
+  - **395 checks, 0 failures.** 1580 raw saves at 867 us, 1185 raw
+    restores at 1829 us with their check.
+  - **0 reference counts rebuilt differently**, as predicted. 0 snapshots
+    went the network way, none expected without Lua. 0 PARANOIA.
+  - **The players-block difference, named**: 9 of 1185 restores, as in
+    8.94 (9 of 1137). The first five, all the check prints, in two places:
+    player 5, a bot, 1005 bytes into the
+    record (three restores at tic 2041), and player 6, a bot, 1012 bytes in
+    (two at tic 2311) -- past the fields `P_NamePlayerField` names, but
+    both times **0x00 became 0x20**, Carnival Night's pattern of 8.94.
+  - **It is `itemRoulette.itemList.cap`**, read in the code. The archive
+    writes 0 and 0 for a player whose item list was never allocated, else
+    its capacity and length (`p_saveg.cpp:990-999`). A restore never frees
+    or shrinks the list (the read code, "Growing only": both passes of a
+    check share the block). So a bot that had its first roulette after the
+    snapshot comes back with a length of 0 but a block of 32
+    (`K_InitRoulette`'s first size), and the check's archive writes 32
+    where the snapshot's wrote 0. Allocation bookkeeping, and **no gameplay
+    reads it**: a roulette always starts in `K_FillItemRoulette`, which
+    calls `K_InitRoulette` whatever the block, and `K_FillItemRouletteData`'s
+    own `items == NULL` test only repeats that. The network restore keeps
+    the block the same way: not B2's.
+  - Predicted "a field of an object or of the roulette, not a position":
+    held.
+- **So B2's open points are closed or not B2's**: the players-block
+  difference is the item list's capacity, harmless and shared with the
+  network restore; the double claim counted once (0 counts off here; the
+  leak soak, where 8.94 saw it, not run again yet); the Lua slope goes the
+  network way; the level interpolators are the network load's too.
+- **Next**: `soak.sh wwraw map=RR_Opulence` (verified raw snapshots,
+  unattended) to name the players-block field and check the counts; then,
+  if both are clean or understood, `rollback_rawsnap 1` by default, and the
+  sixteen-kart race on Opulence again against 8.121's.
+
+### 8.125 B2 on by default
+
+On Gibax's "Fait B2", once 8.124 had closed its open points or found them
+not B2's. Written on 2026-10-02, not built, not run.
+
+- **`rollback_rawsnap` is 1 by default**: raw snapshots, not verified. A
+  snapshot taken while an object has a Lua `floorspriteslope` still goes
+  the network way (8.124).
+- **The tests**: `rollback_test`, `rollback_resim`, `rollback_leak`,
+  `rollback_replay` and the soaks compare archives, which mode 1 does not
+  write, and refuse it (a running soak waits). The 22 harness scenarios
+  that run them and set no mode now start with `rollback_rawsnap 0`, so each
+  measures what it always measured; `soak_leakraw` and `soak_wwraw` keep 2.
+- **Every WORLDWIDE race from this build on runs on raw snapshots**,
+  `wwwindows` and the other client scenarios included, and its rebuilds
+  restore the raw way. Their figures are not comparable with earlier ones
+  on that count.
+- **Prediction for the first measurement**, sixteen karts on Opulence with
+  a host, nobody driving, against 8.121's 10.2 to 10.7 ms a pass: the save,
+  about 4.6 ms there, down to about 1.5 (Opulence's 1.1 at nine karts, 8.95,
+  plus the extra karts), so **a pass of about 7 to 8 ms, under the gate's
+  8.6**; a rebuild's restore under 2.5 ms. 0 bodies below zero, 0 PARANOIA.
+
+- **Measured** (Gibax: "oui pousse, installe et lance"): CI run 36935126003
+  green, `c24d8d205` installed (sha256 `a360e3f4…`, `94c7bd4` kept as
+  `.bak_94c7bd4`). Sixteen karts on Opulence with a host, nobody driving,
+  00:35 (`playlog_wwwindows_RR_Opulence_join_k16_20261002-003532_c24d8d2.txt`).
+  The report says "rollback_rawsnap: on -- raw snapshots of the level
+  pools": 9269 raw saves at 780 us, 591 raw restores at 1.6 ms.
+
+  | a pass, window by window | 8.121 (network snapshots) | B2 on |
+  |---|---|---|
+  | window 1 | 10.2 ms | **6.0 ms (21%)** |
+  | window 2 | 10.7 ms | **7.4 ms (26%)** |
+  | window 3 | 10.3 ms | **19.9 ms (70%)** |
+
+  - **Held, in windows 1 and 2**: a pass of 6.0 and 7.4 ms, under the gate,
+    against 10.2 and 10.7 with network snapshots; the save about 1.4 to 1.7
+    ms a pass (a raw save 0.78 ms) against about 4.6; a rebuild's restore
+    1.6 ms, under 2.5. 0 bodies below zero, 0 PARANOIA.
+  - **Window 3 is not a measurement.** Gibax, after the race: he clicked
+    into the game by mistake near the end and pressed the ring button ("j'ai
+    fait un missclick, vers la fin j'ai rejoint et appuyé sur le ring
+    button, pas bcp"), one button and nothing else ("j'ai appuyé que sur
+    un bouton"). This machine's wrong inputs have one each in buttons,
+    turning and throwdir: the button is his; the other two are not read.
+    In that window the client fell behind
+    (1314 tics of leveltime in 1000 passes), 152 of the race's 168 rebuilds
+    for this machine's input fall there, mostly in the latency stamp (176:
+    samples filed late), the speculation went as deep as 8 tics, and 412
+    loop iterations ran past a tic: a pass of 19.9 ms. The touch came only
+    near the end ("mais vers la fin ... donc jsp"); whether it set that off,
+    or it would have happened anyway, this race cannot say.
+  - **The stamp fix under load**: the host's wrong guesses are now 405, all
+    of them in the stamp alone, where 8.121 had 621 (341 in the angle):
+    fewer than before, but the guess of one more a tic is wrong 405 times.
+    A guess, not checked: a loaded host runs several tics in one frame on
+    one built input, so its stamps do not move one a tic.
+- **So**: B2 takes a pass on Opulence at sixteen karts from about 10.5 to
+  6 to 7.5 ms in the two windows nobody touched. Next: the same race again,
+  hands off, for a clean third window; and fifteen karts on a dedicated
+  server, which draws nothing, to tell the machine's load from B2.
+- **The two control races** (Gibax: "oui lance les deux, je touche à
+  rien"; prediction pushed before, notes `a8e713a`). `c24d8d2`, nobody
+  driving or touching, Opulence, a pass window by window from the
+  cumulative reports:
+
+  | | 16 karts, host, 00:41 | 15 karts, dedicated, 00:44 |
+  |---|---|---|
+  | grid | host, 14 bots, local | 14 bots, local |
+  | window 1 | 6.2 ms | 5.7 ms |
+  | window 2 | 6.8 ms | 6.4 ms |
+  | window 3 | **6.8 ms** | **6.6 ms** |
+  | passes kept, race | 3489 of 3764 | 3799 of 3806 |
+  | rebuilt for another's input / this machine's | 263 / 10 | 0 / 5 |
+  | loop iterations past a tic | 271 | 4 |
+  | frames drawn | 16272 | 18021 |
+  | bodies below zero, PARANOIA | 0, 0 | 0, 0 |
+
+  - **Held: a clean third window, under the gate** (6.8 ms; predicted 6 to
+    8.5). 00:35's runaway did not come back: 10 rebuilds for this
+    machine's input in the whole race, against 168. Whether the click set
+    it off stays unproven, but nothing without one repeated it.
+  - **Held: dedicated, cheaper** -- 5.7 to 6.6 ms in every window, 4
+    iterations past a tic (predicted under 20).
+  - **Wrong: the host's race ran 271 iterations past a tic**, not under 50:
+    the server's window drawing sixteen karts on Opulence on the same
+    machine costs the client frames even when its passes fit.
+  - **The rebuilds for another's input are the host's**: 263 with one, 0
+    without (8.123).
+- **So B2 meets Phase B's gate at sixteen karts on Opulence**, for the
+  race's first 1:48: about 6 to 7 ms a pass, 21 to 24% of a tic. Not yet
+  the gate's whole condition: late in a race (the windows end at 1:48), and
+  at the depth Phase D settles on.
+
+### 8.126 The race to its end: the cascade again, nobody touching
+
+Gibax, at work, nobody at the machine: "allez donc lance 1 et 2 et 3 et 4
+dans cet ordre, par contre tu t'arrêtes si un résultat n'est pas attendu ou
+qu'il ne peut pas valider une étape"; then "tu peux mettre 5 minutes et
+assure toi aussi que le player est tjr en spectateur ou que y'a un auto
+destruct pour le dernier sinon ça va pas se finir".
+
+- **The scenario**: `wwlong` (harness), `wwwindows` with ten 1000-tic
+  windows (to about 5:09 of leveltime), the server kept 12500 tics after
+  the race map; `windows.py` reads a log window by window (it gives back
+  8.125's figures). A race map with one person in it is free play: no
+  POSITION, the race starts at leveltime 0. The race ends by itself: half
+  the grid finished starts a 30 s countdown (`P_CheckRacers`), and its end
+  times out every kart still racing (`P_DoTimeOver`), the idle one too.
+  Prediction in the notes before the race (notes `dd81e78`).
+- **Run**: `playtest.sh wwlong dedicated join karts=15 map=RR_Opulence`,
+  `c24d8d2` (sha256 `a360e3f4…`), 08:47 to 08:53
+  (`playlog_wwlong_RR_Opulence_join_k15_20261002-085335_c24d8d2.txt`).
+  The player entered; "Guest ran out of time." in window 7; the race ended
+  at leveltime 9026, then the intermission, the vote and Wavecrash
+  Dimension. 0 bodies below zero, 0 PARANOIA, no crash.
+
+  | window, leveltime | a pass | passes past a tic | rebuilt, an input | speculated tics a pass | one speculated tic |
+  |---|---|---|---|---|---|
+  | 0, to 1805 | 5.9 ms | 0 | 0 | 1.0 | 4.7 ms |
+  | 1, to 2805 | 6.5 ms | 0 | 0 | 1.0 | 5.2 ms |
+  | 2, to 3890 | **11.8 ms** | 86 | 87 | 1.7 | 5.3 ms |
+  | 3, to 4914 | 8.9 ms | 25 | 25 | 1.2 | 5.8 ms |
+  | 4, to 6092 | **18.2 ms** | 176 | 174 | 2.3 | 5.7 ms |
+  | 5, to 7268 | **18.1 ms** | 158 | 159 | 2.3 | 5.8 ms |
+  | 6, to 8404 | 14.5 ms | 111 | 110 | 1.9 | 5.8 ms |
+  | 7, to 9026 (the end) | 6.6 ms | 0 | 0 | 1.0 | 5.4 ms |
+
+- **Held: the witness, windows 0 and 1** (5.9 and 6.5 ms, in 5.1-6.3 and
+  5.8-7.0). **Wrong: window 2** (11.8 ms, out of 5.9-7.3), so by the rule
+  set before the race the run stopped there: no soak, nothing launched
+  after it. **Held: the race ends by itself**, the idle kart timed out, a
+  new map after. **Wrong, the instrument**: no `finished` phase line --
+  a timed-out kart gets `PF_NOCONTEST`, not `exiting`, which is all
+  `K_PassPhase` reads.
+- **The pass without rebuilds, late in the race: about 7.2 ms** (25% of a
+  tic): one speculated tic grows from 4.7 ms (window 0) to 5.8 (windows 3
+  to 6), plus a save of about 1.2 and 0.2 of network and corrections.
+  Under the gate, about 1.4 ms to spare.
+- **The cascade**: in window 2 the client began rebuilding for its own
+  input -- an idle kart's, so it differs only in the latency stamp (65 of
+  the window's) and `received` (22) -- and the sample the server applied
+  was mostly one older than the one replayed (53). A rebuild re-runs about
+  eight tics, over a tic of time, so the client fell behind (1085 tics of
+  leveltime in 1000 passes) and made no sample of its own on 85 tics. The
+  server's report shows the same from its side: this machine's samples,
+  filed a tic late 500 times in 500 until leveltime 2600 (the slot taken,
+  steady), then 328 late and 41 tics with none, repeated; steady again from
+  3600 to 4600 (window 3 lower), then disturbed from 4600 to 8600 (windows 4
+  to 6). Window 7, the bots finishing and the idle kart timed out: 0.
+- **A theory, not checked**: a loop that feeds itself. One stall longer
+  than a tic makes the client miss a sample; the server repeats the one
+  before, and the tic each later sample is filed at moves by one; the
+  client then replays the wrong sample of its own kart, the stamp differs,
+  it rebuilds; the rebuild is the next stall. Late in the race a tic costs
+  more, so a rebuild costs more (about 2.3 speculated tics a pass in
+  windows 4 and 5). What starts it is not known: 8.125's two races passed
+  the same leveltime with no cascade. **This machine was not idle**:
+  Windows Update installed Microsoft Gaming Services at 08:45:46, then
+  Microsoft GameInput (MSI, with a restore point and a shadow copy) from
+  08:45:54 to 08:50:01, where it failed -- "Service 'GameInput Redist
+  Service' could not be stopped" (Application log, 11921, 1603). The
+  server's first disturbed report covers about 08:49:06 to 08:49:21.
+  At 00:35 (8.125), the other cascade, the Application log has GameBar.exe
+  hanging (1002, reported at 00:36:12). Two coincidences, not a cause.
+- **So**: Phase B's gate holds late in a race only while nothing sets off
+  the cascade: about 7.2 ms a pass without rebuilds, 18 ms inside it. The
+  cascade is the open problem, ahead of the gate: why this machine's own
+  sample is replayed one off once the server's filing moves, and why that
+  feeds itself. Step 2 (the leak soak) and what follows were not run.
+- **The same race again** (Gibax: "relancer la même course. Si ça passe,
+  ouf, sinon tu passes à 2 et 3"), 09:02 to 09:08, prediction in the notes
+  before it (`bf3a4d6`)
+  (`playlog_wwlong_RR_Opulence_join_k15_20261002-090823_c24d8d2.txt`).
+  Windows Update idle (`wuauserv` stopped, no MSI event since 08:50:01);
+  GameInput still 3.3 and its redist service stuck in StopPending since the
+  failed install, left as it is (a system change, Gibax's to make).
+
+  | window, leveltime | 0, 1831 | 1, 2831 | 2, 3830 | 3, 4840 | 4, 5840 | 5, 6840 | 6, 7840 | 7, 8839 | 8, 9843 |
+  |---|---|---|---|---|---|---|---|---|---|
+  | a pass | 5.9 ms | 6.1 | 6.6 | **7.5** | 6.5 | 6.4 | 6.4 | 6.1 | 6.4 |
+  | rebuilt, an input | 4 | 0 | 0 | 12 | 0 | 0 | 0 | 0 | 9 |
+  | passes past a tic | 4 | 0 | 0 | 12 | 0 | 0 | 0 | 0 | 9 |
+
+  - **Held: no cascade, every window under the gate**, the worst 7.5 ms
+    (26% of a tic), the race's last minutes 6.1 to 6.5. The witness in
+    its band (5.9, 6.1). 0 bodies below zero, 0 PARANOIA, no crash.
+  - **Wrong, in the details**: no slow rise to 7.2-7.5 ms -- the windows
+    stay flat about 6.4; window 3 had 12 rebuilds (predicted under 10).
+    The bots were slower: the idle kart ran out of time between leveltime
+    9843 and 10097, and the session ended in the intermission, before
+    another map.
+  - **The loop's first step, seen twice, and it died out**: the server
+    filed this machine's samples a tic late 500 times in 500 in every
+    report but two -- leveltime 4100 to 5100 (39 then 166 late, 10 tics
+    with none, repeated: window 3's 12 rebuilds) and 8600 to 9100 (5
+    repeated: window 8's 9). Each time the filing came back steady by the
+    next report. This morning the same step fed itself for two minutes.
+- **So: Phase B's gate holds to the race's end** at fifteen karts,
+  dedicated, on Opulence, B2 on: a pass of 5.9 to 7.5 ms, 21 to 26% of a
+  tic. Not proven: sixteen with a host to the end, and a machine under
+  load -- where this morning's cascade shows a missed sample can feed
+  itself. The cascade stays open (the next step if it comes back: date each
+  stall and each rebuild for this machine's input, then the replay of its
+  own sample when the server's filing moves).
+
+### 8.127 The leak soak again, raw snapshots verified: no count off
+
+Step 2 of Gibax's four ("lance 1 et 2 et 3 et 4 dans cet ordre"), once the
+same race again had held the gate (8.126). Prediction in the notes before
+it (`7d6a0d2`): 0 reference counts rebuilt differently (8.94: one kart at
+67 against 66, in 6 restores), 0 soak failures, archive differences 0 or
+the item list's capacity, a raw save about 0.8 ms and a verified restore
+1.6 to 1.8. Said before: nothing counts double claims, so a 0 says no count
+was off, not that the case came up.
+
+- **Run**: `soak.sh leakraw map=RR_Opulence`, `c24d8d2`, unattended, 09:09
+  to 09:12 (`soaklog_leakraw_RR_Opulence_20261002-091258_c24d8d2.txt`).
+  Opulence, 8 racers (7 bots), one level, 0 stalls, 0 PARANOIA.
+- **Held: 0 reference counts rebuilt differently** in 1716 verified raw
+  restores -- 8.124's claim counted once, for the body that stays.
+- **Wrong: 1 soak failure of 286** (predicted 0; 8.94 had 0 of 278). It is
+  the item list's capacity: the leak check at leveltime 2300 found one byte,
+  byte 4114, in the players block, 0x00 become 0x20, player 2 (a bot), 1007
+  bytes into the record -- 8.124's pattern. The same byte is the verify's
+  4 restores with the archive differing, all at tic 2301. Harmless, shared
+  with the network restore (8.124), and it counts as a failure whenever a
+  bot's first roulette falls inside a check.
+- The cost, cheaper than predicted (eight racers, not fifteen): a raw save
+  619 us, a verified restore 1329 us. `rollback_test` after the soak: the
+  round trip identical over 282095 bytes, PASS.
+- **So B2's last open check is done**: no count off where 8.94 saw one.
+
+### 8.128 Read without launching: the dedicated server's dump, the join's missing chat line
+
+Step 3 of Gibax's four: the open questions, nothing launched.
+
+- **The dump** (`ringracers_rollback-netcode.exe.dmp`, 2026-10-01 23:26, the
+  dedicated server at sixteen karts, 8.121). Read with `cdb`: an access
+  violation on a deliberate `mov dword ptr [0],4`, and on the stack the
+  formatted message "assert failed: newplayernum < MAXPLAYERS, file
+  .../src/d_clisrv.c, line 4163" (the format string checked in
+  `.bak_d56763c`, the exe that ran). **Upstream's assert, as 8.121 read
+  it**: the bots took every slot and a client joined. Closed; the harness
+  already refuses sixteen karts on a dedicated server.
+- **No "entered the game" on the client with `rollback_join`** (8.119).
+  A tic writes that line (`P_SpectatorJoinGame`, from
+  `K_CheckSpectateStatus` in the tic loop), and a line a tic writes is
+  written only the first time this machine runs the tic (8.108). In the
+  join of 2026-10-01 21:15, made by hand, the line came from speculated
+  tics past the horizon ("rollback_chat: a tic's line written on tic 60
+  (leveltime 59, speculated ...)"). In today's two `rollback_join` joins
+  there is no `rollback_chat` line at all: the join's line was held back
+  as a rerun's. **A reading, not checked**: the netxcmd that sets
+  `PF_WANTSTOJOIN` reaches the client with a confirmed tic its standing
+  speculation has already run past, so the tic that joins was first run
+  without the join, and the run that joins is a rebuild's, below the
+  horizon. If so, any player's join line can go missing on a WORLDWIDE
+  client, not only the harness's -- a thing to look at before the alpha.
+  The count of held lines (`g_chatheld`) is printed only beside a line
+  written; a report that prints it would settle it.
+- Three more of the list -- the latency stamp's "+1" under load (8.125),
+  the host's latency and angle errors (8.121), the idle kart rebuilding
+  more (8.119) -- are about the sample the server files against the one
+  the client replays, the cascade's ground (8.126); left to that work,
+  which Gibax chose next ("Ouais 1 puis si vraiment ça passe pas, on fait
+  le 2": the client fills the tics it missed, then if needed it follows the
+  server's shift). Still open: why `rollback_hits` sees no wrong guess
+  after the start (the `neededtic` reading).
+
+### 8.129 The cascade read in the code: one sample for a gap; `rollback_fill`
+
+Gibax, on 8.126's cascade: "ça serait pas top de mettre trop de stress aux
+rebuild nn ? genre le 3 en théorie ça nous sauve quoi et c'est quoi les
+risques ?" -- then, of the ways offered: "Ouais 1 puis si vraiment ça passe
+pas, on fait le 2" (1: the client fills the tics it missed; 2: the client
+follows the server's filing when it moves). Written on 2026-10-02 on a local
+branch, `wip/fill`; not pushed, not built, not run.
+
+**The mechanism, read in the code and against the server's reports.**
+- The server files each sample of a client on the tic it arrives
+  (`faketic = maketic`; the remote client's packets show `faketic -
+  realstart` at 7 or 8, the transit, with no delay added), or on the tic
+  after when that one already holds one (`d_clisrv.c`, "1 tic of buffer").
+- In the steady state every sample finds its tic taken by the one before
+  and goes a tic later: the server's reports, 500 "a tic late because the
+  slot was taken" in 500. That state holds itself: a sample a tic late
+  still lands where the steady state puts it.
+- The client sends **one sample a `NetUpdate`**, however many tics went by
+  (`Local_Maketic(realtics)`). After a frame past a tic, its one sample
+  finds its tic free, and so does the next: the filing moves a tic earlier
+  and loses its step. The tics in the gap get the sample before, repeated
+  (`SV_Maketic`).
+- R1 gives the sample before a gap of k tics all k (8.87). In the steady
+  state it owns k - 1: for a round trip, the replay of this machine's own
+  input runs one sample off. An idle kart's samples differ in the stamp
+  alone, a driver's in the steering too: rebuilds either way.
+- A rebuild re-runs about eight tics, 45 to 60 ms on Opulence at fifteen --
+  past a tic -- and leaves the next gap. Two packets in one server tic put
+  the filing back in step, a tic later, which the replay does not know
+  either ("older by 1", 53 in 8.126's window 2). So the loop.
+- The test latency is no part of it: `rollback_lag` holds what the client
+  receives (`d_net.cpp`, "store and forward, on reception"); what it sends
+  reaches the server when it is sent.
+
+**`rollback_fill`** (client, off by default until measured). After a gap of
+k real tics, in a level, this machine sends two samples: a copy of the
+newest, stamped a tic earlier so the anchor tells the two apart, then the
+newest, with the same delay. The copy takes the free tic, the newest the
+next -- where the steady state puts it -- and the filing keeps its step.
+R1 is told the sample before the gap owns k - 1 tics, the copy one. Only
+the client changes; a stock server files the two as it files any pair (its
+rule handles two a tic; a third would overwrite). The copy's stamp, a tic
+earlier, counts as a tic more of control lag on its tic, as a sample made
+on time would have.
+
+**`rollback_stall <ms> [every]`** (client, for testing): holds the loop at
+the end of `NetUpdate`, once or every so many tics of a level -- the busy
+machine of 8.126, on demand. **`rollback_cascadelog 1`**: a dated line for
+each gap (alone, or sent with a copy) and each rebuild for this machine's
+input (the stamps, a repeat or not, the applied sample against the
+replayed one). The `rollback_keepspec` report also prints the chat lines
+held back as a rerun's (8.128). The `rollback_history` report counts the
+gaps sent with a copy and the stalls.
+
+- Checked: the syntax of `k_rollback.c` and `d_clisrv.c` with the local gcc
+  (the one error left, `CL_DOWNLOADHTTPFILES`, is the fake config's, there
+  without the change too), each catching an error put in on purpose.
+- **The test, before and after in one session**: `wwstall` (fill 0) and
+  `wwstallfill` (fill 1), 15 karts dedicated on Opulence, the loop held
+  100 ms every 500 tics from the windows' start (7 stalls), `cascade.py`
+  laying out what each stall set off.
+- **Prediction**:
+  - `wwstall`: each stall leaves a gap sent alone, and the server's report
+    shows the filing out of step (fewer than 500 late in 500, repeats). At
+    least 3 rebuilds for this machine's input after at least 5 of the 7
+    stalls; a window's pass at least 1 ms over 8.125's (5.7 to 6.6 ms).
+  - `wwstallfill`: each gap sent with a copy; the server's filing in step
+    but for the gap's repeats; **at most 7 rebuilds for this machine's
+    input in all**, none in a chain; each window within 0.5 ms of
+    `wwstall`'s first window before any stall, plus the stalls themselves.
+  - Both: 0 bodies below zero, 0 PARANOIA, no crash.
+- **Measured** (Gibax: "lance"). `85ccac6e2` pushed (CI run 36979386803,
+  green on its three jobs), installed in both folders (sha256
+  `7029595f…`; `c24d8d2` kept as `.bak_c24d8d2`); the exe carries the new
+  strings. One after the other, nobody touching: `wwstall` at 09:41
+  (`playlog_wwstall_RR_Opulence_join_k15_20261002-094340_85ccac6.txt`) and
+  `wwstallfill` at 09:44
+  (`playlog_wwstallfill_RR_Opulence_join_k15_20261002-094652_85ccac6.txt`).
+
+  | | `wwstall` (fill 0) | `wwstallfill` (fill 1) |
+  |---|---|---|
+  | stalls of 100 ms | 7 | 7 |
+  | gaps (alone / sent with a copy) | 32 / 0 | 0 / 161 |
+  | rebuilds for this machine's input | 62 | **229** |
+  | after each stall | 10, 2, 8, 2, 2, 2, 9 | 35, 10, 60, 24, 2, 42, 9 |
+  | windows 0 / 1 / 2, a pass | 7.0 / 7.2 / 7.3 ms | **8.6 / 11.8 / 9.7 ms** |
+  | server: late / over one already there / repeated (p15, whole session) | 3024 / 12 / 91 | 3223 / **56** / 144 |
+  | chat lines held back as a rerun's | 1 | -- |
+
+  - **Held, the control**: every stall leaves a gap and rebuilds for this
+    machine's input after it, "older by 1" most often; three of the seven
+    run on in a chain (8 to 10 rebuilds, 60 to 195 real tics). **Wrong in
+    the count**: 3 stalls of 7 with 3 rebuilds or more, not 5; and the
+    windows 0.7 to 1.3 ms over 8.125's, not 1 ms in each.
+  - **Wrong, the fix: worse in every count** -- 229 rebuilds, 47 of them
+    before the first stall; the windows over the gate. The server's
+    filing kept its step more often, but **wrote over a sample 56 times**:
+    the pair landed where the sample before already sat. A gap the client
+    counts in whole tics (`realtics`) is not always a gap at the server --
+    a frame begun late in one tic and ended early two tics on is two by
+    `realtics` and about one by the wire -- and then the copy takes the next
+    tic, the sample overwrites it, and the replay runs a copy the server
+    never applied ("newer by 1", most of them). The client cannot tell the
+    two cases apart from its own clock.
+  - **The chat**: "1 chat lines a tic wrote were held back as a rerun's" in
+    the control, the join's line: 8.128's reading holds.
+  - 0 bodies below zero, 0 PARANOIA, no crash in either.
+- **So**: the mechanism holds (a gap, the filing out of step, the replay
+  one off, rebuilds past a tic, the next gap) and the trigger can be had
+  on demand; `rollback_fill` stays off, its default, and is to be taken
+  out. What a fix has to break is the loop's gain -- our own rebuilds
+  leaving gaps -- rather than to guess the server's filing from the
+  client's clock.
+
+### 8.130 `rollback_ontime`: a long pass still sends a sample each real tic
+
+What 8.129 left to break is the loop's gain: our own rebuilds leaving gaps.
+Asked by Gibax whether a vanilla resync would do ("qu'est ce qui empêche
+d'utiliser nu gros resync à la vanilla Ring Racers si ça a trop desync ?"):
+no -- nothing is out of sync in a cascade (drift 0, no kart put back), it is
+time; a full resync is a long stall of its own, the biggest gap there is. And
+whether this costs much on a smaller machine ("faut que ça marche pas sur
+des betes de cours en machine, mais aussi d'autre machine moins
+performante"): a sample is a few microseconds and a packet of about fifty
+bytes, and a smaller machine has more long passes, so more for it to stop;
+what it does not do is make a rebuild cheaper (that is the next step, a cap
+on a rebuild's cost). Gibax: "Faisons comme ça alors" -- this first, then the
+cap, then the laptop, the Steam Deck and the Steam Machine during the alpha.
+Written on 2026-10-02 on a local branch, `wip/ontime`; not pushed, not
+built, not run.
+
+- **`rollback_fill` is taken out of the code** (`6d0779207`), measured
+  worse (8.129). `rollback_stall` and `rollback_cascadelog` stay; a gap's
+  line no longer says "alone".
+- **`rollback_ontime`** (client, off by default until measured): between two
+  tics a pass runs -- the confirmed ones the loop catches up on, and the
+  speculated ones -- if a real tic has gone by since the last sample, one is
+  made from the controls as they stand and sent, as `NetUpdate` would at
+  the top of the next pass (`CL_SampleOnTime`). It reads no packet and
+  processes no event in the middle of a pass. Between speculated tics it is
+  stamped with the frontier's leveltime, as `NetUpdate`'s are, and the
+  applied sample's age in the history moves on by one, so the rest of the
+  speculation replays the samples it was laid out with; the next pass maps
+  the history afresh. The `rollback_history` report counts the samples so
+  made.
+- What it cannot stop: a stall outside a pass -- `rollback_stall`'s, an
+  operating system's -- still leaves its own gap and its rebuilds. What it
+  should stop is the next gaps, the ones those rebuilds leave.
+- Checked: the syntax of `k_rollback.c` and `d_clisrv.c` (C) and of
+  `d_net.cpp` (C++20, which includes the changed `d_clisrv.h`), each
+  catching an error put in on purpose; the one error left in `d_clisrv.c`
+  is the fake config's.
+- **The test**: `wwstall` (now `rollback_ontime 0`) then `wwstallontime`
+  (`rollback_ontime 1`), the same build, the same session, 15 karts
+  dedicated on Opulence, 7 stalls of 100 ms; `cascade.py`.
+- **Prediction**:
+  - `wwstall`, the control: as at 09:41 -- a gap and at least 2 rebuilds
+    for this machine's input after each stall, some in a chain; 40 to 90
+    rebuilds after the first stall.
+  - `wwstallontime`: each stall still leaves its own gap and about 2
+    rebuilds, but **no chain: at most 4 rebuilds after any stall, at most
+    20 after the first stall in all, and one gap a stall** (the stall's
+    own). Samples made between two tics of a pass: more than 0. Each window
+    no dearer than the control's.
+  - Both: 0 bodies below zero, 0 PARANOIA, no crash.
+- **Measured** (Gibax: "pousse donc, et tu peux tester aller"). `aa9629fdf`
+  pushed, CI run 36982022863 green on its three jobs, installed in both
+  folders (sha256 `70f4e916…`; `85ccac6` kept as `.bak_85ccac6`); the exe
+  has `rollback_ontime` and no `rollback_fill`. One after the other, nobody
+  touching: `wwstall` at 10:11
+  (`playlog_wwstall_RR_Opulence_join_k15_20261002-101351_aa9629f.txt`),
+  `wwstallontime` at 10:14
+  (`playlog_wwstallontime_RR_Opulence_join_k15_20261002-101637_aa9629f.txt`).
+
+  | | `wwstall` (ontime 0) | `wwstallontime` (ontime 1) |
+  |---|---|---|
+  | rebuilds for this machine's input after each stall | 10, 19, 1, 42, 1, 62, 3 | 1, 3, 1, 81, 1, 62, 24 |
+  | after the first stall, in all | 138 | 173 |
+  | windows 0 / 1 / 2, a pass | 7.6 / 8.9 / 10.4 ms | 6.5 / 11.3 / 11.9 ms |
+  | **samples made between two tics of a pass** | -- | **2** |
+  | server: late / over one already there / repeated (p15) | 2365 / 14 / 178 | 1903 / 12 / 178 |
+
+  - **Wrong, the control's size**: 138 rebuilds after the first stall, not
+    40 to 90 -- chains of 42 and 62 over 350 and 430 real tics.
+  - **`rollback_ontime` did not run**: 2 samples in the race. Not a verdict
+    on the idea: see 8.131. The race is a second control.
+  - 0 bodies below zero, 0 PARANOIA, no crash in either.
+
+### 8.131 `rollback_ontime` on the live clock
+
+Why 8.130's `rollback_ontime` made 2 samples: `I_GetTime` returns
+`g_time.time`, which `I_UpdateTime` moves once a frame, at the top of the
+main loop (`i_time.c`). During a pass it stands still, so a pass that runs
+for two tics runs on one tic's clock, and `CL_SampleOnTime` never saw a tic
+go by. Written on 2026-10-02 on a local branch, `wip/ontime2`; not pushed.
+
+- **`I_GetTimeNow`** (`i_time.c`): the tic count as it stands -- the time
+  since the frame's update, on top of what that update left over -- without
+  moving the clock; `CL_SampleOnTime` uses it. The next `NetUpdate`, on the
+  frame's clock, then finds the tic already sampled and makes none.
+- **The stamp of a sample made in a speculation**: the frontier does not
+  move while a speculation runs, and the next pass's first sample, made
+  before any tic runs, is stamped with it too. A sample made in the
+  speculation on the same stamp would be its twin -- the same to the anchor
+  for a kart held still -- and the replay would take the wrong one. So the
+  n-th made in a speculation is stamped n tics past the frontier, as one
+  made on time would have been. Between confirmed tics the stamp is the
+  confirmed world's, already distinct.
+- Checked: the syntax of `i_time.c`, `k_rollback.c`, `d_clisrv.c` (C) and
+  `d_net.cpp` (C++20), errors put in on purpose caught.
+- **Prediction**, the same test as 8.130 (`wwstall` then `wwstallontime`,
+  one build, one session): samples made between two tics of a pass, **more
+  than 7** (at least one for each stall's rebuild); **no chain: at most 4
+  rebuilds after any stall, at most 20 after the first stall in all**; the
+  control as before, with chains. 0 bodies below zero, 0 PARANOIA.
+- **Measured** (Gibax: "Pousse, et Ouais tu peux lancer"). `df4b3e2b7`
+  pushed, CI run 36983588015 green on its three jobs, installed in both
+  folders (sha256 `167b5ded…`; `aa9629f` kept as `.bak_aa9629f`). One after
+  the other, nobody touching: `wwstall` at 10:27
+  (`playlog_wwstall_RR_Opulence_join_k15_20261002-103020_df4b3e2.txt`),
+  `wwstallontime` at 10:30
+  (`playlog_wwstallontime_RR_Opulence_join_k15_20261002-103302_df4b3e2.txt`).
+
+  | | `wwstall` (ontime 0) | `wwstallontime` (ontime 1) |
+  |---|---|---|
+  | samples made between two tics of a pass | -- | **49** |
+  | gaps (samples after more than one real tic) | 118 | **11** |
+  | rebuilds for this machine's input after each stall | 3, 1, 3, 50, 1, 59, 11 | **4, 1, 1, 1, 7, 1, 1** |
+  | after the first stall, in all | 128 | **16** |
+  | windows 0 / 1 / 2, a pass | 6.3 / 9.6 / 11.0 ms | **6.3 / 6.5 / 7.1 ms** |
+  | server: late / over one already there / repeated (p15) | 2015 / 12 / 166 | 2999 / 12 / **71** |
+
+  - **Held: no chain.** One gap a stall -- the stall's own -- and 16
+    rebuilds after the first stall in all (predicted at most 20), against
+    128 with chains of 50 and 59. The windows under the gate. 49 samples
+    made between two tics of a pass (predicted more than 7).
+  - **Wrong, by a little**: one stall was followed by 7 rebuilds (over 82
+    real tics, with no gap after its own), not 4 at most.
+  - The server's filing kept its step (2999 late, 71 repeated, against
+    2015 and 166). 0 bodies below zero, 0 PARANOIA, no crash.
+- **So `rollback_ontime` breaks the cascade's loop**: an outside stall still
+  costs its own gap and a few rebuilds, and they no longer feed the next.
+  Still off by default. Next, as Gibax asked once a fix worked ("tu peux
+  tester en condition normale comme avant, comme ça on confirme que ça
+  fixe le pb"): the race to its end in normal conditions, `wwlongontime`
+  (`wwlong` with `rollback_ontime 1`), 15 karts dedicated on Opulence.
+  **Prediction**: every race window under the gate (at most 7.5 ms, as
+  8.126's clean race), no window with more than 20 rebuilds for this
+  machine's input, samples made between two tics of a pass more than 0;
+  the race ends by itself; 0 bodies below zero, 0 PARANOIA.
+- **The race to its end, normal conditions** (`wwlongontime`, 10:34 to
+  10:40, `playlog_wwlongontime_RR_Opulence_join_k15_20261002-104025_df4b3e2.txt`).
+
+  | window, leveltime | 0, 1820 | 1, 2820 | 2, 3820 | 3, 4820 | 4, 5820 | 5, 6820 | 6, 7916 | 7, 8916 | 8, 9532 (end) |
+  |---|---|---|---|---|---|---|---|---|---|
+  | a pass | 5.9 ms | 6.4 | 6.4 | 6.7 | 6.0 | 6.4 | **12.3** | 6.0 | 5.7 |
+  | rebuilt, an input | 0 | 0 | 0 | 0 | 0 | 0 | **81** | 0 | 0 |
+  | samples between two tics of a pass | 0 | 0 | 0 | 0 | 0 | 0 | 208 | 0 | 0 |
+  | same stamp as the one before / anchors matching two | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | **94 / 134** | 0 / 0 | 0 / 0 |
+
+  - **Held**: eight of the nine race windows clean, 5.7 to 6.7 ms with no
+    rebuild at all; the idle kart timed out ("Guest ran out of time.")
+    and the race ended at leveltime 9532, Bigtime Breakdown after it; 5
+    gaps in the whole race; 0 bodies below zero, 0 PARANOIA.
+  - **Wrong: window 6**, 12.3 ms and 81 rebuilds for this machine's input,
+    over the gate (predicted none over, none past 20). It began at
+    leveltime 6914 with the frontier jumping four tics (stamp 250 to 253,
+    then 255 to 3), then settled into a rebuild every eleven tics or so
+    for six hundred, "newer by 2" most of them (39 of 75) -- with 208
+    samples made between two tics of a pass, 94 with the same stamp as the
+    one before and 134 passes whose anchor matched two samples, where every
+    other window has 0 of each. **The stamps made twins**: in a kept pass
+    the frontier moves on by one, so a sample made in it at "frontier + 1"
+    has the stamp the next pass's first sample takes. `rollback_ontime`
+    stopped feeding the loop with gaps and fed it with twins instead.
+
+### 8.132 Stamps that step
+
+Written on 2026-10-02 on a local branch, `wip/ontime3`; not pushed.
+
+- **With `rollback_ontime`, no stamp the same as the one before**
+  (`K_RollbackStepStamp`, from `CreateNewLocalCMD`): a new sample's stamp
+  at or up to seven tics behind the one before is moved on to the one
+  after it; one further behind -- a new level, its leveltime starting
+  again -- is left as it is. A sample made in a speculation is on the
+  frontier's clock again (8.131's "+ n" taken out), the step doing the
+  rest. The `rollback_history` report counts the stamps moved on.
+- The stamp is also what a server reads a sample's control lag from, and
+  what another client guesses at a tic a tic for a person (8.123): moved
+  on by at most the frontier's own stalls, it now does move a tic a
+  sample, as that guess has it.
+- Checked: the syntax of `k_rollback.c`, `d_clisrv.c` (C) and `d_net.cpp`
+  (C++20), an error put in on purpose caught.
+- **Prediction**: `wwstall`, `wwstallontime`, then `wwlongontime`, one
+  build, one session.
+  - `wwstallontime` as in 8.131 or better: at most 20 rebuilds after the
+    first stall, one gap a stall, **no sample with the same stamp as the
+    one before** in the race's windows, and the anchors matching two
+    samples down to a handful.
+  - `wwlongontime`: **every race window under the gate** and none with
+    more than 20 rebuilds for this machine's input; no sample with the
+    same stamp as the one before in the race.
+  - `wwstall`, the control, with chains as before. 0 bodies below zero, 0
+    PARANOIA everywhere.
+- **Measured** (Gibax: "Oui lance"). `70814ebc0` pushed, CI run
+  37003491079 green, installed in both folders (sha256 `8e191b35…`;
+  `df4b3e2` kept as `.bak_df4b3e2`). One after the other, nobody touching:
+  `wwstall` at 13:58
+  (`playlog_wwstall_RR_Opulence_join_k15_20261002-140138_70814eb.txt`),
+  `wwstallontime` at 14:01 (`..._20261002-140420_70814eb.txt`),
+  `wwlongontime` at 14:04
+  (`playlog_wwlongontime_RR_Opulence_join_k15_20261002-141026_70814eb.txt`).
+
+  | stalls of 100 ms | `wwstall` (ontime 0) | `wwstallontime` (ontime 1) |
+  |---|---|---|
+  | rebuilds for this machine's input after each stall | 1, 3, 1, 1, 3, 8, 1 | 2, 1, 1, 1, 1, 1, 7 |
+  | after the first stall, in all | 18 | 14 |
+  | gaps | 21 | 11 |
+  | windows 0 / 1 / 2, a pass | 6.3 / 6.6 / 7.2 ms | 6.2 / 6.5 / 6.9 ms |
+  | samples with the same stamp as the one before, in the race's windows | 21 | **0** |
+  | anchors matching two samples, in the race's windows | 33 | 8 (window 0), then 0 |
+
+  | `wwlongontime`, window | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 (the end) |
+  |---|---|---|---|---|---|---|---|---|---|
+  | a pass | 5.7 ms | 6.4 | 6.2 | 6.6 | 5.9 | 6.3 | 6.6 | 6.3 | 5.6 |
+  | rebuilt, an input | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+
+  - **Held, the race to its end**: every race window under the gate, at
+    most 6.6 ms (23% of a tic); one rebuild for an input in all; no gap in
+    the race; 0 samples with the same stamp as the one before. The idle
+    kart timed out and the race ended at leveltime 9475, Monkey Mall after
+    it (the next window, 24 passes at 71 ms, is that map loading, not a
+    race). 13 samples made between two tics of a pass, 123 stamps moved on.
+  - **Held, the stalls**: at most 20 rebuilds after the first stall (14),
+    one gap a stall, no twin stamp in the race's windows, the ambiguous
+    anchors down to 8, all in the first window.
+  - **Wrong, the control**: it hardly cascaded this time -- one chain of 8,
+    18 rebuilds after the first stall, against 128 and 138 in the two
+    before. The cascade is not certain from a stall; the comparison this
+    time says little more than "no worse". The ambiguous anchors before the
+    race windows -- the join and each map's start, where leveltime starts
+    again under stamps still in the history -- are the same with and
+    without (115 and 127).
+  - 0 bodies below zero, 0 PARANOIA, no crash, in all three.
+- **So, with 8.131: `rollback_ontime` and its stepped stamps break the
+  cascade's loop and cost nothing in a clean race** -- Phase B's gate held
+  to the race's end at fifteen karts, dedicated, on Opulence. Still off by
+  default; next, on by default (or with WORLDWIDE mode), then the cap on a
+  rebuild's cost for smaller machines.
+
+### 8.133 WORLDWIDE mode turns `rollback_ontime` on
+
+The first of the next steps 8.132 left. Written on 2026-10-02 on a local
+branch, `wip/ontime-ww` (`72857f680`); not pushed.
+
+- **`K_WorldwideJoin` turns `rollback_ontime` on** with the other switches
+  a WORLDWIDE join sets, and `K_WorldwideClientOff` turns it off, on
+  leaving or on joining a stock server. Off otherwise, as a stock client.
+  The join's line now says "rollback_ontime on".
+- **Every WORLDWIDE race from this build on runs with it**, `wwwindows`,
+  `wwlong` and the other client scenarios included; their figures are not
+  comparable with earlier ones on that count.
+- **The harness**: `wwstall`, the control, turned `rollback_ontime 0` at
+  the top of its scenario -- before the join, which would now turn it
+  back on. It turns it off at the windows' start instead.
+- Checked: the syntax of `k_rollback.c`, an error put in on purpose caught.
+- **The confirmation**: `wwlong` as it stands, no switch set by the
+  scenario, 15 karts dedicated on Opulence. **Prediction**: the join's line
+  says "rollback_ontime on", and the report counts stamps moved on (more
+  than 0); every race window under the gate (at most 7.5 ms) and none with
+  more than 20 rebuilds for this machine's input; no sample with the same
+  stamp as the one before in the race's windows; the race ends by itself;
+  0 bodies below zero, 0 PARANOIA.
+- **Measured** (Gibax: "oui"). `8c9dd904e` pushed, CI run 37005934047
+  green, installed in both folders (sha256 `e06575fc…`; `70814eb` kept as
+  `.bak_70814eb`). `wwlong` as it stands, nobody touching, 14:24 to 14:30
+  (`playlog_wwlong_RR_Opulence_join_k15_20261002-143042_8c9dd90.txt`).
+  The join's line: "worldwide: this server runs WORLDWIDE mode -- predicting,
+  rollback_twoclock 4, rollback_history 12, rollback_keepspec on,
+  rollback_ontime on, corrections applied".
+
+  | window | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 (the end) |
+  |---|---|---|---|---|---|---|---|---|---|---|
+  | leveltime | 1821 | 2821 | 3821 | 4821 | 5821 | 6821 | 7821 | 8827 | 9861 | 10029 |
+  | a pass | 5.7 ms | 6.0 | 6.2 | 6.5 | 6.8 | 6.7 | 6.6 | 6.5 | 7.3 | 5.7 |
+  | rebuilt, an input | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 7 | 15 | 0 |
+  | gaps / samples made between two tics of a pass | 0 / 1 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 13 | 8 / 47 | 0 / 0 |
+
+  - **Held, every count of the prediction**: the join's line; 229 stamps
+    moved on; every race window under the gate, at most 7.3 ms (25% of a
+    tic); none with more than 20 rebuilds for an input (15 at most); 0
+    samples with the same stamp as the one before; "Guest ran out of
+    time." and the race ended, the session closing in the intermission;
+    0 bodies below zero, 0 PARANOIA.
+  - Window 8, near the race's end, had a disturbance of its own -- 8 gaps,
+    47 samples made between two tics of a pass, 15 rebuilds -- and it went
+    no further: 7.3 ms, the next window clean.
+- **So the fix is in: a WORLDWIDE client sends a sample each real tic
+  through a long pass, with stamps that step**, and the race to its end
+  holds Phase B's gate at fifteen karts, dedicated, on Opulence. Left for
+  smaller machines: the cap on a rebuild's cost (C), then the laptop, the
+  Steam Deck and the Steam Machine during the alpha.
+
+### 8.134 C: a budget on a rebuild, and a smaller machine on this one
+
+Gibax: "allez fait la suite (le 1.) puis oui, l'étape 4" -- the cap on a
+rebuild's cost, then the alpha. `rollback_ontime` stopped the gaps feeding a
+cascade (8.131 to 8.133), but a rebuild is still a hitch: about eight tics
+re-run, 45 to 60 ms on Opulence at fifteen karts here, and what a smaller
+machine takes for a tic times eight. Written on 2026-10-02 on a local
+branch, `wip/budget` (`9e11a355c`); not pushed.
+
+- **`rollback_rebuildbudget <ms>`** (client, off by default until
+  measured): a speculation stops once it has run that many milliseconds,
+  one tic at least, and the passes after run on from where it stopped -- in
+  a rebuild and in a kept pass's extension alike. No pass far past a tic;
+  the price, a drawn world a few tics short of its lead until the passes
+  after have caught up, which `rollback_history` counts as "the drawn world
+  moved against the clock". The report counts the speculations cut short
+  and the tics left to the passes after.
+- **`rollback_slowtic <us>`** (client, for testing): every tic the client
+  runs, confirmed or speculated, takes that many microseconds more -- a
+  smaller machine on this one. 4000 us is a guess at a Steam Deck's
+  Opulence tic at fifteen karts (about 10 ms against 5.8 here); the laptop
+  and the Steam Deck themselves come during the alpha.
+- **Harness**: `wwslow` and `wwslowbudget`, `wwstall`'s race (stalls of
+  100 ms every 500 tics, `rollback_ontime` on with WORLDWIDE mode) with
+  `rollback_slowtic 4000` and `rollback_rebuildbudget` 0 or 20, set at the
+  windows' start. `windows.py` now prints, per window, the frames whose
+  work with a pass ran over 50 ms and the drawn world's moves against the
+  clock.
+- Checked: the syntax of `k_rollback.c`, an error put in on purpose caught.
+- **Prediction** (`wwslow` then `wwslowbudget`, one build, one session):
+  - `wwslow`: a pass about 11 to 13 ms (over the gate: the gate is this
+    machine's, and a slower one pays more for every tic), and **at least 20
+    frames with a pass over 50 ms** in the windows -- the rebuilds.
+  - `wwslowbudget`: speculations cut short more than 0; **frames with a
+    pass over 50 ms at most a quarter of `wwslow`'s**; the drawn world
+    moving against the clock more often than in `wwslow` -- the price.
+  - Both: 0 bodies below zero, 0 PARANOIA, no crash.
+
+### 8.135 `worldwide-2.4` resynced, and the ROADMAP audited again
+
+Gibax: "allez fait la suite (le 1.) puis oui, l'étape 4, et refait un
+audit/corrige/met à jour la roadmap.md aussi".
+
+- **`worldwide-2.4` brought up to date** from `rollback-netcode` at
+  `8c9dd904e`, as the branch policy says it is for the alpha (ROADMAP,
+  *Branches*). The 2.4 branch was ported from `093a79aeb` (`k_rollback.c`
+  identical, byte for byte, between the two), and the AZERTY change was
+  ported to it on its own (`0a9877dd1`); so the code changes since are
+  `git diff 1fcef131b 8c9dd904e -- src` -- 11 files, 884 lines in and 122
+  out: `rollback_join`, `rollback_botsashuman`, the other karts as drawn
+  (8.119 to 8.121), the window's title and icon (8.122), a guessed person's
+  stamp (8.123), B2 on by default (8.124, 8.125), `rollback_stall` and
+  `rollback_cascadelog` (8.129), `rollback_ontime` with its live clock and
+  stepped stamps, on in WORLDWIDE mode (8.130 to 8.133). Applied three-way
+  on the 2.4 worktree: one conflict, the window's creation, where 2.4's
+  SDL2 takes a position the development line's no longer does -- 2.4's call
+  kept, with the Worldwide title. **`b3c6cbb7d`, local**: it touches `src/`,
+  so it is pushed on Gibax's word.
+- Checked in the 2.4 tree: `k_rollback.c`, `d_clisrv.c`, `i_time.c` (C),
+  `p_saveg.cpp`, `d_net.cpp` (C++20, with fmt, span and Tracy's headers)
+  error-free but for upstream's own under the fake configuration, the same
+  as before the change; an error put in on purpose caught in each kind.
+  `i_video.cpp` needs SDL2's headers, absent here: the CI's.
+- **C is left out** (`rollback_rebuildbudget`, 8.134, still to measure);
+  it goes to the 2.4 branch with the next update if it is kept.
+- **The ROADMAP audited again**: *Where this starts from* and *Next, in
+  order* rewritten for 2026-10-02 -- the `MT_PLAYER` item closed, B2 done,
+  sixteen karts down to "with a host, to the end", the release base and its
+  four cases, a real network's jitter tied to the filing of 8.129 -- with
+  the item numbers kept, since this file and the harness cite them, and two
+  items added: 12, the join's chat line (8.128), and 13, smaller machines
+  (8.134). Phase B's status, Phase C's full races, the compatibility
+  section's status and the risks brought up to date.
+- **Next for item 4**: the four cases against the stock 2.4 exe in the game
+  folder, once the 2.4 build is pushed and built -- a stock client refused
+  by a WORLDWIDE server, a WORLDWIDE client on a stock server, a WORLDWIDE
+  build hosting in vanilla mode for a stock client, and the leave putting
+  the switches back.
+- **The cases against the stock 2.4 exe** (Gibax: "Tu peux pousser
+  worldwide-2.4 du coup si c'est corrigé", then "tu peux screen si besoin",
+  "tu peux aussi tester une run classique genre client/serveur worldwide avec
+  la release 2.4", "tu peux appuyer sur les touches si besoin"). `b3c6cbb7d`
+  pushed, CI run 37008262875 green on its three jobs (`i_video.cpp`'s SDL2
+  call built there); its **release** build installed as
+  `ringracers_worldwide-2.4-release.exe` (sha256 `81b8e143…`, 64-bit; a
+  development build reports version 0, which a 2.4 refuses for that alone).
+  The stock exe: the game folder's `ringracers.exe`, v2.4 `7f895c9a7`,
+  32-bit. Harness: `compat.sh` (notes), each side in a folder of its own,
+  nobody touching, dedicated servers that never advertise.
+
+  | case | server | client | what the logs say |
+  |---|---|---|---|
+  | `refuse` | WORLDWIDE, `worldwide On` | stock 2.4 | "worldwide: refused node 1 -- it did not declare itself WORLDWIDE"; the join request sent, never joined |
+  | `stockserver` | stock 2.4 | WORLDWIDE | "worldwide: this server runs the stock netcode -- so does this client"; joined and **entered the race** (`rollback_join`); `rollback_ontime` and `rollback_keepspec` off, `rollback_twoclock` 0; 0 game states reloaded, 0 timeouts |
+  | `vanillahost` | WORLDWIDE, `worldwide Off` | stock 2.4 | joined, stayed about 100 s, watching (2.4 has no console command to join); no refusal, 0 timeouts |
+  | `leave` | WORLDWIDE, `worldwide On` | WORLDWIDE | on at the join (`rollback_ontime`, `rollback_keepspec`, `rollback_twoclock 4`), off after `exitgame` |
+  | `wwrace` | WORLDWIDE, `worldwide On` | WORLDWIDE | the join's line with "rollback_ontime on"; entered the race; **1.5 to 1.6 ms a pass**, 5% of a tic, on Skyscraper Leaps at eight karts, 0 rebuilds in the three windows, about 144 frames a second |
+
+  - **Held**: every case as predicted (notes, session of 2026-10-02).
+  - **Not seen: the refusal's text on screen.** The stock 2.4 shows its
+    photosensitivity warning at every start, over the refusal's box; a key
+    posted to its window (allowed by Gibax) took the warning away, and
+    behind it the menu of a first start -- the stock exe keeps its data
+    under the game folder's `ringracers`, not the `-home` it was given -- with
+    no box. The text is in the code; seeing it is left to a stock 2.4 of
+    Gibax's own. (A first attempt with `SendKeys` and the window brought to
+    the front could not take the focus, and its key went to the window in
+    front instead.)
+  - **Wrong, three times in the harness, not the code**: the two instances
+    write one log between them (the game folder's `ringracers/logs`, named
+    for the last to start), which `compat.sh` now reads as one; a comment
+    with a `;` ran as a second command in 2.4; the leave case's first run
+    used `disconnect`, which Ring Racers does not have (`exitgame`), so it
+    never left -- run again, it held.
+  - In a release build, the refs report counts no kart body below zero
+    ("counted only in a PARANOIA build"): the 0 there proves nothing, and
+    `windows.py` no longer takes those words for a PARANOIA line.
+  - Seen in passing: on a loopback (no test latency), the `leave` case's
+    client, watching on the waiting map, rebuilt 92 times in 700 passes for
+    its own input, "the newest input guessed past it", "newer by 1". To read
+    with a LAN, where the round trip is that short (ROADMAP item 2(b)).
+- **Measured** (Gibax: "pousse le C", then "fais donc ça aller"). `f9e76d65b`
+  pushed, CI run 37012340255 green, installed in both folders (sha256
+  `fb7a1ff2…`; `8c9dd90` kept as `.bak_8c9dd90`). Fifteen karts dedicated
+  on Opulence, the loop held 100 ms every 500 tics, every tic 4 ms longer,
+  nobody touching.
+  - **The first pair is not a measurement of what was meant**: a comment in
+    both scenarios -- "after the join; rollback_ontime is on" -- was cut at
+    its `;` by the console, which ran "rollback_ontime is on", that is
+    `rollback_ontime 0`. Both ran without `rollback_ontime`. What they show
+    all the same: **without it, the smaller machine collapses** -- 55.5,
+    70.9, 79.2 ms a pass, 2033 gaps and 1928 rebuilds for this machine's
+    input, 500 to 800 frames a window -- and the budget alone holds it (10.9
+    to 11.8 ms, 26 gaps, 73 rebuilds). The harness's comments lost their
+    semicolons (notes `42d04af`; of the 19, `frames_off` ran
+    "rollback_twoclock 0", which that control without prediction wanted
+    anyway, the others a word the console did not know).
+  - **Run again, `rollback_ontime` on** (15:35 and 15:38,
+    `playlog_wwslow_RR_Opulence_join_k15_20261002-153838_f9e76d6.txt`,
+    `playlog_wwslowbudget_RR_Opulence_join_k15_20261002-154120_f9e76d6.txt`):
+
+    | every tic 4 ms longer | budget 0 | budget 20 ms |
+    |---|---|---|
+    | a pass, windows 0 / 1 / 2 | 10.6 / 11.6 / 12.6 ms | 10.9 / 11.8 / 11.7 ms |
+    | frames whose work with a pass ran over 50 ms | **45** | **15** |
+    | the drawn world moving against the clock | 8 | **187** |
+    | rebuilds for this machine's input / gaps | 73 / 11 | 73 / 12 |
+    | frames a window | 3089 to 3305 | 3072 to 3219 |
+    | speculations cut short / tics left to the passes after | -- | 132 / 464 |
+
+  - **Held**: a pass of 11 to 13 ms on the smaller machine (over the gate,
+    which is this machine's: a slower one pays more for every tic), at least
+    20 hitches over 50 ms without a budget (45); with it, speculations cut
+    short, and the drawn world moving back more often (187 against 8) -- the
+    price. **`rollback_ontime` holds on the smaller machine**: no cascade,
+    11 gaps for 7 stalls.
+  - **Wrong, by a little**: the hitches over 50 ms with the budget are a
+    third of those without, not a quarter.
+- **So C trades a few long hitches for many short steps back** -- 45 frames
+  over 50 ms for 15, 8 moves back for 187. Which a player prefers is for
+  eyes, on a machine that is really smaller; `rollback_rebuildbudget` stays
+  off by default and goes with the alpha as a setting to try (ROADMAP item
+  13).
+
+### 8.136 The join's chat line, and sixteen karts with a host to the race's end
+
+Gibax: "fais donc ça aller" -- the plan after the audit: C measured (8.134),
+the join's chat line (ROADMAP item 12), sixteen karts with a host to the
+race's end (item 6), in one race.
+
+- **The fix** (`526de71e6`, written in a worktree of its own so the
+  repository's HEAD did not move under the races, then pushed): with the
+  speculation kept, a chat line is written once, by the first run that has
+  it, whatever the tic -- the same text written in the last five seconds of
+  real time is held back. A join the server's netxcmd brings to a tic the
+  standing speculation has already run is first run by a rebuild, and its
+  "entered the game" was held back as a rerun's (8.128); each rebuild moving
+  a join a tic later wrote it again past the horizon, 1 to 5 times (8.109).
+  The `rollback_keepspec` report counts the lines held back and those written
+  by a rerun. Syntax checked (C, C++20), errors put in on purpose caught; CI
+  run 37012991318 green.
+- **Run**: installed in both folders (sha256 `7be7ac85…`; `f9e76d6` kept
+  as `.bak_f9e76d6`), `playtest.sh wwlong join karts=16 map=RR_Opulence`,
+  with a host, nobody touching, 15:42 to 15:48
+  (`playlog_wwlong_RR_Opulence_join_k16_20261002-154858_526de71.txt`).
+  Prediction in the notes before it (`cc7ae40`).
+
+  | window | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 (the end) |
+  |---|---|---|---|---|---|---|---|---|---|---|
+  | leveltime | 1777 | 2777 | 3777 | 4777 | 5777 | 6777 | 7777 | 8777 | 9777 | 10359 |
+  | a pass | 5.9 ms | 6.6 | 6.5 | 6.8 | 6.5 | 6.7 | 7.0 | 6.6 | 5.9 | 6.1 |
+  | rebuilt, an input | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+
+  - **Held, the chat line**: "*Guest entered the game." once in the
+    client's log, where `rollback_join`'s joins showed none; "0 chat lines
+    ... held back as a rerun's or written already, 1 written by a rerun, no
+    run having written them"; the harness's check now finds the line in the
+    client's own log.
+  - **Held, sixteen karts to the end**: every race window under the gate,
+    at most 7.0 ms (24.5% of a tic), against 6.2 to 6.8 over the first 1:48
+    before (8.125); one rebuild for an input in the whole race (8.121, a host
+    and the race's first 1:48: 263 for another's); 3746 to 3923 frames a
+    window; the host's player and the client's, both idle, timed out ("ran
+    out of time", twice) and the race ended at leveltime 10359; 0 bodies
+    below zero, 0 PARANOIA.
+- **So Phase B's gate holds at sixteen karts**, with a host, on Opulence, to
+  the race's end, on this machine; and a WORLDWIDE client shows a joining
+  player's line once.
+
+### 8.137 Phase B validated, and `worldwide-2.4` resynced again
+
+Gibax: "si ça demande rien, tu fais ces changements de code dans
+worldwide-2.4, et du coup on peut valider la phase B".
+
+- **`worldwide-2.4` at `dd636160e`**: the code since its last resync
+  (`8c9dd904e`, 8.135) -- the rebuild budget and the smaller machine
+  (`rollback_rebuildbudget`, off by default, `rollback_slowtic`, 8.134), and
+  the chat line written once by the first run that has it (8.136).
+  `k_rollback.c` and `k_rollback.h` applied three-way, cleanly; `hu_stuff`
+  is still C on 2.4 (`hu_stuff.c`), so its one changed call was carried by
+  hand. Syntax checked in the 2.4 tree, an error put in on purpose caught.
+  `bb69dff0f`, pushed on Gibax's word, CI run 37016669243.
+- **Phase B validated**, on Gibax's word, by its *Done when*: a pass in 30%
+  of a tic at sixteen karts late in a race -- 5.9 to 7.0 ms, at most 24.5%,
+  with a host, on Opulence, to the race's end (8.136). Measured on this
+  machine, at WORLDWIDE mode's depth; a depth Phase D settles on elsewhere
+  is run again, and smaller machines stay ROADMAP item 13.
+
+### 8.138 Linux builds for `worldwide-2.4`
+
+Gibax: "avant tout le reste, je te propose de faire aussi un build linux sur
+worldwide-2.4 en CI", then "regarde sur la source gitlab de ring Racers nn ?",
+then, of a tarball or a Flatpak, "Les deux".
+
+- **Upstream.** 2.4's GitLab CI builds Linux on Debian (stable, oldstable,
+  testing; amd64, arm64, i386), Alpine and Batocera, each a bare binary
+  linked to that distribution's libraries -- a compile check more than a
+  download; master keeps Alpine alone. Kart Krew's Linux build for players
+  is their Flatpak on Flathub (`org.kartkrew.RingRacers`): the freedesktop
+  runtime 25.08, the release config, `-O3`, WebM on, the 2.4 data from
+  their GitHub release, `RINGRACERSWADDIR` set by a launcher. A Steam Deck
+  installs that one.
+- **The tarball** (job `linux-tarball`, dev and release): Ubuntu 22.04, GCC,
+  `RelWithDebInfo -O3`, libgcc and libstdc++ linked static, WebM off as in
+  the other jobs. Left to the system: glibc (2.35 the newest symbol
+  needed), SDL2 -- its display, audio and input stack, and a Steam Deck's
+  controller support -- and zlib. In `lib/`, each found through `$ORIGIN`:
+  curl and the 25 libraries it needs, opus, png -- 28 files, about 16 MB. A
+  README says where the data goes (a 2.4 folder, or `RINGRACERSWADDIR`).
+  **Checked on Ubuntu 24.04, Arch and Fedora** (job `linux-tarball-check`),
+  each with its own SDL2 and nothing else: every library the game and
+  `lib/` need is found (`ld.so --list`).
+- **The Flatpak** (job `flatpak`, release): the Flathub manifest -- same
+  runtime, modules (GLU, libyuv) and flags -- building this checkout, under
+  an app id of its own (`io.github.ringracers_worldwide.RingRacersWorldwide`),
+  so it installs beside Kart Krew's with a home of its own. It carries no
+  game data: its launcher reads the official Flatpak's, installed for the
+  user or system-wide, or the folder `RINGRACERSWADDIR` names.
+- **CI run 37039648238 green**, all nine jobs, `b6745014b` (no `src/`
+  change; the Alpine compile check kept). Artifacts
+  `ringracers-linux64[-release]-<sha>` (the tarball and its debug info, 51
+  MB) and `ringracers-flatpak-<sha>` (3.6 MB).
+- **Not yet run anywhere**: whether either starts, draws and plays is for a
+  launch -- on a Steam Deck first (ROADMAP item 5).
+
+### 8.139 The refusal's text and AZERTY, checked by Gibax
+
+Gibax, on 2026-10-03, of the fifth step of the list he was given (8.138's
+session) -- the refusal's text with his own 2.4, and AZERTY's menu text
+boxes, chat and Off, left open since 8.117: "tu peux valider déjà le 5 j'ai
+testé de mon côté". Checked by him, by hand, on his machines; nothing of it
+was run or measured from here. ROADMAP item 4 and *Compatibility* updated:
+of the compatibility cases, a stock client in the race rather than watching
+is left.
+
+### 8.140 The Flatpak carries `worldwide.pk3`
+
+Gibax, asked whether `worldwide.pk3` came with the Linux builds -- it came
+with none, nor with the CI's Windows zip: "oui fais la modif pour mettre
+worldwide.pk3 dans le flatpak déjà, comme ça on fait pas d'erreur les
+prochaines fois".
+
+- **Why the Flatpak needed something**: the game loads the title's
+  graphics from `data/worldwide.pk3` in its data folder, if there (8.113).
+  The Flatpak's data folder is the official Flatpak's, read only: nothing
+  can be put there, so its title stayed stock. With the tarball or on
+  Windows, the file is dropped into `data/` by hand.
+- **Done in the launcher, not in `src/`** (`446545f35`, on
+  `worldwide-2.4`): the pk3 ships in the app
+  (`/app/share/ringracers-worldwide/`), and at each start the launcher
+  makes the game a data folder of its own, in the app's data
+  (`~/.var/app/<id>/data/ringracers-data`): links to every file of the
+  official data, and `worldwide.pk3` in its `data/`. A data folder that has
+  its own `worldwide.pk3` is used as it is. The same result as a change to
+  the game's search, with no code for the two branches to keep apart.
+  Tried in WSL with fake folders and a fake game: the links made, made
+  again at the next start, a folder with its own pk3 left alone, and no
+  data still reported.
+- **The pk3 is now in the public repository**: `assets/worldwide.pk3`, the
+  notes' `titre/worldwide.pk3` (sha256 `171b240b…`), added past
+  `assets/.gitignore`'s `*.pk3` on purpose -- it is ours, 27 KB, four
+  images and a settings line. Rebuilt in the notes, it is copied there
+  again (the notes' `titre/README.md` says so).
+- **CI run 37213273395 green**, all nine jobs. The bundle grew from
+  3,617,240 to 3,645,384 bytes, the pk3's size; a failed `install` would
+  have stopped the build.
+
+### 8.141 A WORLDWIDE race from a Steam Machine, and its silent level
+
+Gibax, the Flatpak installed on his Steam Machine (8.138, 8.140): "ça
+marche". Then: "Tu pourrais donc tester de lancer sur ce pc un serveur
+dedicated en worldwide (en 2.4) je vais m'y co depuis ma steammachine".
+
+- **The server**: this machine, `ringracers_worldwide-2.4-release.exe`
+  replaced by the release build of run 37213273395 -- the same `src/` as
+  `bb69dff0f` and as the Flatpak; sha256 `009838d8…`, with
+  `rollback_rebuildbudget` and 8.136's chat line in it; `b3c6cbb` kept as
+  `.bak_b3c6cbb`. `-dedicated +worldwide On`, the notes' `lan_server.cfg`:
+  six bots, not on the public list. The firewall already let that path in.
+  The prediction, written before, in the session's note.
+- **The race, in the server's log** (`lanlog_steammachine_20261004_446545f.txt`):
+  the Steam Machine joined over the LAN, entered the game, raced Robotnik
+  Coaster with the six bots and **finished first**; the next map loaded,
+  and it left. No timeout, no resend.
+- **Seen by Gibax**: "sur steam deck, quand tu lance en worldwide (quand tu
+  rejoins) je remarque que en fait y'a pas de son du tout [...] y'a la
+  musique, et le son reprend en local/course offline, mais en mode
+  client-side prediction il n'y a pas de son". Not seen on Windows.
+- **Read in the code, not yet measured**: with the speculation kept, a tic
+  sounds the first time this machine runs it -- below `g_soundhorizon`, the
+  first tic not yet run, its sounds are held back as a rerun's (8.108). The
+  horizon only moves on, and nothing ever reset it. A client takes the
+  server's `gametic` at its join (`CL_ConnectToServer`'s servercfg), and
+  `gametic` is reset only when the game starts. So a client whose earlier
+  tics had gone past the server's clock -- the Steam Machine had raced
+  offline before joining a server started after that -- held back every
+  sound of the server's level until the server's clock caught up with its
+  old horizon. The music is not a level's sound and plays on; offline, the
+  speculation is not kept and the rule does not apply. Nothing in it is
+  Linux's: on Windows the harness has always started the server first, so a
+  client's clock was always behind the server's.
+- **The fix, written** (`f367fa6cc` on `rollback-netcode`, `1963b654b` on
+  `worldwide-2.4`, both local, not pushed): at the join, where the client
+  takes the server's clock, the horizon goes to it
+  (`K_RollbackNewTimeline`), with a console line when it was ahead;
+  `rollback_soundreset 0` leaves it where it was, for a control.
+  `rollback_keepspec`'s report counts a level's sounds, played and held
+  back, with the horizon and `gametic`. Syntax checked on both trees, an
+  error put in on purpose caught.
+- **To measure** (the notes' `soundjoin.sh control|fix`): the client races
+  offline on Opulence for 60 s, then joins a WORLDWIDE server started 65 s
+  after it, and reports after 30 s there. Predicted: with the control, a
+  gap of more than 1000 tics and nearly no sound played; with the fix,
+  sounds played by the hundred.
+- **Pushed, not measured** (Gibax: "oui pousse, pas besoin de lancer, et je
+  te fais confiance, fais juste le nouveau flatpak aussi"): `f367fa6cc` on
+  `rollback-netcode` (CI run 37217815320 green), `1963b654b` on
+  `worldwide-2.4` (CI run 37217817328 green, all nine jobs; its Linux
+  build carries `rollback_soundreset`). `soundjoin.sh` was not run. The
+  check is Gibax's ear, on the Steam Machine, with that run's Flatpak.
+- **Heard** (the server again, on Gibax's word: "tu peux lancer le server
+  dedicated"): this machine's release exe replaced by that run's (sha256
+  `c4102c29…`, built from `1963b65`; `446545f`'s kept as
+  `.bak_446545f`), `lan_server.cfg` again. The Steam Machine, an offline
+  race first, joined, raced Crimson Core with the bots and finished first,
+  and left. Gibax: "oui le son marche maintenant". The server, idle for half
+  an hour after, ended with code 3 when its window was closed -- the
+  signal `quit_handler` raises again, not a crash (no Windows error, the log
+  clean). **Item 19 closed.**
+- **Two slips of this session, put right** (`RRW_logo.png`): the commit
+  `93bb302f3` took `docs/RRW_logo.png` out of the repository -- the file
+  still on disk, the README's logo broken on GitHub -- and put its bullet
+  above at the end of ROADMAP.md instead of here. The logo is back, the
+  same bytes (blob `c00deda4…`), and the bullet moved here.
+
+### 8.142 Character dubs, chosen by the one listening
+
+Gibax, with his trailer's script ("DUBS : character can now have multiple
+dubs, want Sonic to speak Japanese ? now you can"): "j'aimerais ajouter
+déjà ce délire de dub en nouvelle feature". Of who chooses a voice -- the
+one listening, or the one driving, whose choice would go over the network
+and need everyone to have the pack -- "Celui qui écoute". Then: "Pense à
+faire genre tu selectionne un personnage avec 2 dub (comme dans le
+selecteur de profil)", and a pack to try, `KL_JapDub_v1_RR.wad`.
+
+- **Where a voice is played**: a character's twelve voice lines (win,
+  lose, two of pain, two of attack, two of boost, overtake, hit, power,
+  talk; `skinsound_t`) are sounds its S_SKIN maps, and
+  `S_StartSoundAtVolume` redirects each through `skin->soundsid` -- one
+  place. `K_DubSkinSound` replaces that look-up.
+- **A dub** (`k_dubs.c`): a DUBDEF lump written as an S_SKIN's sound lines
+  -- `skin = sonic`, `name = Japanese`, `DSKWIN = DSSNJWIN`; the lines it
+  lacks are the character's own. DUBDEF joins the lumps a file may hold and
+  stay unimportant (`W_VerifyNMUSlumps`, as `MUSICDEF`): a pack of sounds
+  and DUBDEFs loads on this machine alone, even in a netgame, and never
+  enters a server's file list. The packs in `<home>/dubs` load at start-up
+  with the music files -- a pack holding anything else is left out, with a
+  warning. `dublist` lists the dubs loaded.
+- **The choice**, this machine's: at character select, a character that
+  has dubs gets a step between it and the colors, `CSSTEP_DUBS`, a list
+  drawn as the profiles' is (the character translucent behind it, as at
+  "Changes?"); each voice is heard as it comes up, and the choice is saved
+  for that character (`voicedubs`, "sonic=Japanese,tails=Default"). In the
+  sound options, "Voice Language" names the voice of every other character
+  (`voicelanguage`). The character's own choice comes first.
+- **The pack given**: a replacement pack, 231 sound lumps named as the
+  characters' own -- loaded, it replaces their voices for everyone. The
+  notes' `dubs/convert_replacement.py` reads which character plays which
+  lump (chars.pk3's S_SKINs), renames the pack's voice lines and writes a
+  DUBDEF a character: **14 characters of the base game, 154 lines**; the
+  other 77 lumps are modded characters' (not in chars.pk3). The result,
+  `JapDub_Worldwide.wad`, stays out of both repositories: the voices are
+  not ours to publish.
+- **Written** on `dubs-2.4` (`b96bf7fa8`), from `worldwide-2.4`; syntax
+  checked (C, C++17), an error put in on purpose caught. Pushed on Gibax's
+  word ("faudra push ça dans une branche"); its CI is run by hand, a push
+  to that branch starting none.
+
+### 8.143 Item 8 closed on Gibax's word, and the Steam Deck run
+
+Gibax: "tu peux aussi arrêter le point 8 et le consigné, car ben mdr c'est
+fini". Read first as the Steam Deck step of the order given after 8.138;
+then, from him: "tu peux clore le §8" -- ROADMAP item 8, breadth.
+
+- **Item 8 closed, on his word**: items used on purpose and more maps,
+  which he drove in WORLDWIDE mode -- among them the two LAN sessions from
+  his Steam Machine on this machine's dedicated server, Robotnik Coaster
+  and Crimson Core with six bots, first both times (the server's logs,
+  8.141). Nothing of it measured by the harness: no item-roulette count, no
+  map list of the client's. Battle, Grand Prix and Encore stay out of the
+  alpha unless they are run.
+- **The Steam Deck run is done too**, by what 8.141 shows: the Flatpak,
+  installed by the notes' `install-steamdeck.sh`, runs on a Steam Deck and
+  a Steam Machine and races over a LAN; its silent level was fixed and
+  heard, and its title carries the ring (8.140). Not reported: the script's
+  check of the tarball's libraries on SteamOS, and a desktop distribution.
+
+⚠ Misread: Gibax's "point 8" and "§8" were this file's §8, to close as a
+chapter ("je parlais en fait de §8 et §9 dans WORLDWIDE.md"), not ROADMAP
+item 8. Breadth was never closed by him: the item is open again. The Steam
+Deck run stands, on what 8.141 shows.
+
+### 8.144 R1's gaps, closed as negligible
+
+Gibax: "On ouvre l'item 9" -- meant as this file's §9, below; read as
+ROADMAP item 9, the two places 8.89 found R1
+leaving on one sample a tic: the speculation's depth taken from the samples
+in flight, so after a late sample it may stop a tic or two short of the
+newest input's tic (the drawn world a tic or two late, on that pass); and
+the instrument calling the tics R1 fills past the samples' count guessed.
+
+- **Read as "write it"**, the fix was written (`K_HistorySpan`, the depth
+  and the source from R1's tics, `rollback_histspan` for a control) and
+  stopped before any file changed: Gibax, "Euh attend pk tu retouches à du
+  code validé là ?". The branch was empty; it was deleted.
+- **Measured instead, in the races of 2026-10-02** (`rollback_history`'s
+  report, "passes laid out differently from one sample a tic" -- the only
+  passes either gap can touch): **15 of 11182 passes (0.13%)** in the
+  sixteen-kart race with a host to the end (`526de71`, 8.136); 18 of 10768
+  at fifteen (`8c9dd90`, 8.133); 36 of 4600 on the smaller machine
+  (`f9e76d6`, 8.134). `rollback_ontime` sends a sample each real tic even
+  through a long pass (8.130 to 8.133), so a sample owning more than one
+  tic -- what both gaps need -- has become rare.
+- **Closed as negligible, without code** -- Gibax's choice when asked, item 9
+  being in his words too. The fix stays described here, should a feel ever
+  point to it.
+
+**§8 closed on 2026-10-05.** Gibax: "le §8 est TERMINE". It ran from the
+driven bot race and the light correction channel (8.1) to a netcode the
+alpha can stand on: the confirmed world at 0.000 units, input lag gone at
+every latency measured, the cascade fixed (8.133), Phase B validated at
+sixteen karts (8.137), the release base on 2.4 and its compatibility cases
+(8.135, 8.139), the Linux builds (8.138, 8.140), the sound after a join
+(8.141), and dubs begun (8.142). What is left of it is in `ROADMAP.md`.
+
+## 9. Toward the public alpha
+
+Opened on 2026-10-05 (Gibax: "t'ajoute en dessous un gros §9"). The journal
+of what the alpha needs from a validated netcode: its features -- dubs (begun
+in 8.142), steering by tilting the controller, photo mode -- each on a branch
+of its own until tried and merged; the kit and the files' release; a second
+human and a real network; and what announces the public alpha (`ROADMAP.md`,
+items 2, 3, 5, 7, 8, 13 to 18, 20 to 22). Its sections are numbered 9.1,
+9.2, and so on; the rules of §8 hold: a prediction before a run, a control
+in the same session, every finding here.
+
+### 9.1 Sonic's stray pixel, removed in `worldwide.pk3`
+
+Gibax: "y'a défois un pixel en hauteur (haut à gauche) sur certains sprit,
+un pixel innocent mais qui fait tâche... Tu pourrais le remarquer, et
+ensuite le supprimer ? Tu propose ce fix dans worldwide.pk3 si t'arrives".
+
+- **Found**: every opaque pixel of Sonic's frames (chars.pk3, the 2.4 data)
+  with no opaque neighbour. 28 of them: 19 at the top of the frame, row 2,
+  column 29 (rotation 6) or 66 (its mirror, rotation 4), of his colour,
+  about thirty pixels above his head -- frames DRLIA6 DRLIC6 DRLNA6 DRRIA4
+  DRRIC4 DRRNA4 DRROA4 FSGLA4 FSGRA6 FSLLA4 FSLRA6 SLGLA4 SLLLA4 STGLA4
+  STGRA6 STGRB6 STLLA4 STLRA6 STLRB6; and 9 against the quills of the drift
+  frames, rows 53 and 61, the dithering's, left. Both sets shown to Gibax,
+  pixel circled: "C'est correct du coup tu as bien corrigé bravo".
+- **The fix**: a P_SKIN for sonic in `worldwide.pk3` with those 19 frames,
+  each with that one pixel removed in the Doom patch itself -- every other
+  pixel, the size and the offsets the original's, checked by the build. A
+  P_SKIN patches a skin's frames rather than replacing its sprites
+  (`R_AddSingleSpriteDef` copies the frames already defined, "are we
+  'patching' a sprite already loaded ?"), so every other frame stays the
+  game's; P_SKIN comes first in its folder of the zip, as S_SKIN in
+  chars.pk3. `README-WORLDWIDE.txt` in the pk3 says what it is, and that
+  nothing else is changed -- Gibax: "je considère ça comme un 'bug fix',
+  même si c'est un bugfix d'asset. A la limite on met en place une note".
+- **Built** by the notes' `titre/sonic_fix.py`, after `build_pk3.py`;
+  rebuilt from its own output, the same file. sha256 `2c4325c3…`, in the
+  notes' `titre/`, the public repository's `assets/` on `worldwide-2.4`
+  (`2a0e1f66d`, which the Flatpak carries) and the game folder's `data/`
+  (the one before kept as `.bak_171b240`). Not yet seen in the game.
+
+### 9.2 WORLDWIDE mode on by default
+
+Gibax: "Pour le 'Worldwide On', en fait j'aimerais que ça soit 'On' de base
+en vrai".
+
+- **What changes**: `cv_worldwide`'s default, `Off` to `On` (`cvars.cpp`;
+  `778612d24` on `rollback-netcode`, `f358c7719` on `worldwide-2.4`). A host,
+  listen or dedicated, is in WORLDWIDE mode unless it turns it off for stock
+  players. Offline and splitscreen do not change: `K_WorldwideServer` asks
+  for `server && netgame`.
+- **What does not**: the switch, its menu, the refusal of a change with
+  anybody else connected. The harness sets it on every server's command line
+  (`playtest.sh` and `soak.sh` start with `+worldwide off`, `compat.sh` and
+  `soundjoin.sh` give On or Off): none of it relied on the default.
+- **A saved config keeps its value.** `CV_SaveVariables` writes every saved
+  variable, at its default or not, so a config written by an earlier build
+  holds `worldwide "Off"` -- the three on the measuring machine do. Such a
+  host stays stock until it turns the mode on once in the menu; a new player
+  starts with it on.
+- The host screen draws `(WORLDWIDE: ...)` in the warning colour when it is
+  not at its default: that is now Off.
+- Not built, not run.
+
+### 9.3 The client-local input delay knob, written
+
+Gibax: "Et le knob delai local ui tu peux déjà bosser dessus" (ROADMAP,
+*Client-local input delay knob*).
+
+- **What it does**: `localdelay`, a player setting saved in the config, 0 to
+  12 tics, 0 by default; in *Profiles > Accessibility*, "WORLDWIDE Input
+  Delay", under the stock *Minimum Input Delay*, which the prediction lifts
+  (`K_RollbackPays`). Under two-clock, `K_SpeculationDepth` stops the
+  speculation that many tics short of where the inputs in flight take it:
+  this machine's own input shows N tics later, and the other karts are
+  guessed N tics less. The cut comes after the history's lead is held, which
+  it does not move, and leaves one tic at least. Against a stock server there
+  is no speculation and it does nothing; `mindelay` does that job there.
+- **Why it never reaches the wire**: the inputs leave as before, made at the
+  same moment and for the same tics; only how far this machine draws ahead
+  changes. Nothing puts it in a packet nor in the player's config
+  (`XD_WEAPONPREF` carries `mindelay`, not this). The original `cv_mindelay`
+  bug was the other way: a delay sent as `wantdelay`, which the server then
+  applied to the client's own input.
+- **Its two counts**: the client's `rollback_history` prints `localdelay N
+  tics -- X speculations held back, Y tics in all`; the server's
+  `rollback_relabel`, `P packets from remote clients in a race, Z of them
+  asking for a delay`. ROADMAP's *done when* is Z at 0 with X above 0.
+- **Changed during a race**: raised, the kept speculation's head is already
+  past the new depth, and nothing runs until the frontier catches up -- the
+  drawn world stands still N tics; lowered, it jumps N tics on. Either is one
+  move of the drawn world against the clock.
+- **Branch** `localdelay`, from `rollback-netcode` (`df8e2e8b0`), CI run
+  37331303761. Not merged. Syntax checked here with MSYS2's gcc.
+
+**The prediction, before the race.** `playtest.sh wwdelay` (new): the
+`wwwindows` race in four windows of 750 tics at `rollback_lag 6`, `localdelay`
+0, 3, 0, 3 -- the 0 windows are the control, in the same session.
+
+1. Every `rollback_relabel` on the server: 0 packets asking for a delay, in
+   every window.
+2. The client's `held back` grows only in the 3 windows, by about one a pass,
+   and its tics by three times that.
+3. The depth the history asks for ("speculation ... tics deep on average")
+   the same in both kinds of window; the drawn world moves against the clock
+   about once more at each switch.
+4. A rebuild runs about three tics fewer in the 3 windows (`rollback_twoclock`:
+   tics run by the speculations built, over their number).
+
+Not run.
+
+### 9.4 Two players side by side, written
+
+Gibax: "commence déjà le travail sur un splitscreen vertical pour 2 joueurs.
+Tu le mets dans une branche à part" (ROADMAP item 23).
+
+- **The setting**: *Options > HUD > 2P Splitscreen*, `Horizontal` (the
+  game's) or `Vertical`, saved (`split2p`). `R_ExecuteSetViewSize` latches it
+  with `r_splitscreen` as `r_splitvertical`, and every place that changes
+  `r_splitscreen` calls it at once: nothing sees the setting change in the
+  middle of a frame.
+- **The renderers**: the software one already draws half-wide views, for
+  3P/4P -- side by side is their width with a whole screen's height: the
+  view sizes, the second view's origin and `ylookup`, the view morph of
+  screen tilting, the sky copy, the sprites' lighting, and the blit of the
+  software screen (`blit_postimg_screens`). OpenGL: the view's size and
+  origin, and a projection half as wide.
+- **The field of view**: the horizontal split widens it by 1.7 along its
+  long side; side by side takes the same rule turned, 1.7 along the tall
+  side and 0.85 of a whole screen's across (`fovtan * 17/20`), in both
+  renderers and in the HUD's projection. One number, to be judged by eye.
+- **The HUD** lays each view out as 3P/4P do (`K_HudSplits`), the layout
+  made for a half-wide view; `V_AdjustXYWithSnap` gives it half the view's
+  height as its frame, and what is snapped to the top or the bottom reaches
+  the whole height. Kept on `r_splitscreen`: the loops over the views, and
+  "the last view draws the timer". The projection of tracked objects and
+  the off-screen arrows take the frame's offset back; the tally's fade
+  covers its own view (`R_SplitViewRect`). The camera keeps the map's
+  height: the 2P pull-back is for a view half as tall.
+- **Branch** `splitv-2.4`, from `worldwide-2.4` (`facd091b4`), CI run
+  37334079203. Syntax checked here. **Never run**: what is not snapped
+  (centred texts) sits in the middle of the view, and the minimap and the
+  rankings, drawn once for all views as in 4P, sit on the line between the
+  two -- only eyes on it will say what to move. Not touched: the chat, the
+  sound's stereo, the replay menus.
+
+### 9.5 Dubs raced, fixed, merged
+
+The dubs of 8.142, tried by Gibax on 2026-10-05.
+
+- **The profile card**, driven on this machine with his go-ahead for that
+  test (keys to the game's window alone, captures sent to him): the list
+  shows, opens on the saved choice, takes Default, keeps it back from the
+  colours, and `voicedubs` holds it across a quit and a relaunch.
+- **A race**, exe `9ccb3b0`, Sonic and the Japanese pack: "toutes les voix
+  sont pas remplacé : genre le gloat, hitfeed, result etc etc sont tjr
+  anglais. mais certains sont japonais". The pack had the lines -- 11 for
+  each of its 14 characters, the gloat, "hit 'em", win and lose among them.
+  The code did not: `S_StartSoundAtVolume` dubs a skin's sound asked for by
+  its generic id (`sfx_kattk1`...), but some places take the skin's own
+  sound first and play that -- `K_PlayGenericCombatSound` (the hurt and
+  "hit 'em" lines), the tally's and the podium's grade voices, Lua's
+  `K_PlayLossSound`, the challenges menu and the dialogues' talk sound.
+  They ask `K_DubSkinSound` since `f411595df`.
+- **Raced again**, exe `f411595` checked by its sha: "c'est bon les dubs
+  sont tous en japonais ça marche". Merged into `worldwide-2.4`
+  (`31f658309`, pushed on his word, CI run 37341767580).
+- **A shared config forgets**: each test exe is built from its own branch,
+  and one without a feature drops that feature's settings when it saves
+  the config on quitting -- the `worldwide-2.4` exe of the WORLDWIDE test
+  lost `voicedubs` and `voicelanguage` (put back by hand, the file before
+  kept as `.bak_test2`). Merged features stop doing it.
+- **Next, per pilot** (Gibax: "1. du coup"): each profile chooses its
+  dubs, and a kart speaks with its pilot's, offline, in splitscreen, and
+  online in WORLDWIDE mode only; a bot with the listener's *Voice
+  Language* ("le défaut configuré dans les options"). A character without
+  that dub keeps its own voice, as now.
+
+### 9.6 Side by side, raced and merged
+
+The split of 9.4, raced by Gibax on 2026-10-05, two players on this machine,
+each build checked by its sha before it was launched.
+
+- **`facd091`**: "c'est pas mal en théorie même ça marche bien", then "les
+  items et même les rings sont petit un peu nn ?", and, shown a 2P capture:
+  "Garde le positionnement du reste du HUD, juste reprend le ring compteur,
+  l'indicateur de place, et les items". `7d6137b66`: those at their 1P/2P
+  size, at the corners the 3P/4P layout gives each view, P1 on the left and
+  P2 against the right edge (`K_SideItemCorner`) -- the item box, the
+  backup item and the ring box's slot machine at the top, the ring counter
+  at 2P's height, the place above it. The place has one size for every
+  split; only its pop is 2P's.
+- **`7d6137b`**, on his capture at 1920x1080: P2's ring counter ran 4 units
+  past the right edge, P1's sat 10 from the left; and the duel bar was
+  drawn twice, top and bottom, as 3P/4P do. `210054068`: P2's counter 14
+  further left, one bar at the bottom; then "Affiche juste celle de j2 à la
+  place" (`db868010c`) -- a bar puts its own player on the right, so P2's
+  has each face on its view's side.
+- **`db86801`**: "C'est bien", but the song credit sat mid-screen, across
+  both views. `04c80c81c`: at the top, as 1P. Not yet seen in the game.
+- **Merged** into `worldwide-2.4` (`1ed058fed`, pushed on his word, CI run
+  37345599838) -- "après ça fusionne pour moi c'est bon". `worldwide-2.4`
+  had been merged into `splitv-2.4` first (`2a09e9cb6`), so that the test
+  exe kept the dubs' settings in the shared config.
+- **Not looked at**: OpenGL, the horizontal split since the change, the
+  end-of-race tally, Battle.
+- **On the way**: "arrêter la tâche" in the task manager ends the game
+  without saving the config -- two sessions lost their settings that way,
+  among them, likely, the `worldwide On` of 9.2's check, which a log that
+  was never written cannot show. Quitting by the window's cross saves it.
+
+### 9.7 Dubs per pilot, written
+
+Gibax: "imaginons : en local/online, y'a 2 Sonics, mais un a choisi le dub
+japonais, et l'autre le dub default, le but c'est que chacun des sonics
+jouent les voix de SON dub", WORLDWIDE mode only online, "tant que le côté
+local reste non changé"; then "les bots prennent [...] le défaut configuré
+dans les options"; "ok attaque les dubs par pilote".
+
+- **The choice is the profile's**: made at character select as before, now
+  kept under the profile the pilot races with (`pilotdubs`,
+  `GIBAX/sonic=Japanese,...`), in place of the listener's per-character
+  `voicedubs`, which is gone -- a saved one is no longer read, and its
+  choices are made again at character select.
+- **Who speaks with what** (`K_DubPilotSound`): a kart in its pilot's dub --
+  from the profile for this machine's own pilots, offline and in
+  splitscreen alike; from what the pilot's machine said for a remote one.
+  A bot, a replay, a pilot who chose nothing: the listener's *Voice
+  Language*. A dub this machine does not have, or a line it lacks, is the
+  character's own. The menus and the dialogues keep the listener's.
+- **Online, WORLDWIDE mode only**: `XD_PILOTDUB`, a pilot's character and
+  dub's name. `K_DubNetUpdate` sends it once a frame from the main loop,
+  never in a tic the prediction runs again: when it changes, and again
+  when anybody joins, since a late join brings no history of net commands.
+  A client sends it only to a server in WORLDWIDE mode -- it learns the
+  mode where `K_WorldwideJoin` does, in `d_clisrv.c`, without reading
+  `k_rollback.c`. A stock server kicks a client over a net command it does
+  not know (`Got unknown net command`), and so would a WORLDWIDE build
+  without this one: **`WORLDWIDE_PROTOCOL` goes from 1 to 2**, so that two
+  such builds refuse each other at the join with a readable message rather
+  than in a race. Replays record no net command. Nothing of it touches the
+  game: a name kept by player slot.
+- `dublist` also prints `pilotdubs` and what was heard from whom.
+- **Branch** `pilotdubs-2.4`, from `worldwide-2.4` (`a27350bf7`), CI run
+  37346971495. Syntax checked here, `k_dubs.c` with `-Wall -Wextra`.
+  Not run.
+
+**To try**: offline in splitscreen, two profiles, both on Sonic, one
+choosing Japanese and the other Default -- each kart in its own voice, bots
+in *Voice Language*. Online in WORLDWIDE mode, the PC and the Deck: each
+hears the other's choice, provided it has that dub loaded; `dublist` on
+either names what it heard.
+
+### 9.8 Dubs per pilot, tried and merged
+
+- **Tried** by Gibax on 2026-10-05, exe `a27350b` checked by its sha: in
+  splitscreen, two profiles on Sonic, one choosing Japanese and the other
+  Default -- "c'est bon ça marche, fusionne". The config his quit saved
+  holds both choices, each under its profile (`pilotdubs`).
+- **Merged** into `worldwide-2.4` (`e90256c57`, pushed on his word, CI run
+  37348091536). From there `WORLDWIDE_PROTOCOL` is 2: the Steam Deck's
+  Flatpak and every earlier WORLDWIDE build are refused at the join by a
+  server of this one, and the other way round.
+- **Not yet tried**: online in WORLDWIDE mode, which needs the new build on
+  both machines and the pack on both.
+
+### 9.9 Photo mode, tried and merged
+
+ROADMAP item 22, chosen by Gibax with the gyroscope ("3 et 1 ça serait
+top"), also the trailer's own camera.
+
+- **What it is**: *PHOTO MODE* in the pause menu (`k_photo.c`, `68681fc81`).
+  The game is held -- `P_AutoPause` answers yes while it is on -- the HUD
+  hidden (`cv_showhud`, put back on leaving), and the camera let go: the
+  game's own free camera (`camera[].freecam`). *LEAVE PHOTO MODE* in the
+  same menu puts everything back. Offline and in replays; never in a
+  netgame, where nothing can hold the game.
+- **Tried** by Gibax on 2026-10-05, exe `dd231bc` checked by its sha, built
+  from `photo-2.4` with `worldwide-2.4` merged in first (`dd231bcf9`) so
+  that it kept every other setting: "le mode photo marche, tu peux
+  fusionner".
+- **Merged** into `worldwide-2.4` (`de30d1ad1`, pushed on his word, CI run
+  37349869913).
+
+### 9.10 Steering with the gyroscope, tried and merged
+
+ROADMAP item 21, chosen with the photo mode ("3 et 1 ça serait top").
+
+- **What it is** (`k_gyro.c`, `cf5bb4fb4`): SDL's motion sensors, switched
+  on when a controller opens; the controller's roll, read as a wheel's --
+  the accelerometer's gravity, kept steady by the gyroscope's rate
+  (a complementary filter, on the sensors' own timestamps) -- steers as a
+  stick's x axis would. 2.4 had no sensor code. A line in the log per
+  controller opened says whether SDL gives it an accelerometer and a
+  gyroscope (`94a10f11e`): one that Steam Input shows as a plain controller
+  has none.
+- **Tried** by Gibax on the Steam Machine on 2026-10-05, the Flatpak of
+  `94a10f1`: "le gyro est pas mal", and two asks -- "le setting gyro etc :
+  plutot sur le profil plutot que ALL profile", "Garder si possible la
+  direction au stick pendant le gyro".
+- **So** (`4d7fd5fa9`): *Gyro Steering* (Off, On, Inverted) and *Gyro
+  Range* (the tilt for a full turn, 30 degrees by default) are each
+  profile's, in "This Profile only". A profile is the game's file, which
+  stock 2.4 reads too: they are kept beside it, in `profilegyro`
+  ("GIBAX=1:30"), by the profile's name; the global `gyrosteer` and
+  `gyrorange` are gone. And the stick first: tilting steers only while the
+  stick and the d-pad are left alone -- before, the two were added, and a
+  controller held a little tilted pulled against the stick.
+- **Merged** into `worldwide-2.4` (`e74f03d3e`, on his word, CI run
+  37352495955). Those two changes not yet tried.
+
+### 9.11 The players' tags side by side
+
+Gibax, on a capture of a race side by side: the tag over P2 in P1's view
+"s'efface".
+
+- **Why**: `K_drawKartNameTags` crops the tags to the view, and side by
+  side it took 3P/4P's quarter of the screen -- the upper half of the view
+  only: a kart lower in it lost its tag, and P2's quarter, offset, lost the
+  tags near its right edge. The tags themselves sit in the view's frame
+  (`V_SPLITSCREEN`) and were in the right place.
+- **So** (`44c9ddb01`): side by side, the crop is the whole view
+  (`R_SplitViewRect`). The online name tags, which place their bar and name
+  on the whole screen's coordinates derived from the view's frame by
+  halves, derive them from that frame side by side.
+- The CI run of that commit was cancelled twice by GitHub, its runners down
+  ("The job was not acquired by Runner of type hosted even after multiple
+  attempts"), then went through. Tried by Gibax with its dev build: "je
+  valide du coup". Merged into `worldwide-2.4` (`46da12bf2`, on his word,
+  CI run 37375414315).

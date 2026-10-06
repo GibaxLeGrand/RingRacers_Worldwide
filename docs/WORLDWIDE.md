@@ -9008,6 +9008,18 @@ first (the notes' session of 2026-10-06).
   cap 24 instead of 12 -- the same below about 340 ms, where the depth never
   reaches 12. Not merged: a driven race at `lag=15` first, for the deeper
   rebuild's cost and the feel.
+- **`histcap-2.4`'s own build crashed** (2026-10-06, Gibax's go-ahead,
+  nobody driving): `playtest.sh wwwindows dedicated lag=15 join`, the
+  development build of `8be7c363b`. The client died within a minute of
+  its start -- "Process killed by signal: SIGSEGV", right after the
+  server's settings at the join; the server's log has the Guest enter,
+  become a spectator and enter again (the two `rollback_join`), then
+  leave. No report written (no exchndl in a stock 2.4 folder). The same
+  race on `03ec1b2` with the cap at 12 at the join, 24 only after 1600
+  tics (`wwcap`), did not crash: the cap of 24 from the join is the one
+  difference -- one run, not yet a cause. **Not to be merged** until it
+  is understood: a second run, then the crash's place (a debugger, or the
+  cap raised at the join on `03ec1b2` by the console).
 
 ### 9.16 Jitter and loss in the harness
 

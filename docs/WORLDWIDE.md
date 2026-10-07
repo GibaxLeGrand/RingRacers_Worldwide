@@ -9353,7 +9353,7 @@ speedometer in each view, by its existing setting.
 
 ### 9.18 Japanese lines gathered by hand: Fang first
 
-Gibax, 2026-10-07, with a folder of lines of his own
+Gibax, 2026-10-07, with a folder of lines gathered by hand
 (`addons/work/voicesx`, a folder a character) and its list,
 `new_jap_voice.txt`: "j'aimerais voir pour les transformer en dub pour les
 persos suivant". The list: for the game's own characters without a
@@ -9382,3 +9382,32 @@ Ragna (`ragna`, `DC_SaturnSTBONUS-V1.pk3`) and Noel (`noelvermillion`,
   `--loudness -10` as SegaSonic) and Ragna (11 files for 11) are named by
   their games' numbers: which is which is Gibax's to say, by ear. The seven
   others have no lines yet.
+
+### 9.19 Jet, Surge, Arle and Ragna in Japanese
+
+Fang's, heard by Gibax: "ça marche". Then, "vérifie les voix faites/ajoutées
+aux autres persos et fais de même" -- "c'est des dub japanese": in
+`voicesx`, Jet's and Ragna's lines named by Gibax, Surge's (Baiken's, Ogg),
+and Arle's, who was not on the list.
+
+- **Arle had a Japanese already**, the pack's (8.142), other lines than
+  Gibax's (none the same length, attack2 0.64 s against 1.48). Two DUBDEFs of
+  one name, the later's lines win (`K_ParseDubDef`) -- the pack's would
+  have stayed in the WAD unheard. `convert_replacement.py --skip arle`
+  leaves it out; Gibax's are Arle's Japanese. One flag to have it back.
+- **Jet** calls his pain lines `hit1` and `hit2` (`hitconfirm` is his
+  hitting someone): given by `--line`. Three of his WAVs are stereo; the
+  game reads a sound effect in one channel (`OggPlayer<1>`), so a WAV is
+  now encoded mono -- Fang's lines, mono already, came out the same bytes.
+- **Loudness**: every line -6.3 to -14.5 LUFS, the Japanese pack's own
+  range: none made louder. Five are under the measure's 400 ms block and
+  read -70; `loudness()` now measures such a line played ten times over
+  (Jet's attack1, 0.37 s: -11.0), so a `--loudness` would not give it
+  +60 dB.
+- **Built and checked** line by line against the installed packs:
+  `JapDub_Worldwide.wad` 17 dubs (the pack's 13 and Fang unchanged, Arle
+  changed, Jet and Surge added), `JapDub_Addons_Worldwide.wad` 11 (Ragna
+  added), no lump left unreferenced; SegaSonic and both ComoDubs byte for
+  byte. Installed in both games' `dubs/` and `linux-builds/dubs`.
+  **Not heard yet.** Still without lines: Big, Bark, Bean, Tikal,
+  Whisper, Maria, Noel.

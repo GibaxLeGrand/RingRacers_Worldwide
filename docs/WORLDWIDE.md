@@ -9350,3 +9350,35 @@ speedometer in each view, by its existing setting.
 - Each build was the branch's release build (CI runs 37502752967 to
   37509486349). Gibax: "c'est bon, fusionne". Merged into `worldwide-2.4`
   (`089be225f`). On this machine alone, as 9.4: nothing sent.
+
+### 9.18 Japanese lines gathered by hand: Fang first
+
+Gibax, 2026-10-07, with a folder of lines of his own
+(`addons/work/voicesx`, a folder a character) and its list,
+`new_jap_voice.txt`: "j'aimerais voir pour les transformer en dub pour les
+persos suivant". The list: for the game's own characters without a
+Japanese dub, a voice each -- Fang, Kagura Mutsuki's; Bark, Android 16's;
+Bean, Hazama's; Surge, Baiken's; Whisper, Millia Rage's; Big, Tikal, Jet
+and Maria, their official Japanese ones -- and for two addon characters,
+Ragna (`ragna`, `DC_SaturnSTBONUS-V1.pk3`) and Noel (`noelvermillion`,
+`DCFL_SaturnSTPack-V8.2.pk3`), their own. No code: the dubs of 8.142 and
+9.7 take them as they are.
+
+- **`dubs/convert_folder.py`** (notes) reads a folder on disk as it reads
+  one in a pk3, the words of lines gathered by hand (`attack1`, `boost1`,
+  `hitconfirm`), and `--line <line>=<file>` for a file whose name does not
+  say its line. A WAV is encoded as the louder lines are (Vorbis quality 7,
+  bitexact). The five packs rebuilt with it before the change: byte for
+  byte those installed -- SegaSonic's too, whose encoding was moved into a
+  function shared with the WAVs.
+- **Fang**: 11 lines named by Gibax, 44.1 kHz mono WAVs, -8.4 to -13.7
+  LUFS (two under 400 ms, too short for the integrated measure, peak
+  -0.6 dBFS), beside the Japanese Sonic's -9.2 on average: kept as they
+  are. A 15th DUBDEF in `JapDub_Worldwide.wad` (prefix `ZF`), the 14 before
+  it and their lumps unchanged; built twice, the same bytes. Installed in
+  both games' `dubs/` and `linux-builds/dubs`. **Not heard yet.**
+- **Waiting**: Jet (13 files, 12 lines -- `SND_00499` is there as WAV and
+  as Ogg -- for 11 slots; the Riders ones at -18.1 to -22.6 LUFS, so
+  `--loudness -10` as SegaSonic) and Ragna (11 files for 11) are named by
+  their games' numbers: which is which is Gibax's to say, by ear. The seven
+  others have no lines yet.

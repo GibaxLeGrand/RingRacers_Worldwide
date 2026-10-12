@@ -26,8 +26,9 @@ default from `771bec680` (8.100); `rollback_join` (8.119) and
 `aa9629fdf` (8.130, on the live clock from `df4b3e2b7`, 8.131, its stamps
 stepped from `70814ebc0`, 8.132). `rollback_rebuildbudget` and
 `rollback_slowtic` from `f9e76d65b` (8.134); `rollback_soundreset` from
-`f367fa6cc` (8.141). `rollback_fill` (8.129) came out of the code once
-measured worse (`07e4040d8`).
+`f367fa6cc` (8.141); `rollback_jitter`, `rollback_loss` (9.16) and
+`localdelay` (9.14) merged on 2026-10-12 (9.20). `rollback_fill` (8.129)
+came out of the code once measured worse (`07e4040d8`).
 
 ⚠ Reminder: **none of these commands is ever launched in a race without the
 project owner's explicit go-ahead**, every time (rule 1 of the docs entry
@@ -741,10 +742,23 @@ what let the rollback loop stay on without ever triggering.
 - Warns if packets were lost (queue full): an artificial delay then becomes
   artificial packet loss, and the two would look alike in the results without
   this warning.
-- A delay only: no jitter and no loss, so it cannot stand in for a real
-  network (`ROADMAP.md`, *Next, in order*, item 3). The WORLDWIDE scenarios
-  set it first, before the join, since 8.106; `playtest.sh <scenario>
-  lag=<tics>` swaps it in any scenario.
+- A delay only: no jitter and no loss -- those are `rollback_jitter` and
+  `rollback_loss`, below (`ROADMAP.md`, *Next, in order*, item 3). The
+  WORLDWIDE scenarios set it first, before the join, since 8.106;
+  `playtest.sh <scenario> lag=<tics>` swaps it in any scenario.
+
+### `rollback_jitter [tics]`
+**Testing only**, off at 0 (`WORLDWIDE.md` 9.16). Holds each peer packet 0
+to that many tics more than `rollback_lag`, at random, on reception, so two
+can arrive out of order; draws from a generator of its own, never
+`P_Random`. Setting it zeroes the counts it shares with `rollback_loss`;
+without an argument it prints them: packets seen, held longer, released
+out of order, thrown away. Scenario `wwjitter`.
+
+### `rollback_loss [percent]`
+**Testing only**, off at 0 (9.16). Throws that share of the peer packets
+away on reception, 0 to 100, left to the netcode's acks and resends. As
+`rollback_jitter`: setting it zeroes the counts. Scenario `wwloss`.
 
 ### `rollback_maxdepth [tics]`
 How far back a rollback is allowed to rewind. Beyond this depth, the latency
@@ -817,6 +831,15 @@ delay actually applied to this player), and what a rollback at the current
 depth would cost against a tic's budget — based on the times measured by
 `rollback_test`/`rollback_resim`. Suggests running those two commands first if
 nothing has been measured yet.
+
+### `localdelay [tics]` — player setting
+0 to 12, 0 by default, which changes nothing (`WORLDWIDE.md` 9.3, 9.14). The
+client-local input delay: under the prediction, the speculation stops that
+many tics short of this machine's newest input -- a steadier picture for a
+later one. Local only: it never reaches a packet as `wantdelay` (the
+server's `rollback_relabel` counts the packets that ask for a delay), and
+`rollback_history` prints how many speculations it held back. Console only,
+no menu entry.
 
 ---
 

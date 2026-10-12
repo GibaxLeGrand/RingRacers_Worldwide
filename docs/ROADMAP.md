@@ -114,7 +114,8 @@ audit's, kept because `WORLDWIDE.md` and the harness cite them; items 12 and
    written and run** (9.16, `netsim-2.4`): `rollback_jitter`, `rollback_loss`;
    2% loss is absorbed, 0-3 tics of jitter moves the drawn world on a fifth
    to a third of the passes -- through the history's cap of 12; at 24
-   (`histcap-2.4`, item 7) not once.
+   (`histcap-2.4`, item 7) not once. Merged into `worldwide-2.4`
+   (`afaf3ddf9`, 9.20), off at 0.
 4. **The release base and its compatibility cases** (*Compatibility*,
    below): `worldwide-2.4`, ported onto `v2.4` (8.114), built by the CI, dev
    and release (8.115), starting in a stock 2.4 folder since `68f5eb582`
@@ -306,7 +307,8 @@ unchanged, so every SHA this file and `WORLDWIDE.md` cite from them still
 names the same commit there. `localdelay` (9.3), never merged, is ported
 onto `worldwide-2.4` as `localdelay-2.4` (`7c5adfef1`, CI green), with the
 *Profiles > Accessibility* list made to slide, which the gyroscope's two
-lines had pushed past the screen's bottom: not yet tried. Since `68f5eb582`,
+lines had pushed past the screen's bottom; merged on Gibax's word
+(`8846563fc`, 9.20), 0 by default, its feel not yet tried. Since `68f5eb582`,
 `worldwide-2.4` starts in a stock 2.4 folder, which is 32-bit, without
 `-noexchndl` (8.117). **Proposed scope** (the audit's, not decided):
 Race only, Windows, eight players at most unless 6 says sixteen, and the
@@ -560,6 +562,10 @@ setting -- shows no `wantdelay`.
 
 The pre-join menu that offers this knob with a recommended value is step 7 of
 the compatibility section.
+
+**Done** (`WORLDWIDE.md` 9.3, 9.14): `localdelay`, measured -- no packet asks
+for a delay -- and merged into `worldwide-2.4` (9.20), 0 by default. Its
+feel is left to try.
 
 ---
 

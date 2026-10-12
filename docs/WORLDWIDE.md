@@ -9411,3 +9411,22 @@ and Arle's, who was not on the list.
   byte. Installed in both games' `dubs/` and `linux-builds/dubs`.
   **Not heard yet.** Still without lines: Big, Bark, Bean, Tikal,
   Whisper, Maria, Noel.
+
+### 9.20 `localdelay` and `netsim` merged
+
+Gibax, 2026-10-12: "tu fusionnes les branches". The two side branches left
+open, merged into `worldwide-2.4` with no conflict -- they touch
+`k_rollback.c` in different places:
+
+- **`localdelay-2.4`** (`8846563fc`): `localdelay`, the client-local input
+  delay (9.3, measured in 9.14: no packet asks for a delay, the
+  speculations held back), 0 by default, which changes nothing; a console
+  setting, not in a menu. With it, *Profiles > Accessibility* slides when
+  longer than the screen, which the gyroscope's two lines had made it.
+  **Its feel is not tried yet**: merged as a knob, Gibax's to set.
+- **`netsim-2.4`** (`afaf3ddf9`): `rollback_jitter` and `rollback_loss`
+  (9.16), the harness's jitter and loss on reception, off at 0, debug
+  commands like the other `rollback_` ones.
+- Left on their branches: `histcap-2.4`, `histcap18-2.4` and
+  `histcapfix-2.4` (the cap stays 12, 9.15; the fix they carry is merged
+  as `specauth-2.4`), and `overlaydiag-2.4`, a diagnostic.

@@ -5811,6 +5811,11 @@ static void HandlePacketFromPlayer(SINT8 node)
 			K_RollbackNoteRelabel((int32_t)((int64_t)faketic - (int64_t)realstart),
 				(node == servernode), (gamestate == GS_LEVEL));
 
+			// And the delay the packet itself asked for: a client's own input
+			// delay (localdelay) must never reach it.
+			K_RollbackNoteWantDelay(netbuffer->u.clientpak.wantdelay,
+				(node == servernode), (gamestate == GS_LEVEL));
+
 			// And if we already have a ticcmd submitted for that time, it's weird packet pacing
 			// or interp messing with ticcmd send/receive timing. Instead of dropping, submit this
 			// ticcmd for the next tic, giving us 1 tic of "buffer".

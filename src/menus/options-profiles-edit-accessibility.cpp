@@ -18,7 +18,7 @@
 #include "../p_local.h" // cv_tilting
 #include "../k_gyro.h" // cv_dummyprofilegyro* (WORLDWIDE.md section 9)
 
-extern "C" consvar_t cv_mindelay, cv_drawinput;
+extern "C" consvar_t cv_mindelay, cv_localdelay, cv_drawinput;
 
 using srb2::Draw;
 
@@ -36,7 +36,48 @@ void draw_routine()
 		M_DrawProfileCard(optionsmenu.optx, optionsmenu.opty, false, optionsmenu.profile);
 	}
 
-	for (int i = 0; i < currentMenu->numitems; ++i)
+	// WORLDWIDE: the gyro's two lines and the input delay's (WORLDWIDE.md
+	// section 9) made this list longer than the screen: eleven apart from
+	// y 31, stock's 15th and last line sits at 185, an 18th at 218, under
+	// the bottom edge. So it slides a line at a time, to keep the line
+	// selected on screen; the lines slid off the top are not drawn. A list
+	// that fits, as stock's, never slides.
+	static int first = 0;
+	const int fit = (BASEVIDHEIGHT - 4 - currentMenu->y) / 11;
+
+	if (currentMenu->numitems <= fit || fit < 2)
+	{
+		first = 0;
+	}
+	else
+	{
+		if (itemOn < first)
+		{
+			first = itemOn;
+
+			// Back up to a line under a header: the header with it.
+			if (first > 0 && (currentMenu->menuitems[first - 1].status & IT_HEADERTEXT) == IT_HEADERTEXT)
+			{
+				first--;
+			}
+		}
+		else if (itemOn >= first + fit)
+		{
+			first = itemOn - fit + 1;
+		}
+
+		if (first > currentMenu->numitems - fit)
+		{
+			first = currentMenu->numitems - fit;
+		}
+
+		if (first < 0)
+		{
+			first = 0;
+		}
+	}
+
+	for (int i = first; i < currentMenu->numitems; ++i)
 	{
 		const menuitem_t& it = currentMenu->menuitems[i];
 
@@ -137,6 +178,11 @@ menuitem_t OPTIONS_ProfileAccessibility[] = {
 
 	{IT_STRING | IT_CVAR, "Minimum Input Delay", "Practice for online play! 0 = instant response.",
 		NULL, srb2::itemaction(&cv_mindelay), 0, 0},
+
+	// WORLDWIDE's own (ROADMAP's client-local knob): the prediction lifts the
+	// one above, and this is what it offers in its place.
+	{IT_STRING | IT_CVAR, "WORLDWIDE Input Delay", "WORLDWIDE online: steadier view, later input. 0 = instant.",
+		NULL, srb2::itemaction(&cv_localdelay), 0, 0},
 
 	{IT_STRING | IT_CVAR, "Screen Tilting", "View rotation on inclines.",
 		NULL, srb2::itemaction(&cv_tilting), 0, 0},

@@ -1204,6 +1204,8 @@ boolean HSendPacket(INT32 node, boolean reliable, UINT8 acknum, size_t packetlen
 #define LAGQUEUE_MAX 512
 
 int32_t netlagtics = 0; // set by the rollback_lag console command
+int32_t netjittertics = 0; // rollback_jitter
+int32_t netlosspercent = 0; // rollback_loss
 
 static struct
 {
@@ -1211,11 +1213,33 @@ static struct
 	size_t len;
 	int16_t node;
 	tic_t due;
+	uint32_t order; // when it arrived, among the held ones
 	dboolean used;
 } lagqueue[LAGQUEUE_MAX];
 
 static uint32_t lagheld;   // how many are waiting right now
 static uint32_t lagdropped; // and how many were thrown away for want of room
+
+// rollback_jitter and rollback_loss (ROADMAP item 3). Their draws come from a
+// generator of their own, never the game's: P_Random is the simulation's,
+// and a draw here would desynchronise the machines it is meant to test.
+// Seeded the same at each reset, so a scenario draws the same sequence.
+static uint32_t lagrng = 0x9E3779B9u;
+static uint32_t lagseen;      // peer packets received while any of it is on
+static uint32_t lagjittered;  // ... held longer than netlagtics
+static uint32_t lagreordered; // ... released before one that came in earlier
+static uint32_t laglost;      // ... thrown away on purpose
+static uint32_t lagorder;     // arrival numbers, to tell reordering
+static uint32_t laglastout;   // the arrival number last released
+
+static uint32_t Lag_Rand(void)
+{
+	// xorshift32
+	lagrng ^= lagrng << 13;
+	lagrng ^= lagrng >> 17;
+	lagrng ^= lagrng << 5;
+	return lagrng;
+}
 
 /** Puts the packet now in netbuffer aside until its time comes. */
 static void Lag_Stash(void)
@@ -1234,6 +1258,17 @@ static void Lag_Stash(void)
 		lagqueue[i].len = (size_t)doomcom->datalength;
 		lagqueue[i].node = doomcom->remotenode;
 		lagqueue[i].due = I_GetTime() + (tic_t)netlagtics;
+
+		if (netjittertics > 0)
+		{
+			const tic_t more = (tic_t)(Lag_Rand() % (uint32_t)(netjittertics + 1));
+
+			lagqueue[i].due += more;
+			if (more > 0)
+				lagjittered++;
+		}
+
+		lagqueue[i].order = ++lagorder;
 		lagqueue[i].used = true;
 		lagheld++;
 		return;
@@ -1270,7 +1305,33 @@ static dboolean Lag_Release(void)
 	lagqueue[best].used = false;
 	lagheld--;
 
+	// Out of order: an earlier arrival is still held, or was released after.
+	if (lagqueue[best].order < laglastout)
+		lagreordered++;
+	else
+		laglastout = lagqueue[best].order;
+
 	return true;
+}
+
+/** What the jitter and the loss did, for their commands. */
+void Net_NoiseStatus(uint32_t *jittered, uint32_t *reordered, uint32_t *lost, uint32_t *seen)
+{
+	if (jittered != NULL)
+		*jittered = lagjittered;
+	if (reordered != NULL)
+		*reordered = lagreordered;
+	if (lost != NULL)
+		*lost = laglost;
+	if (seen != NULL)
+		*seen = lagseen;
+}
+
+/** Their counts back to zero and their draws back to the start of the sequence. */
+void Net_NoiseReset(void)
+{
+	lagrng = 0x9E3779B9u;
+	lagseen = lagjittered = lagreordered = laglost = 0;
 }
 
 /** What the delay is doing, for the command that sets it. */
@@ -1380,7 +1441,7 @@ static dboolean HGetPacketNow(void)
   */
 dboolean HGetPacket(void)
 {
-	if (netlagtics <= 0)
+	if (netlagtics <= 0 && netjittertics <= 0 && netlosspercent <= 0)
 		return HGetPacketNow();
 
 	// A held packet must not outlive the game it belongs to. Releasing one after
@@ -1402,6 +1463,16 @@ dboolean HGetPacket(void)
 	{
 		if (doomcom->remotenode == 0)
 			return true; // from ourselves, and never delayed
+
+		lagseen++;
+
+		// Lost on the way: the netcode's acks and resends see to it as they
+		// would on a real network.
+		if (netlosspercent > 0 && Lag_Rand() % 100 < (uint32_t)netlosspercent)
+		{
+			laglost++;
+			continue;
+		}
 
 		Lag_Stash();
 	}

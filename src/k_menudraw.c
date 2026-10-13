@@ -5845,14 +5845,20 @@ void M_DrawVideoModes(void)
 	INT32 i, j, row, col;
 	INT32 t = M_EaseWithTransition(Easing_Linear, 5 * 64);
 
+	// WORLDWIDE: the 4K modes make the columns 8 long (WORLDWIDE.md 9.22), and
+	// the eighth row sat under "Current mode is": the list goes up, its title
+	// with it, to the menu's title (Gibax: "remonte le petit menu"). As it was
+	// at 7.
+	const INT32 top = currentMenu->y - ((optionsmenu.vidm_column_size > 7) ? 12 : 0);
+
 	M_DrawMenuTooltips();
 	M_DrawOptionsMovingButton();
 
-	V_DrawCenteredMenuString(BASEVIDWIDTH/2 + t, currentMenu->y,
+	V_DrawCenteredMenuString(BASEVIDWIDTH/2 + t, top,
 		highlightflags, "Choose mode, reselect to change default");
 
 	row = 41 + t;
-	col = currentMenu->y + 14;
+	col = top + 14;
 	for (i = 0; i < optionsmenu.vidm_nummodes; i++)
 	{
 		INT32 colorflag = 0;
@@ -5874,7 +5880,7 @@ void M_DrawVideoModes(void)
 		if ((i % optionsmenu.vidm_column_size) == (optionsmenu.vidm_column_size-1))
 		{
 			row += 7*13;
-			col = currentMenu->y + 14;
+			col = top + 14;
 		}
 	}
 
@@ -5922,7 +5928,7 @@ void M_DrawVideoModes(void)
 
 	// Draw the cursor for the VidMode menu
 	i = 41 - 10 + ((optionsmenu.vidm_selected / optionsmenu.vidm_column_size)*7*13) + t;
-	j = currentMenu->y + 14 + ((optionsmenu.vidm_selected % optionsmenu.vidm_column_size)*9);
+	j = top + 14 + ((optionsmenu.vidm_selected % optionsmenu.vidm_column_size)*9);
 
 	M_DrawCursorHand(i + 14, j);
 }

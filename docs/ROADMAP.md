@@ -9,7 +9,8 @@ left, in what order, and what each step has to prove. *Where this starts
 from* and *Next, in order* were rewritten twice on 2026-09-30, the second
 time from an audit of what an alpha still needs, and again on 2026-10-02
 from a second audit; their item numbers are kept, since `WORLDWIDE.md` and
-the harness cite them.
+the harness cite them. Both brought up to date on 2026-10-13
+(`WORLDWIDE.md` 9.21).
 
 The old phase numbering (1 to 7, in `ROLLBACK.md`) was retired on 2026-09-10:
 it described an architecture where the authoritative clock ran ahead.
@@ -20,7 +21,7 @@ docs entry point and `ROLLBACK.md` live in the private notes only.
 
 ## Where this starts from
 
-State on 2026-10-02.
+State on 2026-10-13.
 
 - **Solved, from the client's seat: input lag.** "Ça répond tout de suite"
   (8.36), and none felt at any latency from 0 to 428 ms in the sweep of
@@ -67,6 +68,14 @@ State on 2026-10-02.
   harness and a Flatpak for testers. **The Flatpak plays on a Steam Deck
   and a Steam Machine** (8.141, 8.143): races over a LAN on a WORLDWIDE
   server, the sound fixed on the way.
+- **A noisy network, in the harness** (9.16): 2% loss is absorbed; 0 to 3
+  tics of jitter moved the drawn world only through the history's cap,
+  which **stays 12** -- 18 reaches 428 ms but stutters there, driven
+  (9.15) -- and a speculation is held under the snapshot ring, at most 18.
+- **The alpha's features, merged** (§9), each tried by Gibax first, all on
+  this machine's side: dubs per pilot with the Japanese packs, steering by
+  the gyroscope, photo mode, two players side by side with their HUD;
+  WORLDWIDE mode on by default; `localdelay`.
 - **Open:** a second human and a real network; smaller machines, real ones;
   the alpha kit, and what announces the public alpha (items 14 to 18).
   Ordered below.
@@ -84,9 +93,10 @@ State on 2026-10-02.
 
 ## Next, in order
 
-State on 2026-10-02, from a second audit. The numbers are the 2026-09-30
-audit's, kept because `WORLDWIDE.md` and the harness cite them; items 12 and
-13 were added. **Every launch is asked for first.**
+State on 2026-10-02, from a second audit, brought up to date on 2026-10-13.
+The numbers are the 2026-09-30 audit's, kept because `WORLDWIDE.md` and the
+harness cite them; items 12 and 13 were added, then 19 to 23. **Every launch
+is asked for first.**
 
 **Blocking an alpha:**
 
@@ -103,8 +113,8 @@ audit's, kept because `WORLDWIDE.md` and the harness cite them; items 12 and
    two machines, on a LAN. (c) The same over the Internet. (d) One of them
    driving on the host (Phase D). How remote karts are drawn is decided
    after that (Phase D).
-3. **A real network in the harness**: jitter and loss -- `rollback_lag` only
-   delays. The cascade showed what they do (8.129): the server files a
+3. ~~**A real network in the harness**~~ -- **done** (9.16, 9.20): jitter
+   and loss -- `rollback_lag` only delays. The cascade showed what they do (8.129): the server files a
    sample on the tic it arrives, so a late or bunched one moves the filing,
    and the replay runs one sample off until the anchor catches up.
    `rollback_ontime` stops this machine's own stalls doing it (8.131); the
@@ -115,7 +125,8 @@ audit's, kept because `WORLDWIDE.md` and the harness cite them; items 12 and
    2% loss is absorbed, 0-3 tics of jitter moves the drawn world on a fifth
    to a third of the passes -- through the history's cap of 12; at 24
    (`histcap-2.4`, item 7) not once. Merged into `worldwide-2.4`
-   (`afaf3ddf9`, 9.20), off at 0.
+   (`afaf3ddf9`, 9.20), off at 0. R1 laid no pass out differently under
+   jitter (9.16): R2 is not needed so far. A real network is item 2(c).
 4. **The release base and its compatibility cases** (*Compatibility*,
    below): `worldwide-2.4`, ported onto `v2.4` (8.114), built by the CI, dev
    and release (8.115), starting in a stock 2.4 folder since `68f5eb582`
@@ -170,7 +181,8 @@ audit's, kept because `WORLDWIDE.md` and the harness cite them; items 12 and
    driven at 428 ms a cap of 18 rebuilds 16 tics at a time, 62 to 109
    skipped frames a window, where 12 is smooth: Gibax chose 12 ("la 1
    très clairement", 9.15). Under jitter at 171 ms 18 felt better: a
-   cap set from the round trip is what is left to try.
+   cap set from the round trip is what is left to try. It cannot go past
+   18: `rollback_history` is held two short of the ring since `6b629daf9`.
 8. **Breadth, as far as the alpha's scope** (Phase C): items used on purpose
    (the roulette under speculation), and two or three more maps driven --
    water, polyobjects, executors. Battle, Grand Prix and Encore stay out of
@@ -271,7 +283,21 @@ game's rules do not change.
     counter, not a version of the fork); online not yet tried. **The
     packs** (9.13): the base characters' and the addons' apart, built by
     the notes' `dubs/build_packs.sh` -- Japanese for 14 base and 10 addon
-    characters, and two more dubs for Sonic; heard by Gibax.
+    characters, and two more dubs for Sonic; heard by Gibax. **Lines
+   gathered by hand** (9.18, 9.19, `dubs/convert_folder.py`): Fang's
+   Japanese, heard; Jet, Surge, Arle (in place of the pack's) and the addon
+   Ragna, built and installed, **not yet heard**. Still without lines: Big,
+   Bark, Bean, Tikal, Whisper, Maria, Noel.
+   **The goal** (Gibax, 2026-10-13): every character of the base game
+   (`chars.pk3`) that a Japanese voice can fit has one, at least -- not
+   Ecco or Vectorman, nor a character only ever voiced in English. A
+   voice from another game stands in where the character never spoke
+   Japanese, as Fang's (Kagura Mutsuki's) and Surge's (Baiken's). Left:
+   the census -- `chars.pk3`'s S_SKINs (64 in a 2.4-era `chars.pk3`)
+   against the DUBDEFs of `JapDub_Worldwide.wad` (17), each one left
+   classed with Gibax as to dub or out -- then the lines for those to dub,
+   gathered by hand and built by `dubs/convert_folder.py` as Fang's. Known
+   to dub: Big, Bark, Bean, Tikal, Whisper, Maria.
 21. **Steering with the gyroscope** (Steam Deck, DualSense, Switch Pro):
     turning by tilting the controller -- an input like a stick. 2.4 has no
     sensor code. **Tried by Gibax and merged into `worldwide-2.4`**
@@ -288,11 +314,13 @@ game's rules do not change.
     rankings once with both players in, the speedometer, the lives
     beside the laps; tried by Gibax and merged (`089be225f`).
 
-**Order of work:** 19 is done (8.141); 4's cases, 6, 12 and 13's measurement are done (8.134 to
-8.136); then 3; 2(b) to 2(d) with a second person, a LAN first (8.135's
-loopback note); 7; 5, with 14 and 15 (the Steam Deck run is done, 8.143);
-16, 17 and 18; then the announcement. The teaser can come as soon as
-the Discord exists, for it to point somewhere.
+**Order of work** (2026-10-13): 19 is done (8.141); 4's cases, 6, 12 and
+13's measurement are done (8.134 to 8.136); 3 is done (9.16); 20 to 23 are
+merged (§9). Next, 2(b) to 2(d) with a second person, a LAN first (8.135's
+loopback note); 7, a cap from the round trip; 5, with 14 and 15 (the Steam
+Deck run is done, 8.143); 16, 17 and 18; then the announcement. 5 and 7 can
+be written without a second person. The teaser can come as soon as the
+Discord exists, for it to point somewhere.
 
 **Branches** (Gibax, 2026-10-06). **`worldwide-2.4` is the main branch**,
 on the 2.4 release, and the public repository's default: work goes there,
@@ -308,7 +336,10 @@ names the same commit there. `localdelay` (9.3), never merged, is ported
 onto `worldwide-2.4` as `localdelay-2.4` (`7c5adfef1`, CI green), with the
 *Profiles > Accessibility* list made to slide, which the gyroscope's two
 lines had pushed past the screen's bottom; merged on Gibax's word
-(`8846563fc`, 9.20), 0 by default, its feel not yet tried. Since `68f5eb582`,
+(`8846563fc`, 9.20), 0 by default, its feel not yet tried; `netsim-2.4`
+likewise (`afaf3ddf9`). Left unmerged on purpose: `histcap-2.4`,
+`histcap18-2.4` and `histcapfix-2.4` (the cap stays 12; their fix is merged
+as `specauth-2.4`) and `overlaydiag-2.4`, a diagnostic. Since `68f5eb582`,
 `worldwide-2.4` starts in a stock 2.4 folder, which is 32-bit, without
 `-noexchndl` (8.117). **Proposed scope** (the audit's, not decided):
 Race only, Windows, eight players at most unless 6 says sixteen, and the
@@ -456,7 +487,8 @@ Not yet run under prediction, or not read on purpose:
   blind to anything edge-triggered;
 - maps with what the test map lacks: water, polyobjects, linedef executors, ACS
   (`harnais/maps.py` lists them; shortlist in `WORLDWIDE.md` 8.40). Seven
-  maps soaked (8.51-8.62); driven, only Skyscraper Leaps and Opulence. The
+  maps soaked (8.51-8.62); driven, Skyscraper Leaps and Opulence, and
+  Robotnik Coaster and Crimson Core over a LAN (8.141). The
   harness runs any scenario on any map (`map=<lump>`).
 
 **Item policy:** do not predict the roulette's result. Let the reel spin under
@@ -518,7 +550,7 @@ end (8.96, 8.97).
    server ignores; a join without them gets a readable refusal (8.97, with
    `rollback_vanillajoin` standing in for a stock client).
 5. ~~**Switch the client automatically.**~~ At the join, by the bit; undone
-   when it leaves (the leave never checked).
+   when it leaves (the leave checked against the stock 2.4 exe, 8.135).
 6. ~~`K_RollbackPays()` asks the mode~~, through the correction rate the mode
    sets.
 7. Optionally, a few bytes appended to `serverinfo_pak` (depth, correction rate)
@@ -564,8 +596,9 @@ The pre-join menu that offers this knob with a recommended value is step 7 of
 the compatibility section.
 
 **Done** (`WORLDWIDE.md` 9.3, 9.14): `localdelay`, measured -- no packet asks
-for a delay -- and merged into `worldwide-2.4` (9.20), 0 by default. Its
-feel is left to try.
+for a delay -- and merged into `worldwide-2.4` (9.20), 0 by default; in
+*Profiles > Accessibility*, "WORLDWIDE Input Delay" (9.21). Its feel is
+left to try.
 
 ---
 
@@ -675,12 +708,14 @@ far. Only worth revisiting if D fails in a way B cannot pay for.
 
 - **Phase A may not be one field**: "state the archive does not carry" is a
   family, and the live lead may be an instrument artefact.
-- **Phase B holds at fifteen karts on this machine** (a Ryzen 5 5600X); a
+- **Phase B holds at sixteen karts on this machine** (a Ryzen 5 5600X; 8.136); a
   smaller one pays more for every tic, and a rebuild's eight tics with it.
   Item 13 and Phase E exist for that.
 - **The server files a sample by when it arrives** (8.129): a real network's
   jitter moves the filing, and the replay runs one off for a round trip.
-  `rollback_ontime` covers this machine's own stalls only; item 3.
+  `rollback_ontime` covers this machine's own stalls only. In the harness
+  (item 3, 9.16), 0 to 3 tics of jitter cost only through the history's
+  cap, and R1 held; a real network is still to be met (item 2(c)).
 - **Most numbers in the journal are n=1.** The bench fixes that going forward, not
   retroactively.
 - **A person is required for D**, and for every judgement of feel.

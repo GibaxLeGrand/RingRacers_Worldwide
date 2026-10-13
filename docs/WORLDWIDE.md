@@ -19,7 +19,7 @@ measured, and its side branches are kept, their commits unchanged, in a
 private archive rather than in the public repository (`ROADMAP.md`,
 *Branches*).
 
-## Current state (2026-10-05) -- read this first
+## Current state (2026-10-13) -- read this first
 
 This block is the only part of this file that is rewritten to stay current.
 Everything after it is a dated journal: when a later section overturns an
@@ -42,34 +42,42 @@ raw memory instead of through the network archive. What is drawn is
 interpolated between kept passes as between tics (8.102). A tic's sounds and
 chat lines are heard the first time this machine runs it, never again on a
 rebuild (8.73), and the rule holds inside a tic only, so the menus are heard
-(8.108, 8.109).
+(8.108, 8.109). 2.4's signature check, which can leave the game, sits out
+speculated and replayed tics the same way (`fbfd77ddf`, 9.15). The snapshot
+ring has 20 slots, one a tic: a speculation is held 2 short of it
+(`rollback_history` at most 18, `6b629daf9`), or the confirmed world is
+overwritten and left stranded (9.15).
 
 **Switches.** One server switch, `worldwide On` (8.80), on by default since
 9.2, advertises the mode, sends light corrections in place of resends and
 refuses clients that do not declare themselves WORLDWIDE; a client that joins
 such a server switches on `rollback_twoclock 4`, `rollback_history 12`,
 `rollback_keepspec` and applied corrections, and puts its settings back when
-it leaves (8.80; the join and a race run end to end in 8.97, the leave never
-checked).
+it leaves (8.80; the join and a race run end to end in 8.97, the leave
+checked against the stock 2.4 exe in 8.135). WORLDWIDE builds also check
+each other's `WORLDWIDE_PROTOCOL` at the join: 2 since the dubs per pilot's
+net command (9.7, 9.8), so a build before `e90256c57` and one after refuse
+each other with a readable message.
 Outside that mode every piece is off by default except `rollback_cleancmds`
 (8.36), `rollback_histreal` (8.89) and B2's `rollback_rawsnap`, on by default
 since `c24d8d205` (8.125). Off by default and waiting: `rollback_keepearly`
 (8.99, 8.100), `rollback_smooth` (never measured), `rollback_rebuildbudget`
-(8.134). WORLDWIDE mode also turns on `rollback_ontime` (8.133).
+(8.134). WORLDWIDE mode also turns on `rollback_ontime` (8.133). The
+player's `localdelay` (9.3, 9.14), 0 by default, holds the speculation N
+tics short, on this machine alone. The harness's network noise,
+`rollback_jitter` and `rollback_loss` (9.16), is off at 0.
 
-**Builds** (2026-10-05). On the measuring machine:
-`ringracers_rollback-netcode.exe` is `526de71e6` (sha256 `7be7ac85…`, 8.136),
-the last build the harness ran; `ringracers_worldwide-2.4-release.exe` is the
-release build of `1963b654b` (sha256 `c4102c29…`, 8.141), the WORLDWIDE
-server of the LAN races from a Steam Machine, has since been replaced by
-the release build of `e74f03d3e` (sha256 `57fb3253…`): `worldwide-2.4`
-with the alpha's features merged, each tried by Gibax first -- WORLDWIDE
-mode on by default (9.2), dubs per pilot (9.5, 9.8), two players side by
-side (9.6, 9.11), photo mode (9.9), the gyroscope (9.10). The tags' fix of
-9.11 came after it (`46da12bf2`). The Linux builds of `worldwide-2.4` are
-the CI's tarball and Flatpak (8.138, 8.140), those of `e74f03d3e` in the
-measuring machine's `linux-builds`. Older builds are kept as `.bak_<sha>`; the dedicated server's dump of
-8.121 was read in 8.128.
+**Builds** (2026-10-12). `worldwide-2.4` is the main branch since
+2026-10-06, on the 2.4 release (`v2.4`); `rollback-netcode`, where the
+netcode was built, is archived privately (`ROADMAP.md`, *Branches*). On the
+measuring machine, the game folder holds the development build (with its
+`.pdb`, the harness's exe) and the release build of `27d641bcd` -- the
+alpha's features (§9) and `localdelay` and `netsim` merged (9.20), CI run
+38286184615 -- and the measuring machine's `linux-builds` that commit's
+Flatpak and tarball, the tarball checked by the sha in its exe. Older builds
+are kept as `.bak_<sha>` (`aff655a` the one before), the Linux ones in
+`old/`. The dub packs (9.13, 9.19) are installed beside both. The dedicated
+server's dump of 8.121 was read in 8.128.
 
 **Measured and holding.**
 
@@ -77,7 +85,12 @@ measuring machine's `linux-builds`. Older builds are kept as `.bak_<sha>`; the d
 |---|---|
 | input lag, client's seat | gone -- "ça répond tout de suite", seven races, both cleancmds races included (8.36); none felt at any latency from 0 to 428 ms: "parfait" (8.107) |
 | the picture | the kart and the view drawn in even steps, as without prediction, since kept passes are interpolated (8.102, 8.103): "largement plus fluide". A few more long steps than without prediction: 430 to 760 a window, against about 263 (8.103, 8.107) |
-| latency, 0 to 428 ms | the depth follows the round trip up to 285 ms, and nothing is guessed: this machine's wrong inputs 0 in 11 of 12 race windows, 1 in the other. At 428 ms the history's cap of 12 cuts every pass, and the drawn world is about 5 tics behind the newest input (8.107) |
+| latency, 0 to 428 ms | the depth follows the round trip up to 285 ms, and nothing is guessed: this machine's wrong inputs 0 in 11 of 12 race windows, 1 in the other. At 428 ms the history's cap of 12 cuts every pass, and the drawn world is about 5 tics behind the newest input (8.107). A cap of 18 reaches the round trip, but driven there its rebuilds run 16 tics and skip 62 to 109 frames a window, against 0 to 2 at 12: **the cap stays 12**, Gibax's choice (9.15) |
+| sixteen karts, Phase B's gate | sixteen with a host on Opulence to the race's end, 5.9 to 7.0 ms a pass, at most 24.5% of a tic, one rebuild (8.136); fifteen on a dedicated server, 5.6 to 7.3 ms (8.133). On a Ryzen 5 5600X |
+| stalls, smaller machines | with `rollback_ontime`, seven stalls of 100 ms leave no chain of rebuilds (8.131); on a machine 4 ms a tic slower (`rollback_slowtic`), no cascade, 10.6 to 12.6 ms a pass, and a 20 ms rebuild budget takes the hitches over 50 ms from 45 to 15, for 187 moves of the drawn world against 8 (8.134) |
+| jitter and loss, 171 ms | 2% loss absorbed, no rebuild. 0 to 3 tics of jitter moved the drawn world on 153 and 241 passes of 750 -- through the cap of 12, which the round trip then passes by moments: 0 at 24, 23 and 34 at 18 (9.16, 9.15) |
+| `localdelay` | never reaches the wire: 0 of 4405 remote packets ask for a delay; one speculation held back a pass, as many tics as asked (9.14). Its feel not tried |
+| stock 2.4 | the four compatibility cases checked against the stock exe (8.135), the refusal's text on screen (8.139) |
 | snapshot determinism | 12/12 replays byte-identical; 0/330 resim checks (8.9); network-restore leak soaks 0 or 1 failure in about 300 checks on Skyscraper Leaps, Opulence, Coastal Temple and Carnival Night, the one failure being `itemList.cap`, known and harmless (8.34, 8.59, 8.62, 8.94) |
 | confirmed-tic inputs | with `rollback_cleancmds`, 0 to 0.1% of confirmed tics run an input the server did not, against 64-85% (local kart) and 23-80% (bots) without it (8.35, 8.37) |
 | full-state resends | 7 to 9 a race without the channel, **0** with it (8.6, 8.8, 8.16), none in a WORLDWIDE race (8.97) |
@@ -92,35 +105,43 @@ measuring machine's `linux-builds`. Older builds are kept as `.bak_<sha>`; the d
 | listen-server host's input delay | 170-200 ms, now **0** (8.27) |
 | restore, relink step | 4.7 ms before the index, **under 0.1 ms** after (8.34) |
 
-**Open, in ROADMAP's numbers** (2026-10-05) -- `ROADMAP.md`, *Next, in
+**Open, in ROADMAP's numbers** (2026-10-13) -- `ROADMAP.md`, *Next, in
 order*, has the order of work. Closed since the audit of 2026-09-30: 1, the
-join's `MT_PLAYER` alerts (8.118); 4, the release base and its
-compatibility cases (8.135, 8.139); 6, sixteen karts -- **Phase B
-validated** (8.137); **9, R1's gaps -- negligible since
-`rollback_ontime`, closed without code (8.144)**; 12, the join's chat line
-(8.136); 19, the sound after a join (8.141).
+join's `MT_PLAYER` alerts (8.118); **3, jitter and loss in the harness
+(9.16, merged in 9.20)**; 4, the release base and its compatibility cases
+(8.135, 8.139); 6, sixteen karts -- **Phase B validated** (8.137); 9, R1's
+gaps -- negligible since `rollback_ontime`, closed without code (8.144);
+12, the join's chat line (8.136); 19, the sound after a join (8.141); **20
+to 23, the alpha's features, each tried by Gibax and merged**: dubs per
+pilot (9.5 to 9.8, 9.13, 9.18, 9.19), the gyroscope (9.10), photo mode
+(9.9), two players side by side and the 2P HUD (9.6, 9.11, 9.12, 9.17).
 
 **This file's §8 is closed** (2026-10-05), the netcode's journal to Phase B
 validated and the builds of the alpha's base; **§9** is the journal from
 there, toward the public alpha.
 
+- **2. A second human**: one person on two machines has raced over a LAN
+  (8.141); two people, then over the Internet, then one driving on the
+  host, are left. Blocking.
+- **5. The alpha kit**, with Linux built (8.138) and the Flatpak on a Steam
+  Deck (8.143); **14 to 18**, what announces the public alpha. Blocking.
+- **7. The history's cap** past about 340 ms of round trip: 12 stays (9.15);
+  a cap set from the round trip, under the ring's 18, is left to try.
 - **8. Breadth**: items used on purpose and more maps; Robotnik Coaster and
   Crimson Core driven over a LAN (8.141). Battle, Grand Prix and Encore out
   of the alpha unless run.
-
-- **2. A second human**: one person on two machines has raced over a LAN
-  (8.141); two people, then over the Internet, then one driving on the
-  host, are left.
-- **3. A real network in the harness**: `rollback_lag` only delays, with no
-  jitter and no loss.
-- **5. The alpha kit**, with Linux built (8.138) and the Flatpak on a Steam
-  Deck (8.143); **14 to 18**, what announces the public alpha.
-- **7. The history's cap** past about 340 ms of round trip (8.107).
 - **10 and 11**: the small things seen, and the older ones left open
   (ROADMAP).
 - **13. Smaller machines**: C measured, off by default; eyes on real ones.
-- **20 to 22**: the alpha's features -- dubs, gyro steering, photo mode --
-  on branches of their own until tried and merged.
+
+**Waiting on Gibax's eyes or ears**, merged but not yet tried: the feel of
+`localdelay` (9.20); Jet, Surge, Arle and Ragna in Japanese (9.19); the
+dubs per pilot online, which needs the same build and packs on both
+machines (9.8); the gyroscope per profile and the stick first (9.10);
+Sonic's stray pixel removed (9.1); side by side, the song credit at the top
+(9.6), OpenGL, the tally and Battle (9.6). Big, Bark, Bean, Tikal, Whisper,
+Maria and Noel have no Japanese lines yet (9.19); the goal is every base
+character a Japanese voice can fit (`ROADMAP.md`, item 20).
 
 **Compatibility policy, decided by Gibax on 2026-09-21: the server decides.** A
 server in WORLDWIDE mode runs client-side prediction and accepts WORLDWIDE
@@ -178,6 +199,11 @@ launch without Gibax's explicit go-ahead, each time.**
 | 8.106 | "about 3 tics" late at 15 tics of lag is about 5: the round trip there is 17 (8.107) |
 | 8.108 | the 17 copies were the 15-tic race's, the sweep's others wrote 1 to 4; the fix brought the sounds back, not the join line down to one (8.109) |
 | 8.109 | its hypothesis for the extra join lines is not yet tested: the next race wrote the line once (8.110) |
+| 9.3, 9.14 | "not merged": merged in 9.20 |
+| 9.15 | `histcap-2.4` and the cap of 24 are left, not merged: 24 strands the confirmed world past the 20-slot ring, and the cap stays 12 (end of 9.15); `rollback_history` is held at 18 since `6b629daf9` |
+| 9.16 | "not explained yet" is explained in the same section: the cap, not the jitter, moved the picture |
+| 9.18 | Fang "not heard yet": heard in 9.19 |
+| 9.20 | `localdelay` "not in a menu" is wrong: it is, as 9.3 said (9.21) |
 
 ## 0. The rename, and what it actually commits to
 
@@ -9421,7 +9447,7 @@ open, merged into `worldwide-2.4` with no conflict -- they touch
 - **`localdelay-2.4`** (`8846563fc`): `localdelay`, the client-local input
   delay (9.3, measured in 9.14: no packet asks for a delay, the
   speculations held back), 0 by default, which changes nothing; a console
-  setting, not in a menu. With it, *Profiles > Accessibility* slides when
+  setting, not in a menu (⚠ it is in one, 9.21). With it, *Profiles > Accessibility* slides when
   longer than the screen, which the gyroscope's two lines had made it.
   **Its feel is not tried yet**: merged as a knob, Gibax's to set.
 - **`netsim-2.4`** (`afaf3ddf9`): `rollback_jitter` and `rollback_loss`
@@ -9430,3 +9456,28 @@ open, merged into `worldwide-2.4` with no conflict -- they touch
 - Left on their branches: `histcap-2.4`, `histcap18-2.4` and
   `histcapfix-2.4` (the cap stays 12, 9.15; the fix they carry is merged
   as `specauth-2.4`), and `overlaydiag-2.4`, a diagnostic.
+
+### 9.21 The docs checked against the code
+
+Gibax, 2026-10-13: "remets à jour tous les docs si besoin". The *Current
+state* block, `ROADMAP.md` and `COMMANDS.md` read again against
+`worldwide-2.4` at `27d641bcd`. No code, no run.
+
+- **`localdelay` is in a menu**: *Profiles > Accessibility*, "WORLDWIDE
+  Input Delay", under *Minimum Input Delay*
+  (`options-profiles-edit-accessibility.cpp`), as 9.3 wrote it. 9.20 and
+  `COMMANDS.md` said console only.
+- **`rollback_history` is held at 18** since `6b629daf9` (9.15, two short of
+  the snapshot ring); `COMMANDS.md` still said 34.
+- **40 commands** registered by `K_RegisterRollbackStuff` (`rollback_jitter`
+  and `rollback_loss` added to the 38 of 2026-10-04), plus `worldwide` and
+  `localdelay`.
+- *Current state* rewritten (2026-10-13), `ROADMAP.md`'s *Where this
+  starts from*, item 3 closed, its order of work, and the leave of the
+  compatibility section (checked in 8.135) brought up to date.
+- **A goal for the dubs** (Gibax, same day): "dub tous les personnages de
+  base du jeu au minimum en japonais" -- those a Japanese voice can fit,
+  not Ecco or Vectorman, nor one only ever voiced in English. Written as
+  ROADMAP item 20's goal, with the census it needs first: this machine has
+  a 2.4-era `chars.pk3` (64 S_SKINs) but not the packs, so which of the 64
+  the 17 Japanese DUBDEFs cover is to be read where the packs are.

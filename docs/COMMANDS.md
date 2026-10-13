@@ -12,9 +12,9 @@ This file, `WORLDWIDE.md` and `ROADMAP.md` are kept **identical** in the
 public code repository and in the private notes repository (`docs/` on both
 sides).
 
-**Up to date as of 2026-10-04** — 38 commands, checked against
-`K_RegisterRollbackStuff` in `k_rollback.c`, and one server variable,
-`worldwide` (`cvars.cpp`). Two commands are **obsolete** (`rollback_loop`,
+**Up to date as of 2026-10-13** — 40 commands, checked against
+`K_RegisterRollbackStuff` in `k_rollback.c` on `worldwide-2.4`, one server
+variable, `worldwide`, and one player setting, `localdelay` (`cvars.cpp`). Two commands are **obsolete** (`rollback_loop`,
 `rollback_pace`) and are kept only for comparison. `worldwide` and
 `rollback_vanillajoin` exist from `51ba899d6` (`WORLDWIDE.md` 8.80);
 `rollback_poolcopy` from `df8ed24e9` (8.82); `rollback_rawsnap` from
@@ -512,7 +512,10 @@ of repeating your newest input over every speculated tic (`WORLDWIDE.md` 8.39).
 It finds which input the server applied on the newest tic it has sent by the
 leveltime stamp every ticcmd carries, and replays everything you sent after
 it. The speculation then reaches the tic your newest input will land on --
-one tic at least, never above `maxdepth` (capped at 34). Since `da5922575`
+one tic at least, never above `maxdepth` (held at 18 since `6b629daf9`,
+two short of the 20-slot snapshot ring: deeper, the speculation overwrites
+the confirmed tic's slot and the client runs on from a guessed world,
+`WORLDWIDE.md` 9.15; 34 before). Since `da5922575`
 (`WORLDWIDE.md` 8.106), `rollback_twoclock` is no longer its floor: with a
 round trip shorter than it, the floor made the speculation guess this
 machine's own input and rebuild at every change (8.105). Without the history,
@@ -547,8 +550,11 @@ jitter (`WORLDWIDE.md` 8.40, 8.41).
 - Measured from 0 to 428 ms of lag, driven (8.107): the depth follows the
   round trip up to 285 ms, and nothing is guessed. At 428 ms, a round trip
   of 17 tics, the cap of 12 cuts every pass, and the drawn world is about
-  5 tics behind the newest input. For such a round trip, a higher value.
-- Suggested value: `12`.
+  5 tics behind the newest input. 18 reaches that round trip, but driven
+  there its rebuilds run 16 tics and skip 62 to 109 frames a window: Gibax
+  kept 12 (9.15). Under 0 to 3 tics of jitter at 171 ms, 12 moved the drawn
+  world on 153 to 241 passes of 750, 18 on 23 to 34 (9.15, 9.16).
+- Suggested value: `12`, WORLDWIDE mode's.
 
 ### `rollback_histreal [0|1]`
 **Client side, with `rollback_history`** (`WORLDWIDE.md` 8.89). On by default:
@@ -838,8 +844,9 @@ client-local input delay: under the prediction, the speculation stops that
 many tics short of this machine's newest input -- a steadier picture for a
 later one. Local only: it never reaches a packet as `wantdelay` (the
 server's `rollback_relabel` counts the packets that ask for a delay), and
-`rollback_history` prints how many speculations it held back. Console only,
-no menu entry.
+`rollback_history` prints how many speculations it held back. In the menus:
+*Profiles > Accessibility*, "WORLDWIDE Input Delay", under *Minimum Input
+Delay* (`WORLDWIDE.md` 9.3, 9.21). Its feel is not yet tried.
 
 ---
 
@@ -867,9 +874,10 @@ server (`WORLDWIDE.md` §9):
 
 ## Usage cheat sheet
 
-- **Setting up a WORLDWIDE race, the product way** (`WORLDWIDE.md` 8.80, not
-  yet run): `worldwide On` on the server before anybody joins, nothing on the
-  clients -- they switch themselves on at join. The `worldwide` scenario of
+- **Setting up a WORLDWIDE race, the product way** (`WORLDWIDE.md` 8.80, run
+  end to end in 8.97): `worldwide On` on the server before anybody joins --
+  the default since 9.2, unless a config saved by an older build says
+  `Off` -- and nothing on the clients: they switch themselves on at join. The `worldwide` scenario of
   `playtest.sh` does exactly that; `vanillajoin` checks the refusal.
 - **Setting up a WORLDWIDE race by hand**, for measuring (as the `correct`
   scenarios of `playtest.sh` do, `WORLDWIDE.md` 8.4):
@@ -879,7 +887,7 @@ server (`WORLDWIDE.md` §9):
     `rollback_cleancmds` is already on by default. Optionally
     `rollback_history 12`, to draw your inputs still in flight, and with it
     `rollback_keepspec 1`, to keep the speculation when the server confirms
-    it (neither is settled yet);
+    it (both WORLDWIDE mode's own settings, with `rollback_ontime 1`);
   - to simulate 171 ms of latency locally: `rollback_lag 6` on the client.
 - **Measuring the switches**: an off/on/off race cannot measure a switch that
   changes the confirmed world, since an on window inherits what the off window

@@ -18,7 +18,7 @@
 #include "../p_local.h" // cv_tilting
 #include "../k_gyro.h" // cv_dummyprofilegyro* (WORLDWIDE.md section 9)
 
-extern "C" consvar_t cv_mindelay, cv_localdelay, cv_drawinput;
+extern "C" consvar_t cv_mindelay, cv_localdelay, cv_drawinput, cv_dummyprofileaccesssection;
 
 using srb2::Draw;
 
@@ -41,7 +41,8 @@ void draw_routine()
 	// y 31, stock's 15th and last line sits at 185, an 18th at 218, under
 	// the bottom edge. So it slides a line at a time, to keep the line
 	// selected on screen; the lines slid off the top are not drawn. A list
-	// that fits, as stock's, never slides.
+	// that fits, as stock's, never slides -- and since the list shows one
+	// section at a time (OPTIONS_ProfileAccessibilityAll, below), each fits.
 	static int first = 0;
 	const int fit = (BASEVIDHEIGHT - 4 - currentMenu->y) / 11;
 
@@ -109,7 +110,10 @@ void draw_routine()
 
 			if ((it.status & IT_TYPE) == IT_CVAR)
 			{
-				bool isDefault = CV_IsSetToDefault(it.itemaction.cvar);
+				// WORLDWIDE: the section line is a page, not a setting: never
+				// marked as changed.
+				bool isDefault = CV_IsSetToDefault(it.itemaction.cvar)
+					|| it.itemaction.cvar == &cv_dummyprofileaccesssection;
 				auto val = Draw::TextElement(it.itemaction.cvar->string).font(Draw::Font::kMenu);
 
 				h = row.x(BASEVIDWIDTH - 18);
@@ -136,10 +140,23 @@ void draw_routine()
 
 }; // namespace
 
+// WORLDWIDE: one section at a time (WORLDWIDE.md section 9). Stock had both
+// under their headers, "This Profile only:" and "For all Profiles:"; with
+// the gyro's lines and the input delay's they ran past the screen, the last
+// ones out of sight. The first line chooses the section, left or right, and
+// M_ProfileAccessibilitySection_OnChange shows its list: this one, this
+// profile's, or OPTIONS_ProfileAccessibilityAll, every profile's. Both
+// begin with the same two lines, so the cursor stays on the first.
+#define ACCESSIBILITY_SECTION_LINES \
+	{IT_STRING | IT_CVAR, "Section", "This profile's settings, or every profile's. Left/right to switch.", \
+		NULL, srb2::itemaction(&cv_dummyprofileaccesssection), 0, 0}, \
+\
+	{IT_SPACE | IT_NOTHING, NULL,  NULL, \
+		NULL, {NULL}, 0, 0},
+
 menuitem_t OPTIONS_ProfileAccessibility[] = {
 
-	{IT_HEADER, "This Profile only:", NULL,
-		NULL, {NULL}, 0, 0},
+	ACCESSIBILITY_SECTION_LINES
 
 	{IT_STRING | IT_CVAR, "Rumble", "For gamepad users - should your device rumble?",
 		NULL, srb2::itemaction(&cv_dummyprofilerumble), 0, 0},
@@ -170,11 +187,11 @@ menuitem_t OPTIONS_ProfileAccessibility[] = {
 	{IT_STRING | IT_CVAR, "Gyro Range", "How far to tilt, in degrees, for a full turn.",
 		NULL, srb2::itemaction(&cv_dummyprofilegyrorange), 0, 0},
 
-	{IT_SPACE | IT_NOTHING, NULL,  NULL,
-		NULL, {NULL}, 0, 0},
+};
 
-	{IT_HEADER, "For all Profiles:", NULL,
-		NULL, {NULL}, 0, 0},
+static menuitem_t OPTIONS_ProfileAccessibilityAll[] = {
+
+	ACCESSIBILITY_SECTION_LINES
 
 	{IT_STRING | IT_CVAR, "Minimum Input Delay", "Practice for online play! 0 = instant response.",
 		NULL, srb2::itemaction(&cv_mindelay), 0, 0},
@@ -215,3 +232,24 @@ menu_t OPTIONS_ProfileAccessibilityDef = {
 	NULL,
 	NULL,
 };
+
+#undef ACCESSIBILITY_SECTION_LINES
+
+// WORLDWIDE: the section line moved, its list shown (WORLDWIDE.md section 9).
+// The line is the first of both lists, so the cursor, on it, stays put.
+extern "C" void M_ProfileAccessibilitySection_OnChange(void)
+{
+	const bool all = cv_dummyprofileaccesssection.value == 1;
+
+	OPTIONS_ProfileAccessibilityDef.menuitems = all
+		? OPTIONS_ProfileAccessibilityAll
+		: OPTIONS_ProfileAccessibility;
+	OPTIONS_ProfileAccessibilityDef.numitems = all
+		? sizeof (OPTIONS_ProfileAccessibilityAll) / sizeof (menuitem_t)
+		: sizeof (OPTIONS_ProfileAccessibility) / sizeof (menuitem_t);
+
+	if (currentMenu == &OPTIONS_ProfileAccessibilityDef && itemOn >= currentMenu->numitems)
+	{
+		itemOn = 0;
+	}
+}

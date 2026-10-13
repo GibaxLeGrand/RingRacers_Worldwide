@@ -148,7 +148,7 @@ void draw_routine()
 // profile's, or OPTIONS_ProfileAccessibilityAll, every profile's. Both
 // begin with the same two lines, so the cursor stays on the first.
 #define ACCESSIBILITY_SECTION_LINES \
-	{IT_STRING | IT_CVAR, "Section", "This profile's settings, or every profile's. Left/right to switch.", \
+	{IT_STRING | IT_CVAR, "Section", "Settings for this profile, or for all of them.", \
 		NULL, srb2::itemaction(&cv_dummyprofileaccesssection), 0, 0}, \
 \
 	{IT_SPACE | IT_NOTHING, NULL,  NULL, \
@@ -181,7 +181,7 @@ menuitem_t OPTIONS_ProfileAccessibility[] = {
 
 	// WORLDWIDE: steering by tilting the controller, this profile's (k_gyro.c,
 	// WORLDWIDE.md section 9).
-	{IT_STRING | IT_CVAR, "Gyro Steering", "Steer by tilting a gamepad that has motion sensors, as a wheel.",
+	{IT_STRING | IT_CVAR, "Gyro Steering", "Tilt a motion-sensing gamepad to steer.",
 		NULL, srb2::itemaction(&cv_dummyprofilegyrosteer), 0, 0},
 
 	{IT_STRING | IT_CVAR, "Gyro Range", "How far to tilt, in degrees, for a full turn.",
@@ -198,7 +198,7 @@ static menuitem_t OPTIONS_ProfileAccessibilityAll[] = {
 
 	// WORLDWIDE's own (ROADMAP's client-local knob): the prediction lifts the
 	// one above, and this is what it offers in its place.
-	{IT_STRING | IT_CVAR, "WORLDWIDE Input Delay", "WORLDWIDE online: steadier view, later input. 0 = instant.",
+	{IT_STRING | IT_CVAR, "WORLDWIDE Input Delay", "Steadier view, later input. 0 = instant.",
 		NULL, srb2::itemaction(&cv_localdelay), 0, 0},
 
 	{IT_STRING | IT_CVAR, "Screen Tilting", "View rotation on inclines.",

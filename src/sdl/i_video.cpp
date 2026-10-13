@@ -95,7 +95,7 @@
 #endif
 
 // maximum number of windowed modes (see windowedModes[][])
-#define MAXWINMODES (19)
+#define MAXWINMODES (21)
 
 using namespace srb2;
 
@@ -147,8 +147,11 @@ static std::unique_ptr<rhi::Rhi> g_rhi;
 static uint32_t g_rhi_generation = 0;
 
 // windowed video modes from which to choose from.
+// WORLDWIDE: 1440p and 4K on top, under MAXVIDWIDTH x MAXVIDHEIGHT (screen.h).
 static INT32 windowedModes[MAXWINMODES][2] =
 {
+	{3840,2160}, // 1.66
+	{2560,1440}, // 1.66
 	{1920,1200}, // 1.60,6.00
 	{1920,1080}, // 1.66
 	{1680,1050}, // 1.60,5.25

@@ -9481,3 +9481,38 @@ state* block, `ROADMAP.md` and `COMMANDS.md` read again against
   ROADMAP item 20's goal, with the census it needs first: this machine has
   a 2.4-era `chars.pk3` (64 S_SKINs) but not the packs, so which of the 64
   the 17 Japanese DUBDEFs cover is to be read where the packs are.
+
+### 9.22 Resolutions up to 4K, and the desktop's own
+
+Gibax, 2026-10-13, on the PS5 port of premohq/PS5-RINGRACERS (upstream's
+`master`, GPL-2.0), which renders up to 3840x2160: "ajouter leur truc en 4K
+là dans le setting PC actuel car... ben c'est cool aussi"; then his own
+screen's size, "un truc HD+", which he did not remember.
+
+- **Up to 4K** (`a03255d9d`): `MAXVIDWIDTH` x `MAXVIDHEIGHT` (`screen.h`)
+  from 1920x1200 to 3840x2160, as the PS5 port does, and 3840x2160 and
+  2560x1440 on top of the windowed list. The tables sized by the maximum
+  grow with it, read from the code: about 0.85 MB static (`yslopetab`,
+  `ylookup`, `ffloor[]`'s clips...), a `drawseg_t` 30 KB, a `vissprite_t`
+  and a `visplane_t` 15 KB each, allocated as a frame needs them -- small
+  for the 64-bit exe.
+- **In between** (`60f56c35e`): 3200x1800 and 2560x1600, and at startup
+  the desktop's own size (`SDL_GetDesktopDisplayMode`, the primary
+  display) inserted in its place by size when it is none of the list and
+  fits under the maximum -- an ultrawide, a laptop's 2880x1800, Gibax's
+  screen. The list's last slot is held for it and `numWinModes` counts the
+  slots in use, so no lookup, the menu nor `vid_mode` sees an empty one.
+  The Windows exe is per-monitor DPI aware (its manifest): the size is the
+  screen's pixels. `VID_GetModeName`'s bound is now `>=`.
+- **What does not change**: modes are found by their size
+  (`VID_GetModeForSize`), so a saved `scr_width`/`scr_height` keeps its
+  meaning; the menu shows up to 36 modes (24 at most now). Drawing only:
+  nothing the simulation or the network sees, so `WORLDWIDE_PROTOCOL`
+  stays 2. An older exe reading a config saved at one of the new sizes
+  finds no mode and keeps its startup one (`SCR_CheckDefaultMode`: "0 (no
+  mode change) if not found").
+- `res4k-2.4`, from `worldwide-2.4`, CI run 38376624540. No compiler on
+  this machine: built by the CI only. **Not tried**: the software renderer
+  at 4K (four times 1080p's pixels; upstream never drew above 1920x1200 in
+  software, so near walls and sprites are to be watched), OpenGL at 4K, the
+  desktop's size in the menu, a 21:9 screen's HUD and field of view.

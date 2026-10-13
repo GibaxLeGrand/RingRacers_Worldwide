@@ -94,8 +94,9 @@
 #include "../discord.h"
 #endif
 
-// maximum number of windowed modes (see windowedModes[][])
-#define MAXWINMODES (19)
+// maximum number of windowed modes (see windowedModes[][]); the last one is
+// held for the desktop's own size (Impl_AddDesktopMode)
+#define MAXWINMODES (24)
 
 using namespace srb2;
 
@@ -147,8 +148,13 @@ static std::unique_ptr<rhi::Rhi> g_rhi;
 static uint32_t g_rhi_generation = 0;
 
 // windowed video modes from which to choose from.
+// WORLDWIDE: 1440p and 4K on top, under MAXVIDWIDTH x MAXVIDHEIGHT (screen.h).
 static INT32 windowedModes[MAXWINMODES][2] =
 {
+	{3840,2160}, // 1.66
+	{3200,1800}, // 1.66
+	{2560,1600}, // 1.60
+	{2560,1440}, // 1.66
 	{1920,1200}, // 1.60,6.00
 	{1920,1080}, // 1.66
 	{1680,1050}, // 1.60,5.25
@@ -168,7 +174,11 @@ static INT32 windowedModes[MAXWINMODES][2] =
 	{ 640, 400}, // 1.60,2.00
 	{ 320, 240}, // 1.33,1.00
 	{ 320, 200}, // 1.60,1.00
+	{   0,   0}, // the desktop's own size, when it is none of the above
 };
+
+// the modes in use in windowedModes: the desktop's own size adds one
+static INT32 numWinModes = MAXWINMODES - 1;
 
 static void Impl_VideoSetupBuffer(void);
 static SDL_bool Impl_CreateWindow(SDL_bool fullscreen);
@@ -413,7 +423,7 @@ static void VID_Command_ModeList_f(void)
 	CONS_Printf("NOTE: Under SDL2, all modes are supported on all platforms.\n");
 	CONS_Printf("Under opengl, fullscreen only supports native desktop resolution.\n");
 	CONS_Printf("Under software, the mode is stretched up to desktop resolution.\n");
-	for (i = 0; i < MAXWINMODES; i++)
+	for (i = 0; i < numWinModes; i++)
 	{
 		CONS_Printf("%2d: %dx%d\n", i, windowedModes[i][0], windowedModes[i][1]);
 	}
@@ -1250,7 +1260,7 @@ INT32 VID_NumModes(void)
 	if (USE_FULLSCREEN && numVidModes != -1)
 		return numVidModes - firstEntry;
 	else
-		return MAXWINMODES;
+		return numWinModes;
 }
 
 const char *VID_GetModeName(INT32 modeNum)
@@ -1273,7 +1283,7 @@ const char *VID_GetModeName(INT32 modeNum)
 	{
 		return fallback_resolution_name;
 	}
-		if (modeNum > MAXWINMODES)
+		if (modeNum >= numWinModes)
 			return NULL;
 
 		sprintf(&vidModeName[modeNum][0], "%dx%d",
@@ -1286,7 +1296,7 @@ const char *VID_GetModeName(INT32 modeNum)
 INT32 VID_GetModeForSize(INT32 w, INT32 h)
 {
 	int i;
-	for (i = 0; i < MAXWINMODES; i++)
+	for (i = 0; i < numWinModes; i++)
 	{
 		if (windowedModes[i][0] == w && windowedModes[i][1] == h)
 		{
@@ -1547,8 +1557,8 @@ INT32 VID_SetMode(INT32 modeNum)
 
 	if (modeNum < 0)
 		modeNum = 0;
-	if (modeNum >= MAXWINMODES)
-		modeNum = MAXWINMODES-1;
+	if (modeNum >= numWinModes)
+		modeNum = numWinModes-1;
 
 	vid.width = windowedModes[modeNum][0];
 	vid.height = windowedModes[modeNum][1];
@@ -1563,6 +1573,43 @@ INT32 VID_SetMode(INT32 modeNum)
 
 	VID_CheckRenderer();
 	return SDL_TRUE;
+}
+
+// WORLDWIDE: the desktop's own size joins the list, in its place by size,
+// when it is none of the modes above and fits under MAXVIDWIDTH x
+// MAXVIDHEIGHT -- so a screen of any resolution can be drawn at natively,
+// whatever its size is called (WORLDWIDE.md section 9).
+static void Impl_AddDesktopMode(void)
+{
+	SDL_DisplayMode m;
+	INT32 i, at;
+
+	if (numWinModes >= MAXWINMODES || SDL_WasInit(SDL_INIT_VIDEO) == 0)
+		return;
+	if (SDL_GetDesktopDisplayMode(0, &m) != 0)
+		return;
+	if (m.w <= 0 || m.h <= 0 || m.w > MAXVIDWIDTH || m.h > MAXVIDHEIGHT)
+		return;
+	if (VID_GetModeForSize(m.w, m.h) != -1)
+		return;
+
+	// The list runs from the widest down.
+	for (at = 0; at < numWinModes; at++)
+	{
+		if (windowedModes[at][0] < m.w
+			|| (windowedModes[at][0] == m.w && windowedModes[at][1] < m.h))
+			break;
+	}
+	for (i = numWinModes; i > at; i--)
+	{
+		windowedModes[i][0] = windowedModes[i-1][0];
+		windowedModes[i][1] = windowedModes[i-1][1];
+	}
+	windowedModes[at][0] = m.w;
+	windowedModes[at][1] = m.h;
+	numWinModes++;
+
+	CONS_Printf("Desktop resolution %dx%d added to the video modes\n", m.w, m.h);
 }
 
 static SDL_bool Impl_CreateWindow(SDL_bool fullscreen)
@@ -1692,6 +1739,8 @@ void I_StartupGraphics(void)
 		rendermode = chosenrendermode;
 
 	borderlesswindow = M_CheckParm("-borderless") ? SDL_TRUE : SDL_FALSE;
+
+	Impl_AddDesktopMode(); // WORLDWIDE.md section 9
 
 	VID_Command_ModeList_f();
 

@@ -329,7 +329,7 @@ game's rules do not change.
     the screen since the gyroscope's and the input delay's lines, slid
     with nothing to say more was below. A first line, *Section*, shows
     this profile's settings or every profile's, each short enough to fit.
-    **Written** on `profilesections-2.4` (9.23), CI run 38408346895; to
+    **Written** on `profilesections-2.4` (9.23), CI run 38408346895 green; to
     try.
 
 **Order of work** (2026-10-13): 19 is done (8.141); 4's cases, 6, 12 and

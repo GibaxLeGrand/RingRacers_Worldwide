@@ -9575,6 +9575,7 @@ profiles)".
   menu's length for Legacy GL's lines. Both lists begin with the section
   line, so the cursor stays on it; it is never drawn as a changed setting.
   Each section fits; the slide stays for one that would grow.
-- No compiler on this machine: CI run 38408346895. **Not tried**; to look
+- No compiler on this machine: CI run 38408346895, green (the nine jobs).
+  **Not tried**; to look
   at: the cursor now enters the menu on *Section* (stock's first line was
   a header).

@@ -9518,3 +9518,28 @@ screen's size, "un truc HD+", which he did not remember.
   at 4K (four times 1080p's pixels; upstream never drew above 1920x1200 in
   software, so near walls and sprites are to be watched), OpenGL at 4K, the
   desktop's size in the menu, a 21:9 screen's HUD and field of view.
+- **Seen by Gibax** (the measuring machine, a 1920x1080 screen, the
+  release build of `60f56c35e`), in Legacy GL, fullscreen: the Video
+  Options menu whole, but from about 80% of the width on, the picture
+  drawn as long horizontal streaks -- "les pixels allongés à partir d'un
+  moment". **Why**: Legacy GL copies the frame into a screen texture and
+  draws that stretched to the window (`MakeScreenFinalTexture`,
+  `DrawScreenFinalTexture`), and eight places in `r_opengl.c` sized such
+  a texture by the width alone, 512, 1024 or 2048 -- enough while the
+  widest mode was 1920. At 2560 the texture held 2048 columns, 80% of
+  them -- where the capture's streaks begin; its mode was not noted --
+  and the rest clamped to the last one. The config left 3840x2160 saved:
+  there, 53%.
+- **So** (`8bae387cd`, `res4k-2.4`): `ScreenTextureSize`, a power of two
+  the screen fits in -- the same sizes as before up to 1920x1200, 4096 for
+  2560 and 4K -- never past `GL_MAX_TEXTURE_SIZE`; the eight places use
+  it (the final picture, the wipes, the intermission's background, the
+  post-processing's). Checked with gcc's `-fsyntax-only` and a stand-in
+  for SDL's OpenGL header; built by the CI (run 38389742946).
+- **Left, upstream's**: the log's own note, "Under opengl, fullscreen
+  only supports native desktop resolution" -- Legacy GL draws into a
+  window the desktop's size, so a mode larger than the screen is drawn
+  past it. On a 1080p screen, 4K is for the software renderer, which
+  scales its frame to the window; Legacy GL at 4K wants a 4K desktop
+  (a 4K screen, or the GPU's own supersampling, which is Gibax's to turn
+  on).

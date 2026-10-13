@@ -321,7 +321,7 @@ game's rules do not change.
     2560x1600 and 2560x1440 in the video menu, and the desktop's own size
     added at startup when it is none of them -- his screen's included,
     whatever it is. On this machine alone: drawing only. **Written** on
-    `res4k-2.4` (9.22), CI run 38376624540; to try, the software
+    `res4k-2.4` (9.22), CI run 38376624540 green; to try, the software
     renderer at 4K first.
 
 **Order of work** (2026-10-13): 19 is done (8.141); 4's cases, 6, 12 and

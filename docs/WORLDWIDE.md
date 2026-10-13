@@ -9511,7 +9511,9 @@ screen's size, "un truc HD+", which he did not remember.
   stays 2. An older exe reading a config saved at one of the new sizes
   finds no mode and keeps its startup one (`SCR_CheckDefaultMode`: "0 (no
   mode change) if not found").
-- `res4k-2.4`, from `worldwide-2.4`, CI run 38376624540. No compiler on
+- `res4k-2.4`, from `worldwide-2.4`, CI run 38376624540, green -- the
+  nine jobs, Windows and Linux, dev and release, the Flatpak, the tarball
+  on three distributions. No compiler on
   this machine: built by the CI only. **Not tried**: the software renderer
   at 4K (four times 1080p's pixels; upstream never drew above 1920x1200 in
   software, so near walls and sprites are to be watched), OpenGL at 4K, the

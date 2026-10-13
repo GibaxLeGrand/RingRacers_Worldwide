@@ -9579,3 +9579,16 @@ profiles)".
   **Not tried**; to look
   at: the cursor now enters the menu on *Section* (stock's first line was
   a header).
+- **Tried** by Gibax on the measuring machine, the release build of
+  `89182a411`: "c'est bon ça marche, fusionne" -- and "faut juste corriger
+  les textes trop long, ça déborde": on his capture, the *Section* line's
+  tooltip ran past what shows beside the profile card. A tooltip is one
+  line of the thin font, never wrapped (`M_DrawMenuTooltips`); this
+  menu's stock ones are 50 characters at most, stock's longest anywhere
+  90. **So** (`e0bbae77d`): *Section* 66 to 46 ("Settings for this
+  profile, or for all of them."), *Gyro Steering* 63 to 39, *WORLDWIDE
+  Input Delay* 58 to 40; and *Options > Sound > Voice Language*, 98 --
+  longer than any stock one -- to 69. Our other tooltips, 78 at most,
+  sit in menus without the card, within stock's lengths. CI run
+  38442191736.
+- **Merged** into `worldwide-2.4` (`739b4c80e`).

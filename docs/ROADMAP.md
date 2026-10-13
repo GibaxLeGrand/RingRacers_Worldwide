@@ -329,11 +329,11 @@ game's rules do not change.
     the screen since the gyroscope's and the input delay's lines, slid
     with nothing to say more was below. A first line, *Section*, shows
     this profile's settings or every profile's, each short enough to fit.
-    **Written** on `profilesections-2.4` (9.23), CI run 38408346895 green; to
-    try.
+    **Tried by Gibax and merged into `worldwide-2.4`** (`739b4c80e`,
+    9.23), our menu tooltips cut to fit on the way.
 
 **Order of work** (2026-10-13): 19 is done (8.141); 4's cases, 6, 12 and
-13's measurement are done (8.134 to 8.136); 3 is done (9.16); 20 to 24 are
+13's measurement are done (8.134 to 8.136); 3 is done (9.16); 20 to 25 are
 merged (§9). Next, 2(b) to 2(d) with a second person, a LAN first (8.135's
 loopback note); 7, a cap from the round trip; 5, with 14 and 15 (the Steam
 Deck run is done, 8.143); 16, 17 and 18; then the announcement. 5 and 7 can
@@ -358,7 +358,8 @@ lines had pushed past the screen's bottom; merged on Gibax's word
 likewise (`afaf3ddf9`). Left unmerged on purpose: `histcap-2.4`,
 `histcap18-2.4` and `histcapfix-2.4` (the cap stays 12; their fix is merged
 as `specauth-2.4`) and `overlaydiag-2.4`, a diagnostic. `res4k-2.4` (item
-24) tried and merged (`22b0559d5`). Since `68f5eb582`,
+24) tried and merged (`22b0559d5`), `profilesections-2.4` (item 25)
+likewise (`739b4c80e`). Since `68f5eb582`,
 `worldwide-2.4` starts in a stock 2.4 folder, which is 32-bit, without
 `-noexchndl` (8.117). **Proposed scope** (the audit's, not decided):
 Race only, Windows, eight players at most unless 6 says sixteen, and the

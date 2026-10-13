@@ -320,12 +320,13 @@ game's rules do not change.
     premohq/PS5-RINGRACERS: "c'est cool aussi"): 3840x2160, 3200x1800,
     2560x1600 and 2560x1440 in the video menu, and the desktop's own size
     added at startup when it is none of them -- his screen's included,
-    whatever it is. On this machine alone: drawing only. **Written** on
-    `res4k-2.4` (9.22), CI run 38376624540 green; to try, the software
-    renderer at 4K first.
+    whatever it is. On this machine alone: drawing only. **Tried by
+    Gibax and merged into `worldwide-2.4`** (`22b0559d5`, 9.22): Legacy
+    GL past 2048 wide fixed on the way, the modes' list moved up. Left to
+    try: the software renderer at 4K, a 4K desktop in Legacy GL.
 
 **Order of work** (2026-10-13): 19 is done (8.141); 4's cases, 6, 12 and
-13's measurement are done (8.134 to 8.136); 3 is done (9.16); 20 to 23 are
+13's measurement are done (8.134 to 8.136); 3 is done (9.16); 20 to 24 are
 merged (§9). Next, 2(b) to 2(d) with a second person, a LAN first (8.135's
 loopback note); 7, a cap from the round trip; 5, with 14 and 15 (the Steam
 Deck run is done, 8.143); 16, 17 and 18; then the announcement. 5 and 7 can
@@ -349,8 +350,8 @@ lines had pushed past the screen's bottom; merged on Gibax's word
 (`8846563fc`, 9.20), 0 by default, its feel not yet tried; `netsim-2.4`
 likewise (`afaf3ddf9`). Left unmerged on purpose: `histcap-2.4`,
 `histcap18-2.4` and `histcapfix-2.4` (the cap stays 12; their fix is merged
-as `specauth-2.4`) and `overlaydiag-2.4`, a diagnostic. Waiting on Gibax's
-try: `res4k-2.4` (item 24). Since `68f5eb582`,
+as `specauth-2.4`) and `overlaydiag-2.4`, a diagnostic. `res4k-2.4` (item
+24) tried and merged (`22b0559d5`). Since `68f5eb582`,
 `worldwide-2.4` starts in a stock 2.4 folder, which is 32-bit, without
 `-noexchndl` (8.117). **Proposed scope** (the audit's, not decided):
 Race only, Windows, eight players at most unless 6 says sixteen, and the

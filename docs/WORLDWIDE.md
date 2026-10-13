@@ -9543,3 +9543,13 @@ screen's size, "un truc HD+", which he did not remember.
   scales its frame to the window; Legacy GL at 4K wants a 4K desktop
   (a 4K screen, or the GPU's own supersampling, which is Gibax's to turn
   on).
+- **Tried** by Gibax with the build of `8bae387cd` (run 38389742946), the
+  same screen, Legacy GL fullscreen at 2560x1440: the picture whole --
+  "c'est bon ça marche". On his capture, the modes' list, 23 modes in
+  columns of 8 since the 4K ones, ran its eighth row under "Current mode
+  is". **So** (`d9810bed3`): the list and its title go up 12 when a
+  column is longer than 7, as they were at 7 (Gibax: "remonte le petit
+  menu dans resolution"); syntax checked as above, CI run 38391034225.
+- **Merged** into `worldwide-2.4` (`22b0559d5`, Gibax: "fusionne juste
+  après cette bébé correction"). Not tried yet: the software renderer at
+  4K, a 4K desktop in Legacy GL, a 21:9 screen.

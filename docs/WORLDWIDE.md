@@ -9553,3 +9553,28 @@ screen's size, "un truc HD+", which he did not remember.
 - **Merged** into `worldwide-2.4` (`22b0559d5`, Gibax: "fusionne juste
   après cette bébé correction"). Not tried yet: the software renderer at
   4K, a 4K desktop in Legacy GL, a 21:9 screen.
+
+### 9.23 Profiles > Accessibility, one section at a time
+
+Gibax, 2026-10-13: "sur le profile setup [...] c'est trop long, y'a des
+options qui sont cachées, il faudrait voir soit pour proposer un scroll, ou
+une 2e page, ou alors des settings qui affichent et disparaissent (comme
+dans les menus) en fonction de la section (only this profile and ALL
+profiles)".
+
+- **Why hidden**: 9.14's slide keeps the selected line on screen, but
+  nothing says more lines are below -- 18 for 15 places, stock's two
+  headers and a space among them.
+- **So, the third** (`89182a411`, `profilesections-2.4`): the two headers
+  become a first line, *Section* -- This Profile or All Profiles, left or
+  right (`cv_dummyprofileaccesssection`, a menu dummy, never saved) -- and
+  only that section's lines are shown: nine for this profile (rumble to
+  the gyroscope's range), six for all (the two input delays, tilting,
+  effects, screenshake, input display). Its OnChange swaps the menu's
+  list, as `M_RefreshAdvancedVideoOptions` changes the advanced video
+  menu's length for Legacy GL's lines. Both lists begin with the section
+  line, so the cursor stays on it; it is never drawn as a changed setting.
+  Each section fits; the slide stays for one that would grow.
+- No compiler on this machine: CI run 38408346895. **Not tried**; to look
+  at: the cursor now enters the menu on *Section* (stock's first line was
+  a header).

@@ -324,6 +324,13 @@ game's rules do not change.
     Gibax and merged into `worldwide-2.4`** (`22b0559d5`, 9.22): Legacy
     GL past 2048 wide fixed on the way, the modes' list moved up. Left to
     try: the software renderer at 4K, a 4K desktop in Legacy GL.
+25. **Profiles > Accessibility, one section at a time** (Gibax: "c'est
+    trop long, y'a des options qui sont cachées"): the list, longer than
+    the screen since the gyroscope's and the input delay's lines, slid
+    with nothing to say more was below. A first line, *Section*, shows
+    this profile's settings or every profile's, each short enough to fit.
+    **Written** on `profilesections-2.4` (9.23), CI run 38408346895; to
+    try.
 
 **Order of work** (2026-10-13): 19 is done (8.141); 4's cases, 6, 12 and
 13's measurement are done (8.134 to 8.136); 3 is done (9.16); 20 to 24 are

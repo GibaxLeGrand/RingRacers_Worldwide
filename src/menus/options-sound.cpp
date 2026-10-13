@@ -312,7 +312,7 @@ menuitem_t OPTIONS_Sound[] =
 		NULL, srb2::itemaction(&cv_kartvoices), 0, 0},
 
 	// WORLDWIDE: character dubs (k_dubs.c, WORLDWIDE.md 8.142).
-	{IT_STRING | IT_CVAR, "Voice Language", "The voice of every character you have not chosen one for, among the dubs loaded. Only you hear it.",
+	{IT_STRING | IT_CVAR, "Voice Language", "The dub for every character you have not given one. Only you hear it.",
 		NULL, srb2::itemaction(&cv_dummyvoicelanguage), 0, 0},
 
 	{IT_STRING | IT_CVAR, "Follower Horns", NULL, // set in init_routine

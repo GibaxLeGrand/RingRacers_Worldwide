@@ -1285,6 +1285,12 @@ consvar_t cv_profilegyro = Player("profilegyro", "");
 consvar_t cv_dummyprofilegyrosteer = MenuDummy("dummyprofilegyrosteer", "Off").values({{0, "Off"}, {1, "On"}, {2, "Inverted"}});
 consvar_t cv_dummyprofilegyrorange = MenuDummy("dummyprofilegyrorange", "30").min_max(10, 90).step_amount(5);
 
+// WORLDWIDE: Profiles > Accessibility shows one section at a time, this
+// profile's settings or every profile's (WORLDWIDE.md section 9).
+void M_ProfileAccessibilitySection_OnChange(void);
+consvar_t cv_dummyprofileaccesssection = MenuDummy("dummyprofileaccesssection", "This Profile")
+	.values({{0, "This Profile"}, {1, "All Profiles"}}).onchange_noinit(M_ProfileAccessibilitySection_OnChange);
+
 // WORLDWIDE's own input delay (ROADMAP, the client-local input delay knob):
 // how many tics the prediction stops short of this machine's newest input,
 // for a steadier picture against a later one. Under the prediction only, and

@@ -62,7 +62,7 @@ Outside that mode every piece is off by default except `rollback_cleancmds`
 (8.36), `rollback_histreal` (8.89) and B2's `rollback_rawsnap`, on by default
 since `c24d8d205` (8.125). Off by default and waiting: `rollback_keepearly`
 (8.99, 8.100), `rollback_smooth` (never measured), `rollback_rebuildbudget`
-(8.134). WORLDWIDE mode also turns on `rollback_ontime` (8.133). The
+(8.134), and, on `histauto-2.4`, not merged, `rollback_histauto` (9.24). WORLDWIDE mode also turns on `rollback_ontime` (8.133). The
 player's `localdelay` (9.3, 9.14), 0 by default, holds the speculation N
 tics short, on this machine alone. The harness's network noise,
 `rollback_jitter` and `rollback_loss` (9.16), is off at 0.
@@ -126,7 +126,8 @@ there, toward the public alpha.
 - **5. The alpha kit**, with Linux built (8.138) and the Flatpak on a Steam
   Deck (8.143); **14 to 18**, what announces the public alpha. Blocking.
 - **7. The history's cap** past about 340 ms of round trip: 12 stays (9.15);
-  a cap set from the round trip, under the ring's 18, is left to try.
+  a cap set from the round trip, under the ring's 18, written as
+  `rollback_histauto` (9.24, `histauto-2.4`), not yet run.
 - **8. Breadth**: items used on purpose and more maps; Robotnik Coaster and
   Crimson Core driven over a LAN (8.141). Battle, Grand Prix and Encore out
   of the alpha unless run.
@@ -4115,6 +4116,8 @@ Read on 2026-09-28, from 8.66's log and the code; nothing launched.
   and runs it in the same pass (`neededtic = maketic`); `target_lag` delays
   inputs, not the server's world. **8.66's candidate -- a world one tic older
   -- is refuted.**
+  ⚠ For one tic a `NetUpdate` only: a `NetUpdate` two real tics or
+  more after the last makes them all before running any (9.24).
 - **What the bots see differently is the world itself.** The same race's
   drift report: mean 0.002 units, worst 1.42 then 0.15, **287 to 315 of about
   2200 kart samples with a state field differing, and that field is `speed`
@@ -9278,7 +9281,8 @@ first (the notes' session of 2026-10-06).
   too (the budget trades them for moves of the drawn world). **Not
   explained**: at 18 the rebuilds for another kart's input went to 706
   and 827 a race, against 4 at 12 -- in a speculation reaching this
-  machine's newest inputs the bots answer a guessed kart; to read. **So
+  machine's newest inputs the bots answer a guessed kart; to read (⚠
+read in 9.24, not measured). **So
   the cap stays 12** at this latency; under 171 ms of jitter 18 was the
   better feel ("la 2e avait un bien meilleure feeling") -- a cap from
   the round trip, not one number, is the open question.
@@ -9592,3 +9596,80 @@ profiles)".
   sit in menus without the card, within stock's lengths. CI run
   38442191736.
 - **Merged** into `worldwide-2.4` (`739b4c80e`).
+
+### 9.24 The history's cap set from the round trip: `rollback_histauto`
+
+Gibax, 2026-10-19, after a summary of item 7: "ben écris le code du coup",
+the rule first; the bots of 9.15's *Not explained* after ("les bots
+après").
+
+- **The rule.** 9.15 drove both sides of one number. At 428 ms (a round
+  trip of 17), 18 reached the newest input and rebuilt 205 to 222 times a
+  window, 16 tics in one pass, 62 to 109 skipped frames, where 12 -- 5
+  tics short -- rebuilt 0 to 4 times and skipped 0 to 2. Under 0 to 3
+  tics of jitter at 171 ms, 18 moved the drawn world on 23 and 34 passes
+  of 750 against 153 and 241 at 12 (9.16), its few deep rebuilds unseen
+  (0 or 1 skipped frame a window). A cap worked out from a rebuild's cost
+  alone would have refused 18 in both: on this machine a 16-tic rebuild
+  runs past a tic, yet rare ones pass unseen. What decides is how often a
+  deep rebuild comes, and the skipped frames measure that directly, on any
+  machine. So: the cap starts at `rollback_history` -- 12 in WORLDWIDE
+  mode, never less, so never worse than now -- and climbs a tic a second
+  while the depth the inputs in flight ask for is above it, up to 18, the
+  ring's limit (9.15). A second with 2 skipped frames or more takes it a
+  tic down and holds it there 10 s, twice as long at each brake after, up
+  to 320 s; a gap in the passes (a map change, a pause) starts the holds
+  again from 10 s. A tic at a time, so the drawn world moves a tic at a
+  time, as with the held lead (8.41).
+- **Written** (`c548887e6`, `histauto-2.4`, from `worldwide-2.4`):
+  `rollback_histauto [0|1]`, off by default; WORLDWIDE mode does not turn
+  it on. Its report: the cap now and its bounds, the climbs and the
+  brakes, the frames skipped in the seconds it counted, when it climbs
+  again, the passes at each cap; `rollback_history`'s says the cap in
+  force. The brake counts what `rollback_frames` counts -- a loop
+  iteration past a tic, the frame after it skipped -- on a count of its
+  own, which `rollback_cost`'s reset does not zero. No compiler on this
+  machine: not syntax-checked; the CI after the push.
+- **Scenarios** (`harnais/`): `wwauto`, four windows of 1000 tics,
+  `rollback_histauto` 0, 1, 0, 1, each after `rollback_history 12` -- the
+  0 windows the control -- at the latency `lag=` gives; `wwautojitter`,
+  the same at `rollback_lag 6` with `rollback_jitter 3` throughout. Run
+  with `join`; driven, they are 9.15's two comparisons again.
+- **Prediction**, written before any run:
+  1. `wwauto lag=15 join`, nobody driving: in the on windows the cap
+     climbs to 17 in about 5 s -- the depth asks 17, and with nobody
+     driving nothing rebuilds and nothing brakes -- then the drawn world
+     is 0 tics behind the newest input, as at 24 in `wwcap` (17.00 deep,
+     none cut). Passes cut by the cap: under a sixth of the 0 windows'
+     (12 cut 750 of 750).
+  2. `wwauto lag=15 join`, driven: the cap climbs, rebuilds start when
+     the depth reaches the newest input (17), the brake takes it back, the
+     holds lengthen, and it settles at 15 or 16 -- 1 to 2 tics behind
+     instead of 5. Under 15 skipped frames a window (12: 0 to 2; 18: 62 to
+     109), under 30 rebuilds a window.
+  3. `wwautojitter join`: the cap follows the jitter's peaks, 13 to 15;
+     the drawn world moves on under 60 passes of 1000 in the on windows,
+     against about 200 to 320 at 12; 0 to 3 skipped frames.
+  4. Where nothing rebuilds, a pass costs what it does at 12 (about 1 to
+     1.5 ms on Skyscraper Leaps, 9.15).
+  If 2 never settles -- the cap swinging a tic at every hold -- the
+  brake's threshold or its holds are wrong, not the rule.
+- **9.15's bots, read, not measured**: 706 and 827 rebuilds for another
+  kart's input a race at 18, 4 at 12. The keep decision checks the tics in
+  order and stops at the first wrong one, and a bot's input is built from
+  the world at its tic: with every input before it right, the client's
+  world is the server's, and so should the bot's input be. So "the bots
+  answer a guessed kart" cannot be all of it -- this machine's guessed
+  input would be the first wrong one, and counted as such. What the counts
+  show is that they follow this machine's own rebuilds: about 7 for 1 in
+  both driven races where the speculation reached the newest input
+  (780/107 at 6 tics and a cap of 12, 706/98 at 15 tics and 18), almost
+  none where it did not. Two leads: (a) **a gap in 8.67's reading** --
+  when a server's `NetUpdate` comes two real tics or more after the last,
+  it makes them all (`SV_Maketic`, in a loop over `counts`) before running
+  any, so the second one's bot inputs are built from the world a tic
+  older; with the client's 16-tic rebuilds beside the server on one
+  machine, that comes often. (b) 8.67's own candidate: the objects'
+  blockmap order after a restore, which every rebuild makes. To tell them
+  apart: count on the server the tics made in a batch, and set the bots'
+  first wrong tics against them.

@@ -183,6 +183,12 @@ is asked for first.**
    très clairement", 9.15). Under jitter at 171 ms 18 felt better: a
    cap set from the round trip is what is left to try. It cannot go past
    18: `rollback_history` is held two short of the ring since `6b629daf9`.
+   **Written** (9.24): `rollback_histauto`, on `histauto-2.4`
+   (`c548887e6`) -- the cap climbs a tic a second from 12 while the
+   inputs in flight ask for more, up to 18, and a second with skipped
+   frames takes it a tic down and holds it there; off by default, not
+   yet run. Scenarios `wwauto` and `wwautojitter`; the prediction is
+   in 9.24.
 8. **Breadth, as far as the alpha's scope** (Phase C): items used on purpose
    (the roulette under speculation), and two or three more maps driven --
    water, polyobjects, executors. Battle, Grand Prix and Encore stay out of
@@ -335,7 +341,7 @@ game's rules do not change.
 **Order of work** (2026-10-13): 19 is done (8.141); 4's cases, 6, 12 and
 13's measurement are done (8.134 to 8.136); 3 is done (9.16); 20 to 25 are
 merged (§9). Next, 2(b) to 2(d) with a second person, a LAN first (8.135's
-loopback note); 7, a cap from the round trip; 5, with 14 and 15 (the Steam
+loopback note); 7, a cap from the round trip (written, 9.24); 5, with 14 and 15 (the Steam
 Deck run is done, 8.143); 16, 17 and 18; then the announcement. 5 and 7 can
 be written without a second person. The teaser can come as soon as the
 Discord exists, for it to point somewhere.
@@ -359,7 +365,8 @@ likewise (`afaf3ddf9`). Left unmerged on purpose: `histcap-2.4`,
 `histcap18-2.4` and `histcapfix-2.4` (the cap stays 12; their fix is merged
 as `specauth-2.4`) and `overlaydiag-2.4`, a diagnostic. `res4k-2.4` (item
 24) tried and merged (`22b0559d5`), `profilesections-2.4` (item 25)
-likewise (`739b4c80e`). Since `68f5eb582`,
+likewise (`739b4c80e`). `histauto-2.4` (item 7, 9.24) written, not
+yet run. Since `68f5eb582`,
 `worldwide-2.4` starts in a stock 2.4 folder, which is 32-bit, without
 `-noexchndl` (8.117). **Proposed scope** (the audit's, not decided):
 Race only, Windows, eight players at most unless 6 says sixteen, and the

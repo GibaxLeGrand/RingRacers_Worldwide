@@ -29,6 +29,8 @@ stepped from `70814ebc0`, 8.132). `rollback_rebuildbudget` and
 `f367fa6cc` (8.141); `rollback_jitter`, `rollback_loss` (9.16) and
 `localdelay` (9.14) merged on 2026-10-12 (9.20). `rollback_fill` (8.129)
 came out of the code once measured worse (`07e4040d8`).
+`rollback_histauto` (9.24) is on `histauto-2.4` only, not merged, and
+not counted in the 40.
 
 ⚠ Reminder: **none of these commands is ever launched in a race without the
 project owner's explicit go-ahead**, every time (rule 1 of the docs entry
@@ -554,7 +556,29 @@ jitter (`WORLDWIDE.md` 8.40, 8.41).
   there its rebuilds run 16 tics and skip 62 to 109 frames a window: Gibax
   kept 12 (9.15). Under 0 to 3 tics of jitter at 171 ms, 12 moved the drawn
   world on 153 to 241 passes of 750, 18 on 23 to 34 (9.15, 9.16).
-- Suggested value: `12`, WORLDWIDE mode's.
+- Suggested value: `12`, WORLDWIDE mode's. With `rollback_histauto` on,
+  the cap starts there (9.24).
+
+### `rollback_histauto [0|1]`
+**Client side, with `rollback_history`. Off by default**; on
+`histauto-2.4` only, not merged (`WORLDWIDE.md` 9.24, ROADMAP item 7).
+On, the cap on the speculation's depth is no longer `rollback_history`'s
+one number: it starts there and climbs a tic a second while the inputs in
+flight ask for more, up to 18, the ring's limit; a second with 2 frames
+skipped or more takes it a tic down and holds it there -- 10 s the first
+time, twice as long at each brake after, up to 320 s, and from 10 s again
+after a gap in the passes (a map change, a pause). Never under
+`rollback_history`. WORLDWIDE mode does not turn it on.
+
+- A brake on skipped frames rather than a rebuild's cost: at 428 ms, 18
+  rebuilt 16 tics at a time and often, 62 to 109 skipped frames a window;
+  under jitter at 171 ms its deep rebuilds were rare and unseen (9.15).
+- Setting it, 0 or 1, starts the cap again at `rollback_history` and zeroes
+  its counts; `rollback_history N` starts the cap again too.
+- No argument: the cap now and its bounds, the climbs and the brakes, the
+  frames skipped in the seconds it counted, when it climbs again, and the
+  passes at each cap. `rollback_history`'s report says the cap in force.
+- Not yet run. Scenarios `wwauto` and `wwautojitter`.
 
 ### `rollback_histreal [0|1]`
 **Client side, with `rollback_history`** (`WORLDWIDE.md` 8.89). On by default:

@@ -9741,3 +9741,52 @@ The measuring machine, 2026-10-19, set to measure 9.24 (`rollback_histauto`).
   first). And 9.24's measurement, to run again on a quiet machine.
 - **Merged** into `worldwide-2.4` (`abc693bb1`, Gibax: "ui"), on by
   default in WORLDWIDE mode; ROADMAP item 26.
+
+### 9.26 `rollback_histauto` measured, nobody driving
+
+9.24's points 1, 3 and 4, on a quiet machine (Firefox and Spotify closed
+and not started during the races, 9.25), `histauto-2.4`'s development build
+(`c548887e6`), `dedicated join`, nobody driving (the local kart never
+moved); Gibax: "tu as besoin de moi ou non ? si non, tu peux lancer".
+
+**(a) `wwauto lag=15`** (428 ms):
+
+| window | histauto | cap | depth | inputs in flight | cut by the cap | drawn world moved | rebuilt | frames skipped | a pass |
+|---|---|---|---|---|---|---|---|---|---|
+| 0 | 0 | 12 | 12.00 | 16.89 | 1000 | 0 | 0 | 0 | 1.4 ms |
+| 1 | 1 | 12 to **17** | 16.47 | 17.00 | 175 | 5 | 0 | 0 | 1.4 ms |
+| 2 | 0 | 12 | 12.00 | 17.00 | 1000 | 4 | 0 | 0 | 1.6 ms |
+| 3 | 1 | 12 to **17** | 16.47 | 17.00 | 175 | 5 | 0 | 0 | 1.5 ms |
+
+- **Point 1, held**: in each on window the cap climbed a tic a second,
+  12 to 17 in 5 s (35 passes at each), never braked, and stayed at 17 --
+  the depth the inputs in flight ask -- for 825 passes: the drawn world
+  at the newest input instead of 5 tics behind. Passes cut: 175, the
+  climb's, against 1000 at 12 -- a hair over the "under a sixth" written
+  (167). Nothing rebuilt, nothing skipped.
+- **Point 4, held**: a pass 1.4 to 1.5 ms on, 1.4 to 1.6 ms at 12.
+
+**(c) `wwautojitter`** (`rollback_lag 6`, `rollback_jitter 3`, 171 ms and
+0 to 3 tics more):
+
+| window | histauto | cap | depth | inputs in flight | cut | drawn world moved (tics) | rebuilt | skipped | a pass |
+|---|---|---|---|---|---|---|---|---|---|
+| 0 | 0 | 12 | 10.64 | 11.83 | 303 | 271 (416) | 4 | 1 | 1.4 ms |
+| 1 | 1 | 12 to **18** | 11.58 | 11.17 | 104 | **112** (168) | 5 | 1 | 1.5 ms |
+| 2 | 0 | 12 | 10.91 | 12.14 | 359 | 326 (496) | 11 | 2 | 1.7 ms |
+| 3 | 1 | 12 to 18 | -- | -- | -- | -- | -- | -- | -- |
+
+  (Window 3 ran into the race's end: 361 passes, the cap at 18 after 6 s,
+  then the results screen.)
+- **Point 3, half held**: the drawn world moved on 112 passes of 1000
+  against 271 and 326 at 12 -- 2.4 to 2.9 times fewer, not the "under 60"
+  written; 1 skipped frame. The cap did not follow the jitter's peaks at
+  13 to 15: it climbed to 18 in 6 s and stayed, nothing braking it --
+  the rule climbs while a peak asks more and only skipped frames bring it
+  down, so with nothing rebuilding deep it sits at the ring's limit. 9.15's
+  18 under this jitter moved the drawn world 23 and 34 times a window of
+  750; the 112 here include the 6 s of the climb, the cap still under
+  the peaks -- how many of them fell there, not counted.
+- **Point 2**, driven at 428 ms, the one that decides (9.15: 18 stuttered
+  where 12 did not), is left for Gibax: whether the brake settles the cap
+  at 15 or 16 or swings it, and how it feels.

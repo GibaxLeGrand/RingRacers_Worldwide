@@ -3867,6 +3867,33 @@ static uint32_t g_driftsame;        // ... and karts already where the server ha
 // server's map change (WORLDWIDE.md 9.15). One tic more to spare.
 #define ROLLBACK_HISTORY_MAX (ROLLBACK_TICS - 2)
 
+// rollback_histauto (ROADMAP item 7, WORLDWIDE.md 9.24): the cap set from the
+// round trip instead of one number. 9.15 drove both sides of it: at 428 ms a
+// cap of 18 reached the newest input and rebuilt 16 tics at a time, 62 to 109
+// skipped frames a window, where 12 was smooth; under 0 to 3 tics of jitter at
+// 171 ms the same 18 moved the drawn world on a tenth of the passes 12 did, its
+// rare deep rebuilds unseen. So the cap starts at rollback_history and climbs a
+// tic a second while the inputs in flight ask for more, and a second with
+// frames skipped takes it a tic back down and holds it there -- longer each
+// time, so a cap that stutters at one depth settles under it. What the brake
+// reads is what a driver sees, whatever the machine.
+#define HISTAUTO_BRAKE 2                  // skipped frames in a second that take the cap down
+#define HISTAUTO_HOLD (10 * TICRATE)      // how long the first brake holds it there
+#define HISTAUTO_HOLDMAX (320 * TICRATE)  // each brake after holds twice as long, up to this
+
+static dboolean g_histauto;           // off by default: rollback_history alone is the cap
+static int32_t g_histautocap;         // the cap in force, rollback_history to the ring's limit
+static int32_t g_histautopeak;        // the deepest the inputs in flight asked for this second
+static tic_t g_histautostepat;        // I_GetTime() of the last step
+static tic_t g_histautoholduntil;     // no climb before this, after a brake
+static tic_t g_histautohold;          // how long the next brake holds
+static uint32_t g_histautoframes;     // frames skipped, as g_frameskips, never zeroed
+static uint32_t g_histautoskipmark;   // g_histautoframes at the last step
+static uint32_t g_histautoraised;     // climbs
+static uint32_t g_histautobraked;     // brakes that took the cap down
+static uint32_t g_histautoskips;      // frames skipped in the seconds it counted
+static uint32_t g_histautoat[ROLLBACK_HISTORY_MAX + 1]; // passes at each cap
+
 static dboolean g_wwclient;       // this client's switches were set by joining a WORLDWIDE server
 static dboolean g_wwkeepingwas;   // the snapshot keeper's switch before that join turned it on
 static dboolean g_wwvanillajoin;  // rollback_vanillajoin: join without declaring, to test the refusal
@@ -4197,7 +4224,10 @@ void K_RollbackNoteFrame(precise_t work, dboolean ranloop, dboolean drew, dboole
 		g_frameworkmax[which] = us;
 
 	if (skipnext)
+	{
 		g_frameskips++;
+		g_histautoframes++;
+	}
 
 	if (drew)
 	{
@@ -7501,6 +7531,83 @@ void K_RollbackSpeculate(void)
 	K_NoteDrawnOffset();
 }
 
+/** The deepest rollback_history may go: under the input history's length, and
+  * under the snapshot ring's (ROLLBACK_HISTORY_MAX) -- deeper strands the
+  * confirmed world. */
+static int32_t K_HistoryMost(void)
+{
+	return (ROLLBACK_HISTORY_MAX < MAXGENTLEMENDELAY - 1)
+		? ROLLBACK_HISTORY_MAX : MAXGENTLEMENDELAY - 1;
+}
+
+/** rollback_histauto: the cap for this pass, need being how deep the inputs in
+  * flight ask it to go. Once a second it moves a tic: down when frames were
+  * skipped in that second, and no climb then for a while; up when the inputs
+  * asked for more than it gives. Never under rollback_history, never over the
+  * ring's limit. A gap in the passes -- a map change, a pause -- starts the
+  * second again, and the holds from their first length: another map, another
+  * cost. */
+static int32_t K_HistAutoCap(int32_t need, tic_t now)
+{
+	const int32_t most = K_HistoryMost();
+
+	if (g_histautocap < g_histmax)
+		g_histautocap = g_histmax;
+
+	if (g_histautocap > most)
+		g_histautocap = most;
+
+	if (g_histautostepat == 0 || now - g_lastpassat > TICRATE)
+	{
+		g_histautopeak = need;
+		g_histautostepat = now;
+		g_histautoholduntil = 0;
+		g_histautohold = HISTAUTO_HOLD;
+		g_histautoskipmark = g_histautoframes;
+	}
+	else
+	{
+		if (need > g_histautopeak)
+			g_histautopeak = need;
+
+		if (now - g_histautostepat >= TICRATE)
+		{
+			const uint32_t skips = g_histautoframes - g_histautoskipmark;
+
+			g_histautoskips += skips;
+
+			if (skips >= HISTAUTO_BRAKE)
+			{
+				// At rollback_history the cap is not what skipped them, but a
+				// machine that skips frames there is no machine to climb on.
+				g_histautoholduntil = now + g_histautohold;
+				g_histautohold = (g_histautohold * 2 < HISTAUTO_HOLDMAX)
+					? g_histautohold * 2 : HISTAUTO_HOLDMAX;
+
+				if (g_histautocap > g_histmax)
+				{
+					g_histautocap--;
+					g_histautobraked++;
+				}
+			}
+			else if (g_histautopeak > g_histautocap && g_histautocap < most
+				&& now >= g_histautoholduntil)
+			{
+				g_histautocap++;
+				g_histautoraised++;
+			}
+
+			g_histautopeak = need;
+			g_histautostepat = now;
+			g_histautoskipmark = g_histautoframes;
+		}
+	}
+
+	g_histautoat[g_histautocap]++;
+
+	return g_histautocap;
+}
+
 /** How deep this pass speculates from a frontier: rollback_twoclock, or with
   * rollback_history what the inputs still in flight need (see below). */
 static int32_t K_SpeculationDepth(int32_t ahead, tic_t frontier)
@@ -7523,9 +7630,8 @@ static int32_t K_SpeculationDepth(int32_t ahead, tic_t frontier)
 	// server's.
 	if (ahead > 0 && g_histmax > 0 && g_cleancmds)
 	{
-		const int32_t cap = (g_histmax > ahead) ? g_histmax : ahead;
 		const tic_t now = I_GetTime();
-		int32_t most = -1, want = 0, depth;
+		int32_t most = -1, want = 0, depth, cap;
 
 		K_RollbackMapHistory();
 
@@ -7586,6 +7692,12 @@ static int32_t K_SpeculationDepth(int32_t ahead, tic_t frontier)
 		}
 
 		depth = (int32_t)(now - frontier) + g_histlead;
+
+		// rollback_histauto moves the cap with what the depth asks for.
+		cap = g_histauto ? K_HistAutoCap(depth, now) : g_histmax;
+
+		if (cap < ahead)
+			cap = ahead;
 
 		if (depth > cap)
 		{
@@ -9007,12 +9119,10 @@ static void Command_RollbackCleanCmds_f(void)
   * counts. Shared by the command and by WORLDWIDE mode. */
 static void K_SetHistory(int32_t want)
 {
-	// Under the input history's length, and under the snapshot ring's
-	// (ROLLBACK_HISTORY_MAX): deeper strands the confirmed world.
-	const int32_t most = (ROLLBACK_HISTORY_MAX < MAXGENTLEMENDELAY - 1)
-		? ROLLBACK_HISTORY_MAX : MAXGENTLEMENDELAY - 1;
+	const int32_t most = K_HistoryMost();
 
 	g_histmax = (want <= 0) ? 0 : ((want > most) ? most : want);
+	g_histautocap = g_histmax;  // rollback_histauto starts again from it
 	g_histpasses = g_histmatched = g_histcapped = 0;
 	g_histunackedsum = g_histdepthsum = 0;
 	g_histhold = false;
@@ -9084,6 +9194,12 @@ static void Command_RollbackHistory_f(void)
 	if (g_slowtic > 0)
 		CONS_Printf("rollback_history: rollback_slowtic -- every tic %d us longer\n", (int)g_slowtic);
 
+	if (g_histauto && g_histmax > 0)
+	{
+		CONS_Printf("rollback_history: rollback_histauto on -- the cap at %d now, %d at least\n",
+			(int)g_histautocap, (int)g_histmax);
+	}
+
 	if (g_histpasses == 0)
 	{
 		CONS_Printf("rollback_history: no speculation has looked for the applied input yet\n");
@@ -9117,6 +9233,52 @@ static void Command_RollbackHistory_f(void)
 
 	CONS_Printf("rollback_history: lead over the clock raised %u times, lowered %u\n",
 		g_histrises, g_histdrops);
+}
+
+/** Console command: rollback_histauto [0/1]
+  *
+  * Client side, with rollback_history (ROADMAP item 7, WORLDWIDE.md 9.24). On,
+  * the cap on the speculation's depth starts at rollback_history and climbs a
+  * tic a second while the inputs in flight ask for more, up to the ring's limit
+  * (18); a second with frames skipped takes it a tic back down and holds it
+  * there, 10 seconds the first time, twice as long each time after. Off (the
+  * default), rollback_history alone is the cap. Setting it starts the cap again
+  * at rollback_history and zeroes the counts, so a window's report is that
+  * window alone.
+  */
+static void Command_RollbackHistAuto_f(void)
+{
+	int32_t c;
+
+	if (COM_Argc() > 1)
+	{
+		g_histauto = (atoi(COM_Argv(1)) != 0);
+		g_histautocap = g_histmax;
+		g_histautostepat = 0;
+		g_histautoraised = g_histautobraked = g_histautoskips = 0;
+		memset(g_histautoat, 0, sizeof g_histautoat);
+	}
+
+	if (g_histauto == false)
+	{
+		CONS_Printf("rollback_histauto: off -- rollback_history (%d) is the cap\n", (int)g_histmax);
+		return;
+	}
+
+	CONS_Printf("rollback_histauto: on -- the cap at %d now, between rollback_history (%d) and "
+		"%d%s\n", (int)g_histautocap, (int)g_histmax, (int)K_HistoryMost(),
+		(g_histmax > 0 ? "" : " -- but rollback_history is off, so it does nothing"));
+	CONS_Printf("rollback_histauto: raised %u times, brought down %u times; %u frames skipped "
+		"in the seconds it counted; climbing again %s\n",
+		g_histautoraised, g_histautobraked, g_histautoskips,
+		(I_GetTime() >= g_histautoholduntil) ? "now"
+			: va("in %u s", (unsigned)((g_histautoholduntil - I_GetTime()) / TICRATE)));
+
+	for (c = 0; c <= ROLLBACK_HISTORY_MAX; c++)
+	{
+		if (g_histautoat[c] > 0)
+			CONS_Printf("rollback_histauto: %u passes with the cap at %d\n", g_histautoat[c], (int)c);
+	}
 }
 
 /** True when the network has contradicted a tic that has already run.
@@ -9872,6 +10034,7 @@ void K_RegisterRollbackStuff(void)
 	COM_AddDebugCommand("rollback_nullspec", Command_RollbackNullSpec_f);
 	COM_AddDebugCommand("rollback_cleancmds", Command_RollbackCleanCmds_f);
 	COM_AddDebugCommand("rollback_history", Command_RollbackHistory_f);
+	COM_AddDebugCommand("rollback_histauto", Command_RollbackHistAuto_f);
 	COM_AddDebugCommand("rollback_blame", Command_RollbackBlame_f);
 	COM_AddDebugCommand("rollback_correct", Command_RollbackCorrect_f);
 	COM_AddDebugCommand("rollback_drift", Command_RollbackDrift_f);

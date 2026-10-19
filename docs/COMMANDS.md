@@ -12,7 +12,7 @@ This file, `WORLDWIDE.md` and `ROADMAP.md` are kept **identical** in the
 public code repository and in the private notes repository (`docs/` on both
 sides).
 
-**Up to date as of 2026-10-13** — 40 commands, checked against
+**Up to date as of 2026-10-19** — 41 commands, checked against
 `K_RegisterRollbackStuff` in `k_rollback.c` on `worldwide-2.4`, one server
 variable, `worldwide`, and one player setting, `localdelay` (`cvars.cpp`). Two commands are **obsolete** (`rollback_loop`,
 `rollback_pace`) and are kept only for comparison. `worldwide` and
@@ -27,10 +27,11 @@ default from `771bec680` (8.100); `rollback_join` (8.119) and
 stepped from `70814ebc0`, 8.132). `rollback_rebuildbudget` and
 `rollback_slowtic` from `f9e76d65b` (8.134); `rollback_soundreset` from
 `f367fa6cc` (8.141); `rollback_jitter`, `rollback_loss` (9.16) and
-`localdelay` (9.14) merged on 2026-10-12 (9.20). `rollback_fill` (8.129)
+`localdelay` (9.14) merged on 2026-10-12 (9.20); `rollback_maketicone`
+merged on 2026-10-19 (9.25). `rollback_fill` (8.129)
 came out of the code once measured worse (`07e4040d8`).
 `rollback_histauto` (9.24) is on `histauto-2.4` only, not merged, and
-not counted in the 40.
+not counted in the 41.
 
 ⚠ Reminder: **none of these commands is ever launched in a race without the
 project owner's explicit go-ahead**, every time (rule 1 of the docs entry
@@ -762,6 +763,18 @@ horizon goes to the server's clock at the join, with a console line when it
 was ahead. `0` leaves it where it was, for a control (`soundjoin.sh
 control`). The command's line, and `rollback_keepspec`'s report, count a
 level's sounds, played and held back.
+
+### `rollback_maketicone [0|1]`
+**Server side, WORLDWIDE mode: a late server makes the tics it owes one at
+a time** (`WORLDWIDE.md` 9.25). A server whose `NetUpdate` comes two real
+tics or more after the last made them all before running any, its bots'
+inputs for the second from the world before the first -- and every client,
+which builds them from the world after it, rebuilt. `1`, the default:
+`NetUpdate` makes one, `TryRunTics` the others, each after the one before
+has run. `0`: all at once, as stock, for a control (`playtest.sh
+wwmaketic0`). No effect outside WORLDWIDE mode. The command and the
+server's `rollback_relabel` count the `NetUpdate`s that owed more than one
+tic and the tics made one at a time.
 
 ### `rollback_lag [tics]`
 **Testing only.** Delays every packet received from a peer by this many tics.

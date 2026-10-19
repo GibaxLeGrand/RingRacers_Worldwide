@@ -9739,3 +9739,5 @@ The measuring machine, 2026-10-19, set to measure 9.24 (`rollback_histauto`).
   server is late -- whether the simulation reads them (if not, a keep
   decision could leave them out: `k_rollback.c`, to measure and ask
   first). And 9.24's measurement, to run again on a quiet machine.
+- **Merged** into `worldwide-2.4` (`abc693bb1`, Gibax: "ui"), on by
+  default in WORLDWIDE mode; ROADMAP item 26.

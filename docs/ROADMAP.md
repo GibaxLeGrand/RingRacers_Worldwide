@@ -338,6 +338,20 @@ game's rules do not change.
     **Tried by Gibax and merged into `worldwide-2.4`** (`739b4c80e`,
     9.23), our menu tooltips cut to fit on the way.
 
+**Added on 2026-10-19:**
+
+26. **A late WORLDWIDE server must not make its clients rebuild**
+    (Gibax: a VPS running several servers, "ça peut être chiant ou
+    limitant"). A server that woke up two tics late made both before
+    running either, its bots' inputs for the second from a world a tic
+    old: every client rebuilt, about 200 times a window, with only a
+    video and music playing beside it. **Fixed and merged**
+    (`abc693bb1`, 9.25, `rollback_maketicone`): the owed tics made one
+    at a time, 0 wrong bot inputs under 416 late wake-ups. Left: this
+    machine's own `latency` and `received` differences under a late
+    server, 14 to 26 rebuilds a window -- whether the simulation reads
+    them.
+
 **Order of work** (2026-10-13): 19 is done (8.141); 4's cases, 6, 12 and
 13's measurement are done (8.134 to 8.136); 3 is done (9.16); 20 to 25 are
 merged (§9). Next, 2(b) to 2(d) with a second person, a LAN first (8.135's

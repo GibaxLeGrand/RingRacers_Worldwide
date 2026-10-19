@@ -9673,3 +9673,69 @@ après").
   blockmap order after a restore, which every rebuild makes. To tell them
   apart: count on the server the tics made in a batch, and set the bots'
   first wrong tics against them.
+
+### 9.25 A late server and its bots' inputs
+
+The measuring machine, 2026-10-19, set to measure 9.24 (`rollback_histauto`).
+
+- **Race (a) first**, `wwauto dedicated lag=15 join`, nobody driving (the
+  local kart never moved): even in the windows at the cap of 12, 209 to
+  220 rebuilds a window and a pass of 4.7 to 5.6 ms -- where 9.15 had 0 and
+  about 1 ms on the same race. Every rebuild for a bot's input on the
+  frontier tic: about 650 wrong bot inputs a window, this machine's 10 to
+  25. Not the code: `specauth-2.4`'s development build, 9.15's code, did
+  the same (213 to 227); nor the dubs the server loads and the client does
+  not (the `dubs` folder renamed for a race: 209 to 225). With Firefox and
+  Spotify closed (Gibax: "la charge du poste est clairement pas
+  overworked"), `specauth-2.4` again: **0 rebuild** in all four windows,
+  1.5 to 1.7 ms -- 9.15 back; Firefox reopened during the next race, and
+  the rebuilds back, 214 to 236. My predictions said the opposite twice.
+  Gibax: a video in Firefox and music on Spotify -- a machine far from
+  busy, at 31% of its CPU.
+- **Why** (9.24's lead (a), read in the code): when a server's
+  `NetUpdate` comes two real tics or more after the last, it calls
+  `SV_Maketic` that many times before `TryRunTics` runs any, and each
+  builds the bots' inputs (`K_BuildBotTiccmd`) from the world as it is --
+  so the second tic's from the world before the first, where every client
+  builds it from the world after it. A server that wakes up late once in a
+  while -- a busy host, a shared VPS, several servers on one -- makes all
+  its clients rebuild for its bots. Gibax: "mais c'est nul c'est pas le
+  but", and on a VPS running several servers, "ça peut être chiant ou
+  limitant".
+- **So** (`b236a2891`, `maketic-2.4`, from `worldwide-2.4`): in WORLDWIDE
+  mode, `NetUpdate` makes one tic, and `TryRunTics` makes the others one
+  at a time, each after the one before has run, and sends it
+  (`SV_MakeOwedTic`); never past what the clients have acknowledged.
+  `rollback_maketicone [0|1]`, on by default, no effect outside WORLDWIDE
+  mode; `rollback_relabel` (the server's report) counts the `NetUpdate`s
+  that owed more than one tic and the tics made one at a time. Written on
+  Gibax's word ("fait le correctif"); syntax checked with gcc's
+  `-fsyntax-only` and stand-in headers (the one error the same before and
+  after, a build option's constant); CI run 39243607319, the nine jobs.
+- **Measured**, its development build, a video and music playing,
+  `wwmaketic0` (the server's `rollback_maketicone 0`) then `wwmaketic1`
+  (1), `dedicated lag=15 join`, nobody driving, the cap of 12:
+
+| race | server late (NetUpdates owing more than one tic) | rebuilt, per window | wrong bot inputs | this machine's | a pass |
+|---|---|---|---|---|---|
+| `wwauto` this morning, stock, loaded | not counted then | 209, 240, 220, 217 | ~650 a window | 10 to 25 | 4.7 to 7.0 ms |
+| `wwmaketic0`, off | **0** | 0, 0, 0, 0 | 0 | 0 | 1.5 to 2.2 ms |
+| `wwmaketic1`, on | **416**, about 90 a window, all made one at a time | 21, 14, 23, 26 | **0** | 14 to 26 | 2.0 to 2.4 ms |
+
+  - The load did not make the server late in the first race at all, so
+    the same-session control with a late server is missing: my
+    prediction's (1) could not be tested. (2), under 10 rebuilds a window:
+    not held, 14 to 26 -- but **not one for a bot**, against about 650 a
+    window this morning; what is left is this machine's own input,
+    differing in its `latency` (134) and its `received` flag (47) --
+    there in this morning's stock race too (10 to 25 a window), so not
+    the fix's: a late server stamps the client's sample otherwise than the
+    client guessed.
+  - A clean control, if wanted: a late server on demand -- `rollback_stall`
+    is client side only for now (`K_RollbackStallPoint`); a server side
+    one, or `rollback_slowtic` on the server, would make the lateness the
+    same in both races.
+- **Left**: this machine's `latency` and `received` differences when its
+  server is late -- whether the simulation reads them (if not, a keep
+  decision could leave them out: `k_rollback.c`, to measure and ask
+  first). And 9.24's measurement, to run again on a quiet machine.

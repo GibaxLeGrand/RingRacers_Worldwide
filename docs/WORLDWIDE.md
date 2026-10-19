@@ -9629,7 +9629,7 @@ après").
   force. The brake counts what `rollback_frames` counts -- a loop
   iteration past a tic, the frame after it skipped -- on a count of its
   own, which `rollback_cost`'s reset does not zero. No compiler on this
-  machine: not syntax-checked; the CI after the push.
+  machine: CI run 39229275863, green (the nine jobs).
 - **Scenarios** (`harnais/`): `wwauto`, four windows of 1000 tics,
   `rollback_histauto` 0, 1, 0, 1, each after `rollback_history 12` -- the
   0 windows the control -- at the latency `lag=` gives; `wwautojitter`,

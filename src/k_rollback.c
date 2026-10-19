@@ -3646,6 +3646,10 @@ static tic_t g_soundhorizon;                // the first tic this machine has no
 static uint32_t g_soundsplayed;             // a level's sounds with the speculation kept, played
 static uint32_t g_soundsheld;               // ... and held back, their tic run already
 static dboolean g_soundreset = true;        // rollback_soundreset: the horizon to the server's clock at a join
+static dboolean g_maketicone = true;        // rollback_maketicone: a late server makes a tic at a time
+static uint32_t g_makebatches;              // NetUpdates that owed more than one tic
+static uint32_t g_makeowed;                 // ... the tics past the first in them
+static uint32_t g_makelater;                // tics made one at a time, after the one before ran
 
 enum
 {
@@ -3874,6 +3878,22 @@ static dboolean g_wwvanillajoin;  // rollback_vanillajoin: join without declarin
 dboolean K_WorldwideServer(void)
 {
 	return (server && netgame && cv_worldwide.value != 0);
+}
+
+dboolean K_RollbackMakeTicOne(void)
+{
+	return (g_maketicone && K_WorldwideServer());
+}
+
+void K_RollbackNoteMakeBatch(int32_t owed)
+{
+	g_makebatches++;
+	g_makeowed += (uint32_t)(owed - 1);
+}
+
+void K_RollbackNoteOwedTic(void)
+{
+	g_makelater++;
 }
 
 dboolean K_WorldwideDeclare(void)
@@ -8078,6 +8098,14 @@ static void Command_RollbackRelabel_f(void)
 {
 	int32_t off;
 
+	// How often this server fell behind, and what it did about it (9.25).
+	if (K_WorldwideServer())
+	{
+		CONS_Printf("rollback_relabel: rollback_maketicone %s -- %u NetUpdates owed more "
+			"than one tic, %u tics past the first; %u made one at a time" "\n",
+			(g_maketicone ? "on" : "off"), g_makebatches, g_makeowed, g_makelater);
+	}
+
 	if (g_relabelcount == 0)
 	{
 		CONS_Printf("rollback_relabel: no PT_CLIENTCMD packets relabelled yet "
@@ -9750,6 +9778,26 @@ static void Command_RollbackSoundReset_f(void)
 		g_soundsplayed, g_soundsheld);
 }
 
+/** Console command: rollback_maketicone [0/1]
+  *
+  * Server side, WORLDWIDE mode (WORLDWIDE.md 9.25). On, the default: a server
+  * that fell behind -- a busy machine, a shared VPS -- makes the tics it owes
+  * one at a time, each after the one before has run, so a bot's input comes
+  * from the world its clients build it from. Off: all at once in NetUpdate,
+  * as stock -- the bots' inputs of the second from the world before the
+  * first, and every client rebuilds. Off outside WORLDWIDE mode either way. */
+static void Command_RollbackMakeTicOne_f(void)
+{
+	if (COM_Argc() > 1)
+		g_maketicone = (atoi(COM_Argv(1)) != 0);
+
+	CONS_Printf("rollback_maketicone: %s -- %u NetUpdates owed more than one tic, "
+		"%u tics past the first; %u made one at a time\n",
+		(g_maketicone ? "on -- a late WORLDWIDE server makes the tics it owes one at a time"
+			: "off -- all at once, as stock"),
+		g_makebatches, g_makeowed, g_makelater);
+}
+
 /** Console command: rollback_rebuildbudget [ms]
   *
   * Client side. A speculation stops once it has run this many milliseconds,
@@ -9887,6 +9935,7 @@ void K_RegisterRollbackStuff(void)
 	COM_AddDebugCommand("rollback_stall", Command_RollbackStall_f);
 	COM_AddDebugCommand("rollback_ontime", Command_RollbackOnTime_f);
 	COM_AddDebugCommand("rollback_soundreset", Command_RollbackSoundReset_f);
+	COM_AddDebugCommand("rollback_maketicone", Command_RollbackMakeTicOne_f);
 	COM_AddDebugCommand("rollback_rebuildbudget", Command_RollbackRebuildBudget_f);
 	COM_AddDebugCommand("rollback_slowtic", Command_RollbackSlowTic_f);
 	COM_AddDebugCommand("rollback_cascadelog", Command_RollbackCascadeLog_f);

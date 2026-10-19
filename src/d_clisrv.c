@@ -7262,6 +7262,10 @@ static void Local_Maketic(INT32 realtics)
 	}
 }
 
+// WORLDWIDE (WORLDWIDE.md 9.25): the tics a late server still owes, made by
+// TryRunTics one at a time (SV_MakeOwedTic).
+static tic_t svticsowed = 0;
+
 // create missed tic
 static void SV_Maketic(void)
 {
@@ -7309,6 +7313,27 @@ static void SV_Maketic(void)
 
 	// all tic are now proceed make the next
 	maketic++;
+}
+
+// WORLDWIDE (WORLDWIDE.md 9.25): a tic a late server still owes, made now that
+// the one before it has run -- so its bots' inputs come from the world that
+// tic left, as its clients build them -- and sent. Never past what the
+// clients have acknowledged, NetUpdate's own bound.
+static boolean SV_MakeOwedTic(void)
+{
+	if (svticsowed == 0 || gametic < maketic || demo.playback)
+		return false;
+
+	if (maketic + 1 >= firstticstosend + BACKUPTICS)
+		return false;
+
+	SV_Maketic();
+	svticsowed--;
+	K_RollbackNoteOwedTic();
+
+	SV_SendTics();
+	neededtic = maketic;
+	return true;
 }
 
 boolean TryRunTics(tic_t realtics)
@@ -7669,6 +7694,11 @@ boolean TryRunTics(tic_t realtics)
 			consistancy[gametic % BACKUPTICS] = Consistancy();
 			lastconfirmedtic = gametic;
 			Consistancy_Describe(gametic);
+
+			// WORLDWIDE (WORLDWIDE.md 9.25): a late server's next owed tic, made
+			// from the world this one left, and run by this same loop.
+			if (server && SV_MakeOwedTic())
+				runto = neededtic;
 
 			// rollback_ontime (WORLDWIDE.md 8.130): a loop catching up on
 			// several tics still sends a sample for each real tic it runs over.
@@ -8412,6 +8442,24 @@ void NetUpdate(void)
 
 			// Don't erase tics not acknowledged
 			counts = realtics;
+
+			// WORLDWIDE (WORLDWIDE.md 9.25): a server that fell behind made every
+			// tic it owed here, before running any, so a bot's input for the
+			// second came from the world before the first -- where its clients
+			// build it from the world after it, and every one of them rebuilt.
+			// Made one at a time instead: this one here, the others by
+			// TryRunTics, each after the one before it has run.
+			if (K_WorldwideServer() && counts + (INT32)svticsowed > 1)
+				K_RollbackNoteMakeBatch(counts + (INT32)svticsowed);
+
+			counts += (INT32)svticsowed;
+			svticsowed = 0;
+
+			if (K_RollbackMakeTicOne() && counts > 1)
+			{
+				svticsowed = (tic_t)(counts - 1);
+				counts = 1;
+			}
 
 			firstticstosend = gametic;
 			for (i = 0; i < MAXNETNODES; i++)

@@ -105,6 +105,16 @@ dboolean K_RollbackCorrectSuppress(void);
   * that do not declare themselves WORLDWIDE. */
 dboolean K_WorldwideServer(void);
 
+/** rollback_maketicone (WORLDWIDE.md 9.25): whether a WORLDWIDE server that
+  * fell behind makes the tics it owes one at a time, each after the one
+  * before has run, rather than all at once in NetUpdate. */
+dboolean K_RollbackMakeTicOne(void);
+
+/** Server side, for the report: a NetUpdate owed this many tics, more than
+  * one; and a tic owed, made by TryRunTics after the one before ran. */
+void K_RollbackNoteMakeBatch(int32_t owed);
+void K_RollbackNoteOwedTic(void);
+
 /** True while rollback_rawsnap takes raw snapshots (WORLDWIDE.md 8.88): a
   * restore may then bring a removed object back at its own address, so what
   * it points to must outlive its removal. */

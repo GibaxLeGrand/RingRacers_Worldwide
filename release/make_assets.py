@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Makes a release's assets zip: what the game downloads leave out.
 
-    python release/make_assets.py v0.1.0-alpha <folder of dub packs> [--sums SHA256SUMS.txt]
+    python release/make_assets.py v0.1.0-alpha <folder of dub packs> [--steam <folder>] [--sums SHA256SUMS.txt]
 
 The zip, RingRacersWorldwide-<version>-assets.zip, is laid out as the game's
 folder, for Windows and the Linux tarball alike:
@@ -9,6 +9,8 @@ folder, for Windows and the Linux tarball alike:
     data/worldwide.pk3    WORLDWIDE's title screen (assets/worldwide.pk3)
     dubs/<the packs>      each .wad and .pk3 of the folder given
     dubs/CREDITS.txt      release/DUBS-CREDITS.txt
+    steam/<the images>    with --steam: the library's artwork for a
+                          non-Steam game (each .png, .jpg, .ico given)
 
 The packs are never committed: they are given here, at the release. Each must
 hold at least one DUBDEF lump. The credits must be finished (no TODO- left),
@@ -56,6 +58,7 @@ def main():
     p = argparse.ArgumentParser(description="Makes a release's assets zip (worldwide.pk3 and the dub packs).")
     p.add_argument("version", help="the release's tag, v0.1.0-alpha say")
     p.add_argument("dubs", help="the folder holding the dub packs (.wad, .pk3)")
+    p.add_argument("--steam", help="a folder of Steam library artwork (.png, .jpg, .ico) to add under steam/")
     p.add_argument("--out", default=".", help="where to write the zip (default: here)")
     p.add_argument("--sums", help="a sha256sum file to add the zip's line to")
     p.add_argument("--allow-todo", action="store_true", help="credits not finished: for a trial only")
@@ -88,6 +91,17 @@ def main():
             sys.exit(n + ": no DUBDEF lump in it -- not a dub pack.")
         print("  pack  %-40s %8.1f MB" % (n, os.path.getsize(path) / 1e6))
 
+    art = []
+    if a.steam:
+        if not os.path.isdir(a.steam):
+            sys.exit("Not a folder: " + a.steam)
+        art = sorted(n for n in os.listdir(a.steam)
+                     if os.path.isfile(os.path.join(a.steam, n)) and n.lower().endswith((".png", ".jpg", ".jpeg", ".ico")))
+        if not art:
+            sys.exit("No .png, .jpg or .ico in " + a.steam)
+        for n in art:
+            print("  steam %-40s %8.1f MB" % (n, os.path.getsize(os.path.join(a.steam, n)) / 1e6))
+
     name = "RingRacersWorldwide-%s-assets.zip" % a.version
     out = os.path.join(a.out, name)
     with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
@@ -96,6 +110,8 @@ def main():
             z.write(os.path.join(a.dubs, n), "dubs/" + n)
         # Windows line ends: the same text reads in Notepad and elsewhere.
         z.writestr("dubs/CREDITS.txt", credits.replace("\r\n", "\n").replace("\n", "\r\n"))
+        for n in art:
+            z.write(os.path.join(a.steam, n), "steam/" + n)
 
     with open(out, "rb") as f:
         digest = hashlib.sha256(f.read()).hexdigest()

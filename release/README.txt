@@ -50,6 +50,7 @@ The assets, RingRacersWorldwide-v0.1.0-alpha-assets.zip, for every system:
 
   data/worldwide.pk3      WORLDWIDE's title screen (the Flatpak has its own)
   dubs/                   the dub packs, and who made them (CREDITS.txt)
+  steam/                  the game's artwork for a Steam library
 
 The zips are laid out as the game's folder, and nothing in them has the
 name of one of the game's own files: they copy into a Ring Racers 2.4
@@ -106,7 +107,13 @@ Steam Deck
      folder with Ctrl+H.
   2. In Steam, still in desktop mode: Add a Game > Add a Non-Steam Game,
      and pick Ring Racers Worldwide.
-  3. Back in game mode, it is in your library.
+  3. Its artwork, from the assets zip's "steam" folder: in the library,
+     right-click the game > Manage > Set custom artwork for its cover; on
+     its page, right-click the banner at the top for the background and
+     the logo; its icon, in Properties.
+  4. Back in game mode, it is in your library.
+
+  The same artwork works for any non-Steam shortcut, on Windows too.
 
 
 PLAYING ONLINE

@@ -38,13 +38,19 @@ WHAT YOU NEED
 WHAT IS IN THE DOWNLOAD
 -----------------------
 
+The Windows zip and the Linux tarball are laid out as the game's folder:
+
   ringracers_worldwide.exe   the game (ringracers_worldwide and its lib
                              folder in the Linux tarball)
-  worldwide.pk3              WORLDWIDE's title screen; optional
-  README.txt                 this file
-  LICENSE.txt                the GNU General Public License, version 2
+  data/worldwide.pk3         WORLDWIDE's title screen
+  dubs/                      the dub packs, and their credits (CREDITS.txt)
+  README-Worldwide.txt       this file
+  LICENSE-Worldwide.txt      the GNU General Public License, version 2
 
-The Flatpak is a single file, worldwide.pk3 inside.
+Nothing in them has the name of one of the game's own files, so they copy
+into a Ring Racers 2.4 folder without replacing anything.
+
+The Flatpak is a single file, worldwide.pk3 and the dub packs inside.
 
 
 INSTALLING
@@ -54,21 +60,22 @@ Windows
 
   1. Open your Ring Racers 2.4 folder: the one with ringracers.exe and
      bios.pk3 in it.
-  2. Copy ringracers_worldwide.exe there, next to ringracers.exe.
-  3. Copy worldwide.pk3 into the "data" folder inside it.
-  4. Start ringracers_worldwide.exe.
+  2. Copy everything in the zip into it. Its "data" folder merges with the
+     game's, and "dubs" is new.
+  3. Start ringracers_worldwide.exe.
 
   Your ringracers.exe stays as it was. Both use the same profiles,
   progress and settings, so you can switch between them.
 
 Linux, the tarball
 
-  1. Unpack it, and copy ringracers_worldwide and the lib folder into the
-     folder that holds the Ring Racers 2.4 data (bios.pk3 and the "data"
-     folder).
-  2. Copy worldwide.pk3 into that "data" folder.
-  3. Run ./ringracers_worldwide from there -- or, from anywhere, with
-     RINGRACERSWADDIR set to that folder.
+  1. Unpack it, and copy everything in its folder into the folder that
+     holds the Ring Racers 2.4 data (bios.pk3 and the "data" folder): its
+     "data" folder merges with the game's.
+  2. Move the "dubs" folder to ~/.ringracers/dubs (make ~/.ringracers if it
+     is not there yet): the game reads its dubs from there.
+  3. Run ./ringracers_worldwide from the data folder -- or, from anywhere,
+     with RINGRACERSWADDIR set to it.
 
   Settings, saves and logs go to ~/.ringracers.
 
@@ -83,6 +90,7 @@ Linux, the Flatpak
 
   Settings, saves and logs go to
   ~/.var/app/io.github.ringracers_worldwide.RingRacersWorldwide/.ringracers
+  -- the dub packs too: they are linked into its dubs folder at each start.
 
 Steam Deck
 
@@ -133,11 +141,12 @@ ALSO IN THIS BUILD
 None of these change the race or reach a stock server.
 
 - Character dubs: a character can have more than one voice -- Sonic in
-  Japanese, say -- and each pilot picks theirs at character select. Dub
-  packs go in the "dubs" folder next to "addons" (none comes with this
-  download). Options > Sound > Voice Language is the voice for bots and
-  for pilots who picked none. Online, in WORLDWIDE mode, the others hear
-  your kart in your dub if they have the same pack.
+  Japanese, say -- and each pilot picks theirs at character select. The
+  packs that come with this download are in the "dubs" folder, next to
+  "addons", where other packs can go too; who made them is in
+  dubs/CREDITS.txt. Options > Sound > Voice Language is the voice for bots
+  and for pilots who picked none. Online, in WORLDWIDE mode, the others
+  hear your kart in your dub if they have the same pack.
 - Two players side by side: Options > HUD > 2P Splitscreen > Vertical.
 - Photo mode: in the pause menu, offline and in replays.
 - Gyro steering, for controllers with motion sensors: Options > Profile
@@ -197,8 +206,8 @@ LICENSE AND SOURCE
 ------------------
 
 Ring Racers Worldwide is free software, under the GNU General Public
-License, version 2 or later: see LICENSE.txt. Its source code, this
-version's included, is at
+License, version 2 or later: see LICENSE-Worldwide.txt. Its source code,
+this version's included, is at
 
   https://github.com/GibaxLeGrand/RingRacers_Worldwide
 

@@ -23,8 +23,12 @@ You need **Ring Racers 2.4** installed: these carry none of the game's data.
 | `RingRacersWorldwide-v0.1.0-alpha-linux-x64.tar.gz` | Linux x86_64 (glibc 2.35+, the system's SDL2): into a folder with the 2.4 data |
 | `RingRacersWorldwide-v0.1.0-alpha.flatpak` | Linux and the Steam Deck, beside the official Ring Racers from Flathub |
 
-Each holds a `README.txt` with the steps, also
+Each carries WORLDWIDE's title screen and the dub packs, and a
+`README-Worldwide.txt` with the steps, also
 [in the repository](https://github.com/GibaxLeGrand/RingRacers_Worldwide/blob/v0.1.0-alpha/release/README.txt).
+On Windows, the zip's contents copy into your Ring Racers 2.4 folder without
+replacing anything of the game's. `SHA256SUMS.txt` holds the files'
+checksums.
 
 ## What's in it
 
@@ -37,9 +41,12 @@ Each holds a `README.txt` with the steps, also
 - **A light correction channel** in place of the stock full-state resend;
   and a server running late, its machine busy, no longer makes its clients
   correct themselves for its bots.
-- **Not netcode**: character dubs chosen by each pilot; two players side by
-  side; photo mode; gyro steering; resolutions up to 4K; typing with your
-  keyboard's layout; WORLDWIDE's title screen.
+- **Not netcode**: character dubs chosen by each pilot, with Japanese
+  voices for 17 of the game's characters and a few addon ones in the
+  downloads (credits in `dubs/CREDITS.txt`); two players side by side;
+  photo mode; gyro
+  steering; resolutions up to 4K; typing with your keyboard's layout;
+  WORLDWIDE's title screen.
 
 Measured so far, on one machine with simulated latency, jitter and loss, and
 over a LAN: no input lag felt from 0 to 428 ms, a confirmed world that stays
@@ -57,14 +64,15 @@ of a tic of prediction work.
 - No replay is recorded while you play with prediction.
 - On Windows, a crash writes no `.rpt`: send `latest-log.txt`.
 
-The whole list is in `README.txt`.
+The whole list is in `README-Worldwide.txt`.
 
 ## Reporting a problem
 
 On the [Ring Racers Worldwide Discord](TODO-DISCORD-LINK), or as an
 [issue](https://github.com/GibaxLeGrand/RingRacers_Worldwide/issues): what
 happened, the map, how many players, WORLDWIDE or stock server, your system,
-and the `latest-log.txt` of that session (where to find it: `README.txt`).
+and the `latest-log.txt` of that session (where to find it:
+`README-Worldwide.txt`).
 
 ## Source and license
 

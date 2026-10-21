@@ -48,16 +48,18 @@ executable and none of the game's data: get the game from
 | `RingRacersWorldwide-v0.1.0-alpha-linux-x64.tar.gz` | Linux x86_64, glibc 2.35 or newer, the system's SDL2 |
 | `RingRacersWorldwide-v0.1.0-alpha.flatpak` | Linux and the Steam Deck, beside the official Ring Racers Flatpak |
 
-Each comes with a `README.txt` -- the same as
-[release/README.txt](release/README.txt) -- that installs it step by step.
-In short:
+Each carries WORLDWIDE's title screen and the dub packs, and comes with a
+`README-Worldwide.txt` -- the same as [release/README.txt](release/README.txt)
+-- that installs it step by step. In short:
 
-- **Windows**: unzip into your Ring Racers 2.4 folder, next to
-  `ringracers.exe`; move `worldwide.pk3` into its `data` folder; start
-  `ringracers_worldwide.exe`. The stock game stays as it was, and both use
-  the same profiles, progress and settings.
-- **Linux, the tarball**: unpack it into a folder that holds the Ring Racers
-  2.4 data and run `./ringracers_worldwide` from there.
+- **Windows**: copy everything in the zip into your Ring Racers 2.4 folder,
+  the one with `ringracers.exe`: its `data` folder merges with the game's,
+  and nothing of the game's is replaced. Start `ringracers_worldwide.exe`.
+  The stock game stays as it was, and both use the same profiles, progress
+  and settings.
+- **Linux, the tarball**: copy its contents into a folder that holds the
+  Ring Racers 2.4 data, move its `dubs` folder to `~/.ringracers/dubs`, and
+  run `./ringracers_worldwide` from there.
 - **Flatpak and Steam Deck**: install the official Ring Racers from Flathub,
   then this one (`flatpak install --user RingRacersWorldwide-v0.1.0-alpha.flatpak`).
   On a Steam Deck, do it in desktop mode, add *Ring Racers Worldwide* to
@@ -181,7 +183,9 @@ each pilot chooses theirs.
 game's folder on Windows, `~/.ringracers/dubs` with the Linux tarball,
 `~/.var/app/io.github.ringracers_worldwide.RingRacersWorldwide/.ringracers/dubs`
 with the Flatpak -- the game makes the folder at its first start. The
-alpha's downloads carry no pack. The packs
+release downloads carry the packs made for this fork, with their credits
+(`dubs/CREDITS.txt`); the Flatpak links its own into that folder at each
+start. The packs
 there load at start-up, on this machine alone: a dub pack never enters a
 server's file list, is never sent to anyone, and does not make the game
 count as modified, so you can join any server with your dubs loaded, a stock

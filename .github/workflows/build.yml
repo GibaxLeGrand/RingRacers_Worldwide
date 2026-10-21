@@ -4,8 +4,9 @@ name: Build
 #
 # Both recipes are lifted from the upstream .gitlab-ci.yml, which is the CI that
 # actually works for this project. Simplifications versus upstream: no ccache, no
-# GitLab code-quality report, no release/tag handling. The question being asked
-# here is only "does it build, and can I play it".
+# GitLab code-quality report. The question being asked here is only "does it
+# build, and can I play it" -- and, on a tag, the release's downloads (the
+# package job, at the end).
 #
 # worldwide-2.4 is the main branch (the work ported onto the 2.4 release,
 # WORLDWIDE.md 8.114; rollback-netcode, where it began, is retired). The
@@ -24,9 +25,14 @@ on:
   # hand from the Actions tab when a build is wanted anyway. A side branch
   # (dubs-2.4, photo-2.4...) builds the same way, run by hand or through a pull
   # request.
+  #
+  # A tag v* (v0.1.0-alpha...) always builds, paths or not, and ends in a
+  # draft release (the package job).
   push:
     branches:
       - worldwide-2.4
+    tags:
+      - 'v*'
     paths-ignore:
       - 'docs/**'
       - '**.md'
@@ -35,6 +41,11 @@ on:
       - 'docs/**'
       - '**.md'
   workflow_dispatch:
+    inputs:
+      package:
+        description: 'Also make the release downloads, as an artifact (nothing is released)'
+        type: boolean
+        default: false
 
 jobs:
   linux:
@@ -387,3 +398,139 @@ jobs:
             build/bin/ringracers*.exe
             build/bin/ringracers*.pdb
           if-no-files-found: warn
+
+  # The release's downloads, from the release builds above: release/README.txt
+  # says what each holds, and the Windows zip and the Linux tarball are laid
+  # out as the game's folder (data/worldwide.pk3, dubs/ and the packs of
+  # assets/dubs), so that their contents copy in without replacing anything of
+  # the game's -- hence README-Worldwide.txt and LICENSE-Worldwide.txt, beside
+  # 2.4's own README.txt and LICENSE.txt. The Flatpak carries the same inside
+  # (.github/flatpak/).
+  #
+  # On a tag v*: a draft pre-release of that name, release/RELEASE_NOTES.md
+  # its text, published by hand once looked at -- never by this job. Run by
+  # hand with "package" ticked: the same files as an artifact, nothing
+  # released.
+  package:
+    name: Release downloads
+    needs: [windows, linux-tarball, linux-tarball-check, flatpak]
+    if: github.ref_type == 'tag' || inputs.package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # A release's texts are finished before it is drafted: no placeholder
+      # left (the Discord's link, the packs' credits), and its notes name its
+      # tag.
+      - name: Check the texts
+        if: github.ref_type == 'tag'
+        run: |
+          set -eu
+          if grep -n 'TODO-' README.md release/README.txt release/RELEASE_NOTES.md assets/dubs/CREDITS.txt; then
+            echo "::error::a TODO- placeholder is left in the release's texts"
+            exit 1
+          fi
+          if ! grep -qF "$GITHUB_REF_NAME" release/RELEASE_NOTES.md; then
+            echo "::error::release/RELEASE_NOTES.md does not name $GITHUB_REF_NAME"
+            exit 1
+          fi
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ringracers-win64-release-${{ github.sha }}
+          path: in/windows
+      - uses: actions/download-artifact@v4
+        with:
+          name: ringracers-linux64-release-${{ github.sha }}
+          path: in/linux
+      - uses: actions/download-artifact@v4
+        with:
+          name: ringracers-flatpak-${{ github.sha }}
+          path: in/flatpak
+
+      - name: Package
+        run: |
+          set -eu
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            version="$GITHUB_REF_NAME"
+          else
+            version="dev-${GITHUB_SHA:0:9}"
+          fi
+          base="RingRacersWorldwide-$version"
+          echo "BASE=$base" >> "$GITHUB_ENV"
+
+          packs=$(find assets/dubs -maxdepth 1 -type f \( -iname '*.wad' -o -iname '*.pk3' \) 2>/dev/null | sort)
+          if [ -z "$packs" ]; then
+            echo "::warning::assets/dubs holds no dub pack: the downloads carry none"
+          fi
+
+          # What both share, laid out as the game's folder.
+          kit() {
+            mkdir -p "$1/data" "$1/dubs"
+            cp assets/worldwide.pk3 "$1/data/"
+            for p in $packs; do cp "$p" "$1/dubs/"; done
+            if [ -f assets/dubs/CREDITS.txt ]; then cp assets/dubs/CREDITS.txt "$1/dubs/"; fi
+            cp release/README.txt "$1/README-Worldwide.txt"
+            cp LICENSE "$1/LICENSE-Worldwide.txt"
+          }
+
+          # Windows: the exe under the name the texts give, the texts with
+          # Windows line ends; no folder around it, as it unzips into 2.4's.
+          exe=$(find in/windows -type f -name 'ringracers*.exe' | head -n 1)
+          [ -n "$exe" ] || { echo "::error::no Windows exe in the release build"; exit 1; }
+          w=out/windows
+          mkdir -p "$w"
+          cp "$exe" "$w/ringracers_worldwide.exe"
+          kit "$w"
+          for t in "$w"/*.txt "$w"/dubs/*.txt; do
+            if [ -f "$t" ]; then sed -i 's/$/\r/' "$t"; fi
+          done
+          (cd "$w" && zip -q -r -X "$GITHUB_WORKSPACE/$base-windows-x64.zip" .)
+
+          # Linux: the release tarball's exe and lib/, in a folder of the
+          # release's name.
+          tar -xzf in/linux/ringracers-worldwide-2.4-release-linux64.tar.gz -C in/linux
+          src=in/linux/ringracers-worldwide-2.4-release-linux64
+          lexe=$(find "$src" -maxdepth 1 -type f -name 'ringracers*' | head -n 1)
+          [ -n "$lexe" ] || { echo "::error::no Linux binary in the release tarball"; exit 1; }
+          l="out/$base-linux-x64"
+          mkdir -p "$l"
+          install -m 755 "$lexe" "$l/ringracers_worldwide"
+          cp -r "$src/lib" "$l/"
+          kit "$l"
+          tar -C out -czf "$base-linux-x64.tar.gz" "$base-linux-x64"
+
+          fp=$(find in/flatpak -type f -name '*.flatpak' | head -n 1)
+          [ -n "$fp" ] || { echo "::error::no Flatpak bundle"; exit 1; }
+          cp "$fp" "$base.flatpak"
+
+          sha256sum "$base-windows-x64.zip" "$base-linux-x64.tar.gz" "$base.flatpak" | tee SHA256SUMS.txt
+          echo "The Windows zip:"; unzip -l "$base-windows-x64.zip"
+          echo "The Linux tarball:"; tar -tzvf "$base-linux-x64.tar.gz"
+
+      - name: Upload the downloads
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-downloads-${{ github.sha }}
+          path: |
+            ${{ env.BASE }}-windows-x64.zip
+            ${{ env.BASE }}-linux-x64.tar.gz
+            ${{ env.BASE }}.flatpak
+            SHA256SUMS.txt
+          if-no-files-found: error
+
+      - name: Draft the release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --draft --prerelease \
+            --title "Ring Racers Worldwide $GITHUB_REF_NAME" \
+            --notes-file release/RELEASE_NOTES.md \
+            "$BASE-windows-x64.zip" "$BASE-linux-x64.tar.gz" "$BASE.flatpak" SHA256SUMS.txt

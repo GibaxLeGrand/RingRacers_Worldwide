@@ -19,7 +19,7 @@ measured, and its side branches are kept, their commits unchanged, in a
 private archive rather than in the public repository (`ROADMAP.md`,
 *Branches*).
 
-## Current state (2026-10-13) -- read this first
+## Current state (2026-10-21) -- read this first
 
 This block is the only part of this file that is rewritten to stay current.
 Everything after it is a dated journal: when a later section overturns an
@@ -62,7 +62,11 @@ Outside that mode every piece is off by default except `rollback_cleancmds`
 (8.36), `rollback_histreal` (8.89) and B2's `rollback_rawsnap`, on by default
 since `c24d8d205` (8.125). Off by default and waiting: `rollback_keepearly`
 (8.99, 8.100), `rollback_smooth` (never measured), `rollback_rebuildbudget`
-(8.134), and, on `histauto-2.4`, not merged, `rollback_histauto` (9.24). WORLDWIDE mode also turns on `rollback_ontime` (8.133). The
+(8.134), and, on `histauto-2.4`, not merged, `rollback_histauto` (9.24,
+measured nobody driving in 9.26). WORLDWIDE mode also turns on
+`rollback_ontime` (8.133); on the server, `rollback_maketicone` (9.25), on
+by default, makes the tics a late server owes one at a time, and does
+nothing outside WORLDWIDE mode. The
 player's `localdelay` (9.3, 9.14), 0 by default, holds the speculation N
 tics short, on this machine alone. The harness's network noise,
 `rollback_jitter` and `rollback_loss` (9.16), is off at 0.
@@ -77,7 +81,11 @@ alpha's features (§9) and `localdelay` and `netsim` merged (9.20), CI run
 Flatpak and tarball, the tarball checked by the sha in its exe. Older builds
 are kept as `.bak_<sha>` (`aff655a` the one before), the Linux ones in
 `old/`. The dub packs (9.13, 9.19) are installed beside both. The dedicated
-server's dump of 8.121 was read in 8.128.
+server's dump of 8.121 was read in 8.128. Since then, the code's last build
+is CI run 39245907353 (`adb5ee762`: 9.22's resolutions, 9.23's profile
+sections and 9.25's late server merged), green; the measuring machine has
+run development builds of `histauto-2.4`, `specauth-2.4` and `maketic-2.4`
+for 9.25 and 9.26, under their own names.
 
 **Measured and holding.**
 
@@ -85,7 +93,8 @@ server's dump of 8.121 was read in 8.128.
 |---|---|
 | input lag, client's seat | gone -- "ça répond tout de suite", seven races, both cleancmds races included (8.36); none felt at any latency from 0 to 428 ms: "parfait" (8.107) |
 | the picture | the kart and the view drawn in even steps, as without prediction, since kept passes are interpolated (8.102, 8.103): "largement plus fluide". A few more long steps than without prediction: 430 to 760 a window, against about 263 (8.103, 8.107) |
-| latency, 0 to 428 ms | the depth follows the round trip up to 285 ms, and nothing is guessed: this machine's wrong inputs 0 in 11 of 12 race windows, 1 in the other. At 428 ms the history's cap of 12 cuts every pass, and the drawn world is about 5 tics behind the newest input (8.107). A cap of 18 reaches the round trip, but driven there its rebuilds run 16 tics and skip 62 to 109 frames a window, against 0 to 2 at 12: **the cap stays 12**, Gibax's choice (9.15) |
+| latency, 0 to 428 ms | the depth follows the round trip up to 285 ms, and nothing is guessed: this machine's wrong inputs 0 in 11 of 12 race windows, 1 in the other. At 428 ms the history's cap of 12 cuts every pass, and the drawn world is about 5 tics behind the newest input (8.107). A cap of 18 reaches the round trip, but driven there its rebuilds run 16 tics and skip 62 to 109 frames a window, against 0 to 2 at 12: **the cap stays 12**, Gibax's choice (9.15). Set from the round trip (`rollback_histauto`, not merged), nobody driving: 12 to 17 in 5 s at 428 ms, 0 rebuild, 0 skipped frame, a pass as at 12 (9.26) |
+| a late server | a server made late by its machine's load -- a video and music playing beside it -- made every client rebuild for its bots' inputs, about 650 wrong a window; with `rollback_maketicone`, 0 wrong bot inputs under 416 late wake-ups (9.25) |
 | sixteen karts, Phase B's gate | sixteen with a host on Opulence to the race's end, 5.9 to 7.0 ms a pass, at most 24.5% of a tic, one rebuild (8.136); fifteen on a dedicated server, 5.6 to 7.3 ms (8.133). On a Ryzen 5 5600X |
 | stalls, smaller machines | with `rollback_ontime`, seven stalls of 100 ms leave no chain of rebuilds (8.131); on a machine 4 ms a tic slower (`rollback_slowtic`), no cascade, 10.6 to 12.6 ms a pass, and a 20 ms rebuild budget takes the hitches over 50 ms from 45 to 15, for 187 moves of the drawn world against 8 (8.134) |
 | jitter and loss, 171 ms | 2% loss absorbed, no rebuild. 0 to 3 tics of jitter moved the drawn world on 153 and 241 passes of 750 -- through the cap of 12, which the round trip then passes by moments: 0 at 24, 23 and 34 at 18 (9.16, 9.15) |
@@ -105,7 +114,7 @@ server's dump of 8.121 was read in 8.128.
 | listen-server host's input delay | 170-200 ms, now **0** (8.27) |
 | restore, relink step | 4.7 ms before the index, **under 0.1 ms** after (8.34) |
 
-**Open, in ROADMAP's numbers** (2026-10-13) -- `ROADMAP.md`, *Next, in
+**Open, in ROADMAP's numbers** (2026-10-21) -- `ROADMAP.md`, *Next, in
 order*, has the order of work. Closed since the audit of 2026-09-30: 1, the
 join's `MT_PLAYER` alerts (8.118); **3, jitter and loss in the harness
 (9.16, merged in 9.20)**; 4, the release base and its compatibility cases
@@ -114,7 +123,9 @@ gaps -- negligible since `rollback_ontime`, closed without code (8.144);
 12, the join's chat line (8.136); 19, the sound after a join (8.141); **20
 to 23, the alpha's features, each tried by Gibax and merged**: dubs per
 pilot (9.5 to 9.8, 9.13, 9.18, 9.19), the gyroscope (9.10), photo mode
-(9.9), two players side by side and the 2P HUD (9.6, 9.11, 9.12, 9.17).
+(9.9), two players side by side and the 2P HUD (9.6, 9.11, 9.12, 9.17);
+24 and 25, the resolutions up to 4K and the profile's sections (9.22,
+9.23); **26, a late server's bots (9.25)**.
 
 **This file's §8 is closed** (2026-10-05), the netcode's journal to Phase B
 validated and the builds of the alpha's base; **§9** is the journal from
@@ -127,18 +138,24 @@ there, toward the public alpha.
   Deck (8.143); **14 to 18**, what announces the public alpha. Blocking.
 - **7. The history's cap** past about 340 ms of round trip: 12 stays (9.15);
   a cap set from the round trip, under the ring's 18, written as
-  `rollback_histauto` (9.24, `histauto-2.4`), not yet run.
+  `rollback_histauto` (9.24, `histauto-2.4`), measured nobody driving
+  (9.26): it climbs to 17 at 428 ms, nothing rebuilt. Left: driven at 428
+  ms, the one that decides; not merged.
 - **8. Breadth**: items used on purpose and more maps; Robotnik Coaster and
   Crimson Core driven over a LAN (8.141). Battle, Grand Prix and Encore out
   of the alpha unless run.
 - **10 and 11**: the small things seen, and the older ones left open
   (ROADMAP).
 - **13. Smaller machines**: C measured, off by default; eyes on real ones.
+- **26's rest**: a late server still makes this machine's own input differ
+  in its `latency` and `received` fields, 14 to 26 rebuilds a window --
+  whether the simulation reads them (9.25).
 
 **Waiting on Gibax's eyes or ears**, merged but not yet tried: the feel of
 `localdelay` (9.20); Jet, Surge, Arle and Ragna in Japanese (9.19); the
 dubs per pilot online, which needs the same build and packs on both
-machines (9.8); the gyroscope per profile and the stick first (9.10);
+machines (9.8) -- read in the code and planned for 2026-10-22, two pilots
+on two machines with two dubs (9.27); the gyroscope per profile and the stick first (9.10);
 Sonic's stray pixel removed (9.1); side by side, the song credit at the top
 (9.6), OpenGL, the tally and Battle (9.6). Big, Bark, Bean, Tikal, Whisper,
 Maria and Noel have no Japanese lines yet (9.19); the goal is every base
@@ -205,6 +222,7 @@ launch without Gibax's explicit go-ahead, each time.**
 | 9.16 | "not explained yet" is explained in the same section: the cap, not the jitter, moved the picture |
 | 9.18 | Fang "not heard yet": heard in 9.19 |
 | 9.20 | `localdelay` "not in a menu" is wrong: it is, as 9.3 said (9.21) |
+| 9.24 | its prediction measured in 9.26, nobody driving: points 1 and 4 held, 3 half held, 2 left. Of its two leads for 9.15's bots, (a), a late server making its tics at once, is the one 9.25 saw on a loaded machine and fixed; 9.15's own races not run again |
 
 ## 0. The rename, and what it actually commits to
 
@@ -9654,6 +9672,9 @@ après").
      1.5 ms on Skyscraper Leaps, 9.15).
   If 2 never settles -- the cap swinging a tic at every hold -- the
   brake's threshold or its holds are wrong, not the rule.
+  ⚠ Measured in 9.26, nobody driving, on a quiet machine: points 1 and 4
+  held, 3 half held; 2 left. The first races of 9.25, on a loaded
+  machine, do not count.
 - **9.15's bots, read, not measured**: 706 and 827 rebuilds for another
   kart's input a race at 18, 4 at 12. The keep decision checks the tics in
   order and stops at the first wrong one, and a bot's input is built from
@@ -9790,3 +9811,90 @@ moved); Gibax: "tu as besoin de moi ou non ? si non, tu peux lancer".
 - **Point 2**, driven at 428 ms, the one that decides (9.15: 18 stuttered
   where 12 did not), is left for Gibax: whether the brake settles the cap
   at 15 or 16 or swings it, and how it feels.
+
+### 9.27 Two pilots, two dubs, online: read in the code, the check planned
+
+Gibax, 2026-10-21: "j'aimerais vérifier si demain, deux joueurs worldwide,
+avec des dubs différents, fonctionnent ensemble [...] l'objectif est que
+OUI, les dubs n'influencent pas la course, c'est cosmétique". 9.8 left it
+untried: online needs the same build and the packs on both machines. No run
+here. The docs brought up to date first, from 9.25 and 9.26: ROADMAP item
+7, *Branches*, the order of work, *Where this starts from*, and the
+*Current state* block.
+
+**Read in the code** (`worldwide-2.4` at `58d9eb8c9`), everywhere a dub
+could reach the race:
+
+- **A sound's number, nothing else.** Every voice line goes through
+  `K_DubPilotSound`, which returns a sound and touches nothing: in
+  `S_StartSound` (a skin's sound redirected), `K_PlayGenericCombatSound`
+  (pain, hit-em), the tally, the podium, Lua's `K_PlayLossSound`. What the
+  game decides around a line comes before it and is the same for every
+  dub: `K_PlayPainSound` rolls `P_RandomKey(PR_VOICES, 2)` whatever is
+  heard, and the voice timers (`K_RegularVoiceTimers`) are the player's,
+  set whether a line plays or not. A sound is never the simulation's: the
+  dedicated server, which hears nothing, runs the same game.
+- **The net command.** `Got_PilotDub` writes a character's name and a
+  dub's into `g_heard[]`, by player slot -- `k_dubs.c`'s own table, outside
+  the game state: never in a snapshot, never in a gamestate sent at a
+  join. `K_DubNetUpdate` sends `XD_PILOTDUB` from the main loop, after
+  `TryRunTics`, never in a tic: when a pilot's character or choice
+  changes, and again for every pilot when a slot fills or empties. A slot
+  changes only through a net command or a level's load
+  (`K_UpdateMatchRaceBots`, `p_setup.cpp`), which only the authoritative
+  loop runs, so a speculated tic cannot make it send, nor a rebuild make
+  it send again. Its one cost: a tic carrying a netxcmd is never kept
+  (`KEEP_TEXTCMD`, "a netxcmd" in `rollback_keepspec`'s report), so each
+  one rebuilds every predicting client once -- at a join or a character
+  change, never in the middle of a race.
+- **The packs.** A file of DUBDEFs and sounds is loaded on its machine
+  alone, outside the server's file list (`W_VerifyNMUSlumps`), as a stock
+  music pack is. Its lines take skin sound slots (`S_AddSoundFx(..., true)`):
+  12288 of them, 1024 characters of 12 lines; the packs of 9.13 and 9.19
+  take about 360. Two machines with other packs number their sounds
+  otherwise; nothing of the game sends a sound's number.
+- **What the listener lacks**: a dub this machine does not have, or a line
+  it lacks, is the character's own. A pilot with no choice for a character
+  -- no `pilotdubs` entry -- is heard in the *listener's* Voice Language,
+  not as Default: for the check, each pilot chooses at character select,
+  Default included.
+- `rollback_keepspec`, `rollback_drift` and `dublist` with no argument
+  only print their report (`COM_Argc() > 1` sets and resets): typing them
+  at a race's end changes nothing.
+
+**The check** (2026-10-22; every race asked for first):
+
+- **Builds**: the release build of CI run 39245907353 (`adb5ee762`, green)
+  on both machines -- the exe on Windows, the Flatpak or the tarball on
+  Linux, its sha read in the log; `WORLDWIDE_PROTOCOL` 2 on both, or the
+  join refuses with its message. The packs in `dubs/` on both.
+- **The race**: a WORLDWIDE server on the LAN (a host, or `lan_server.cfg`
+  dedicated); pilot A on Sonic in Japanese, pilot B on Sonic in Default,
+  each chosen at character select; a few bots; a race with hits, items and
+  a finish, for the pain, hit-em, attack and win or loss lines.
+- **At the race's end**, in each machine's console: `dublist`,
+  `rollback_keepspec`, `rollback_drift`; then each `latest-log.txt` kept.
+- **The control**, the same session: the same race, both pilots in
+  Default. A variant if a pack is missing on one side: B without the
+  Japanese pack, A in Japanese.
+
+**Prediction**, written before any run:
+
+1. Each machine hears its own pilot's kart in its choice and the other's
+   in the other's: on A, B's Sonic in the game's voice; on B, A's Sonic in
+   Japanese. `dublist` on A says it heard `sonic=Default` from B, on B
+   `sonic=Japanese` from A. In the variant, B hears A's Sonic in the
+   game's voice, and nothing else changes.
+2. The race is a race with one dub: no kick, no `Got unknown net command`,
+   no full-state resend (`rollback_keepspec`'s "a gamestate was loaded":
+   none after the join); on a predicting client, `rollback_drift` at 0.000
+   with no `STATE` or `SPIKE` line, and `rollback_keepspec`'s rebuilds for
+   "a netxcmd" a handful, at the join and the level's start -- the dubs'
+   and the game's own -- none during the race.
+3. The control rebuilds as often, reason by reason, within a race's noise:
+   `XD_PILOTDUB` goes out with "Default" as with "Japanese", as many
+   times.
+
+If 2 fails and the control holds, the dubs reach the race: a bug. If both
+fail alike, it is not the dubs -- a second human's own rebuilds are 2(b)'s
+subject (ROADMAP item 2).

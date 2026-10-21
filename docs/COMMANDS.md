@@ -579,7 +579,9 @@ after a gap in the passes (a map change, a pause). Never under
 - No argument: the cap now and its bounds, the climbs and the brakes, the
   frames skipped in the seconds it counted, when it climbs again, and the
   passes at each cap. `rollback_history`'s report says the cap in force.
-- Not yet run. Scenarios `wwauto` and `wwautojitter`.
+- Scenarios `wwauto` and `wwautojitter`. Measured nobody driving (9.26):
+  at 428 ms it climbs from 12 to 17 in 5 s and stays, nothing rebuilt;
+  under jitter at 171 ms, to 18. Driven, not yet.
 
 ### `rollback_histreal [0|1]`
 **Client side, with `rollback_history`** (`WORLDWIDE.md` 8.89). On by default:

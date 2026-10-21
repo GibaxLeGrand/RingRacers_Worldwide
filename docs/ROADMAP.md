@@ -10,7 +10,7 @@ from* and *Next, in order* were rewritten twice on 2026-09-30, the second
 time from an audit of what an alpha still needs, and again on 2026-10-02
 from a second audit; their item numbers are kept, since `WORLDWIDE.md` and
 the harness cite them. Both brought up to date on 2026-10-13
-(`WORLDWIDE.md` 9.21).
+(`WORLDWIDE.md` 9.21) and on 2026-10-21 (9.27).
 
 The old phase numbering (1 to 7, in `ROLLBACK.md`) was retired on 2026-09-10:
 it described an architecture where the authoritative clock ran ahead.
@@ -21,7 +21,7 @@ docs entry point and `ROLLBACK.md` live in the private notes only.
 
 ## Where this starts from
 
-State on 2026-10-13.
+State on 2026-10-21.
 
 - **Solved, from the client's seat: input lag.** "Ça répond tout de suite"
   (8.36), and none felt at any latency from 0 to 428 ms in the sweep of
@@ -76,9 +76,16 @@ State on 2026-10-13.
   this machine's side: dubs per pilot with the Japanese packs, steering by
   the gyroscope, photo mode, two players side by side with their HUD;
   WORLDWIDE mode on by default; `localdelay`.
-- **Open:** a second human and a real network; smaller machines, real ones;
-  the alpha kit, and what announces the public alpha (items 14 to 18).
-  Ordered below.
+- **A late server** (9.25): a server woken up late by its machine's load
+  -- a video and music playing beside it -- made every client rebuild for
+  its bots' inputs; it now makes the tics it owes one at a time
+  (`rollback_maketicone`, on in WORLDWIDE mode): 0 wrong bot inputs.
+- **The history's cap from the round trip** (`rollback_histauto`, not
+  merged), nobody driving (9.26): at 428 ms it climbs from 12 to 17 and
+  stays there, nothing rebuilt. Driven, not yet.
+- **Open:** a second human and a real network; the dubs per pilot online
+  (9.27); smaller machines, real ones; the alpha kit, and what announces
+  the public alpha (items 14 to 18). Ordered below.
 
 ## Ground rules for every step
 
@@ -93,9 +100,10 @@ State on 2026-10-13.
 
 ## Next, in order
 
-State on 2026-10-02, from a second audit, brought up to date on 2026-10-13.
-The numbers are the 2026-09-30 audit's, kept because `WORLDWIDE.md` and the
-harness cite them; items 12 and 13 were added, then 19 to 23. **Every launch
+State on 2026-10-02, from a second audit, brought up to date on 2026-10-13
+and 2026-10-21. The numbers are the 2026-09-30 audit's, kept because
+`WORLDWIDE.md` and the harness cite them; items 12 and 13 were added, then
+19 to 26. **Every launch
 is asked for first.**
 
 **Blocking an alpha:**
@@ -186,9 +194,16 @@ is asked for first.**
    **Written** (9.24): `rollback_histauto`, on `histauto-2.4`
    (`c548887e6`) -- the cap climbs a tic a second from 12 while the
    inputs in flight ask for more, up to 18, and a second with skipped
-   frames takes it a tic down and holds it there; off by default, not
-   yet run. Scenarios `wwauto` and `wwautojitter`; the prediction is
-   in 9.24.
+   frames takes it a tic down and holds it there; off by default.
+   Scenarios `wwauto` and `wwautojitter`; the prediction is in 9.24.
+   **Measured, nobody driving** (9.26), on a quiet machine -- 9.25's
+   first races, on a loaded one, do not count: at 428 ms the cap climbs
+   from 12 to 17 in 5 s and stays, 0 rebuild, 0 skipped frame, a pass
+   1.4 to 1.5 ms as at 12; under jitter at 171 ms it climbs to 18, and
+   the drawn world moves 2.4 to 2.9 times less often than at 12. **Left:
+   driven at 428 ms by Gibax** (9.24's point 2), the one that decides,
+   since 18 stuttered there driven (9.15). Merging it, and WORLDWIDE
+   mode turning it on, are two decisions after that.
 8. **Breadth, as far as the alpha's scope** (Phase C): items used on purpose
    (the roulette under speculation), and two or three more maps driven --
    water, polyobjects, executors. Battle, Grand Prix and Encore stay out of
@@ -286,7 +301,9 @@ game's rules do not change.
     kart speaks with it -- offline, in splitscreen, and online in
     WORLDWIDE mode only (`XD_PILOTDUB` -- a new net command, so the
     builds before it can no longer join: an internal compatibility
-    counter, not a version of the fork); online not yet tried. **The
+    counter, not a version of the fork); online not yet tried -- read in
+    the code (9.27): nothing of it reaches the simulation; the check, two
+    pilots on two machines with two dubs, planned for 2026-10-22. **The
     packs** (9.13): the base characters' and the addons' apart, built by
     the notes' `dubs/build_packs.sh` -- Japanese for 14 base and 10 addon
     characters, and two more dubs for Sonic; heard by Gibax. **Lines
@@ -352,11 +369,13 @@ game's rules do not change.
     server, 14 to 26 rebuilds a window -- whether the simulation reads
     them.
 
-**Order of work** (2026-10-13): 19 is done (8.141); 4's cases, 6, 12 and
+**Order of work** (2026-10-21): 19 is done (8.141); 4's cases, 6, 12 and
 13's measurement are done (8.134 to 8.136); 3 is done (9.16); 20 to 25 are
-merged (§9). Next, 2(b) to 2(d) with a second person, a LAN first (8.135's
-loopback note); 7, a cap from the round trip (written, 9.24); 5, with 14 and 15 (the Steam
-Deck run is done, 8.143); 16, 17 and 18; then the announcement. 5 and 7 can
+merged (§9); 26 is fixed and merged (9.25). Next, the dubs per pilot online
+(9.27, two machines; with a second person it is also 2(b)'s first race);
+7 driven at 428 ms (measured nobody driving, 9.26); 2(b) to 2(d) with a
+second person, a LAN first (8.135's loopback note); 5, with 14 and 15 (the
+Steam Deck run is done, 8.143); 16, 17 and 18; then the announcement. 5 can
 be written without a second person. The teaser can come as soon as the
 Discord exists, for it to point somewhere.
 
@@ -379,8 +398,10 @@ likewise (`afaf3ddf9`). Left unmerged on purpose: `histcap-2.4`,
 `histcap18-2.4` and `histcapfix-2.4` (the cap stays 12; their fix is merged
 as `specauth-2.4`) and `overlaydiag-2.4`, a diagnostic. `res4k-2.4` (item
 24) tried and merged (`22b0559d5`), `profilesections-2.4` (item 25)
-likewise (`739b4c80e`). `histauto-2.4` (item 7, 9.24) written, not
-yet run. Since `68f5eb582`,
+likewise (`739b4c80e`), `maketic-2.4` (item 26, 9.25) likewise
+(`abc693bb1`). `histauto-2.4` (item 7, 9.24) written and measured nobody
+driving (9.26), not merged; it branches from `064043810`, before
+`maketic`. Since `68f5eb582`,
 `worldwide-2.4` starts in a stock 2.4 folder, which is 32-bit, without
 `-noexchndl` (8.117). **Proposed scope** (the audit's, not decided):
 Race only, Windows, eight players at most unless 6 says sixteen, and the

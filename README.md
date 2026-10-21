@@ -7,10 +7,11 @@ An unofficial fork, maintained by Gibax.
   <img src="docs/RRW_logo.png" width="238" alt="Ring Racers Worldwide logo">
 </p>
 
-> **Experimental: there is no release yet.** The prediction runs only on a
-> server that hosts in WORLDWIDE mode, most measurements so far come from one
-> driver on one machine, and what is known to be missing is listed under
-> [Where it stands](#where-it-stands).
+> **Alpha: [v0.1.0-alpha](https://github.com/GibaxLeGrand/RingRacers_Worldwide/releases)
+> is the first public test build.** The prediction runs only on servers that
+> host in WORLDWIDE mode, and it has not yet been raced by two people on two
+> machines over the Internet: that is what this alpha is for. What is known
+> to be missing is under [Known issues](#known-issues-in-this-alpha).
 >
 > **This project is AI-assisted.** How, and why, is explained under
 > [About AI](#about-ai).
@@ -27,15 +28,263 @@ and hides the round trip instead: your kart answers your input on the next
 tic, the world you see is a prediction a few tics ahead of what the server has
 confirmed, and the server's word corrects it.
 
-It is **client-side prediction with server reconciliation**, not GGPO-style
-peer-to-peer rollback: the game keeps its authoritative server and its
-consistency check.
-
 The goal is a community one: letting people race on servers far from them --
 a European on an American server, for a start -- in a game as demanding as
 Ring Racers.
 
+## Download
+
+**[v0.1.0-alpha](https://github.com/GibaxLeGrand/RingRacers_Worldwide/releases)**,
+on this repository's Releases page.
+
+You need **Ring Racers 2.4** first. Ring Racers Worldwide brings its own
+executable and none of the game's data: get the game from
+[kartkrew.org](https://www.kartkrew.org), or from Flathub
+(`org.kartkrew.RingRacers`) for the Flatpak.
+
+| Download | For |
+|---|---|
+| `RingRacersWorldwide-v0.1.0-alpha-windows-x64.zip` | Windows, 64-bit |
+| `RingRacersWorldwide-v0.1.0-alpha-linux-x64.tar.gz` | Linux x86_64, glibc 2.35 or newer, the system's SDL2 |
+| `RingRacersWorldwide-v0.1.0-alpha.flatpak` | Linux and the Steam Deck, beside the official Ring Racers Flatpak |
+
+Each comes with a `README.txt` -- the same as
+[release/README.txt](release/README.txt) -- that installs it step by step.
+In short:
+
+- **Windows**: unzip into your Ring Racers 2.4 folder, next to
+  `ringracers.exe`; move `worldwide.pk3` into its `data` folder; start
+  `ringracers_worldwide.exe`. The stock game stays as it was, and both use
+  the same profiles, progress and settings.
+- **Linux, the tarball**: unpack it into a folder that holds the Ring Racers
+  2.4 data and run `./ringracers_worldwide` from there.
+- **Flatpak and Steam Deck**: install the official Ring Racers from Flathub,
+  then this one (`flatpak install --user RingRacersWorldwide-v0.1.0-alpha.flatpak`).
+  On a Steam Deck, do it in desktop mode, add *Ring Racers Worldwide* to
+  Steam as a non-Steam game, and play it in game mode.
+
+## Playing online
+
+- **Joining**: *Play > Online > Browse*, or *Direct Join* with the server's
+  address. On a WORLDWIDE server, the prediction turns itself on: your kart
+  answers at once, whatever your ping. On a stock 2.4 server, you play the
+  stock netcode, exactly as a stock 2.4 player.
+- **Hosting**: *Play > Online > Host Game*. WORLDWIDE mode is on by default,
+  and the host screen says so (`WORLDWIDE: On`). Only Ring Racers Worldwide
+  players of the same version can join it; a stock 2.4 player is refused
+  with a message saying why. For players outside your network, forward UDP
+  port 5029 to your machine.
+- **On the public server list**: turn on *Public Server* on the host screen.
+  The game first shows Kart Krew's *Server List Rules*: it is their list,
+  and their rules apply to this fork's servers too.
+- **Hosting for stock 2.4 players**: turn off *Options > Server Options >
+  Advanced... > Network Connection > WORLDWIDE Mode*, or start the game
+  with `+worldwide Off`, **before** anybody joins: you then host as a stock
+  2.4 would. A config saved by an earlier build keeps the Off it saved: turn
+  the mode on once in that menu.
+- **A dedicated server**: `ringracers_worldwide -dedicated +worldwide On`.
+- **Versions**: a WORLDWIDE build meets the same WORLDWIDE version only; an
+  older or newer one is told which side to update.
+
+## Known issues in this alpha
+
+- **Two people, two machines, the Internet: not raced yet.** So far, one
+  driver with bots, on simulated latency, jitter and packet loss, and races
+  over a LAN.
+- **Other people are guessed** until their real input arrives -- their last
+  input repeated -- so their karts can jump a little when it does.
+- **Very long round trips**, above about 340 ms: the world you see trails
+  your newest input by a few tics.
+- **Slower machines**: when a guess was wrong, the game runs several tics
+  again at once, which can show as a short hitch.
+- **Race mode only** has been played in WORLDWIDE mode: Battle, Grand Prix
+  and Encore are untested.
+- **No replay** is recorded while you play with prediction.
+- **Crashes write no `.rpt` report** on Windows: the build is 64-bit and
+  the 2.4 folder's crash handler 32-bit. Send `latest-log.txt` instead.
+- **Character dubs online** are new: not yet tried between two machines.
+
+The full list is in [release/README.txt](release/README.txt).
+
+## Reporting a problem
+
+On the [Ring Racers Worldwide Discord](TODO-DISCORD-LINK), or as an
+[issue](https://github.com/GibaxLeGrand/RingRacers_Worldwide/issues) on this
+repository. Say what happened, on which map, with how many players, on a
+WORLDWIDE or a stock server, and on which system; and send the
+`latest-log.txt` of that session -- the one written by the game you were
+playing when it happened, before you start it again:
+
+- **Windows**: in your Ring Racers folder.
+- **Linux, the tarball**: `~/.ringracers/latest-log.txt`.
+- **Flatpak**:
+  `~/.var/app/io.github.ringracers_worldwide.RingRacersWorldwide/.ringracers/latest-log.txt`.
+
+Earlier sessions' logs are in the `logs` folder next to it. Please never
+report this fork's bugs to Kart Krew.
+
+## What this fork adds
+
+| Feature | Console switch | State |
+|---|---|---|
+| WORLDWIDE mode: one server switch, clients follow, stock clients refused | `worldwide` (server; also in the menus) | measured, checked against stock 2.4 |
+| Two-clock prediction, your own input applied at once | `rollback_twoclock` | measured, on in WORLDWIDE mode |
+| Speculation that never writes over tics already received | `rollback_cleancmds` | measured, on by default |
+| Replaying your inputs still in flight | `rollback_history`, `rollback_histreal` | measured, on in WORLDWIDE mode |
+| Keeping the speculation when the server confirms it | `rollback_keepspec` | measured, on in WORLDWIDE mode |
+| Light state-correction channel in place of full resends | `rollback_correct` (server) | measured, on in WORLDWIDE mode |
+| Raw snapshots of the level's object pools | `rollback_rawsnap` | measured, on by default |
+| No chain of rebuilds after a stall of the client | `rollback_ontime` | measured, on in WORLDWIDE mode |
+| A late server makes the tics it owes one at a time, so its bots never make clients rebuild | `rollback_maketicone` (server) | measured, on in WORLDWIDE mode |
+| Smooth drawing between kept passes | -- | measured |
+| Each sound heard once, and heard after a join | `rollback_soundreset` | heard, on by default |
+| No fixed input delay for the host or clients while predicting | -- | measured |
+| A steadier picture for a later one: your own input held back a few tics, on your machine only | `localdelay` (*Profiles > Accessibility*) | measured, 0 by default, its feel not yet tried |
+| A cap on a rebuild's cost, for smaller machines | `rollback_rebuildbudget` | measured, off by default |
+| Restore fixes: item roulette, polyobjects, dynamic slopes, ACS references, kart reference counts, and more | -- | measured |
+| Diagnostics: snapshot and leak soaks, drift and blame logs, cost per pass, network jitter and loss, unattended test races | `rollback_test`, `rollback_soak`, `rollback_drift`, `rollback_jitter`, ... | in use |
+| Not netcode: typing with the system's keyboard layout (AZERTY and others) | `textinput` | checked |
+| Not netcode: WORLDWIDE's title screen, window title and icon | -- | in use |
+| Not netcode: character dubs -- each pilot's voice set per character, "Japanese" say; online in WORLDWIDE mode only | `pilotdubs`, `voicelanguage`, `dublist` | played offline and in splitscreen |
+| Not netcode: two-player splitscreen side by side | `split2p` (*Options > HUD*) | played |
+| Not netcode: photo mode -- the game held, the HUD hidden, a free camera | the pause menu | played |
+| Not netcode: steering by tilting a controller with motion sensors, each profile's | `profilegyro` (*Profiles > Accessibility*) | played |
+| Not netcode: resolutions up to 4K, and your desktop's own | *Options > Video* | played |
+| Not netcode: *Profiles > Accessibility* one section at a time | -- | played |
+
+What the *Not netcode* features do, and how to set them, is under
+[Beyond the netcode](#beyond-the-netcode). Every switch, with what it does,
+is in [docs/COMMANDS.md](docs/COMMANDS.md). The order of the work left is in
+[docs/ROADMAP.md](docs/ROADMAP.md).
+
+## Beyond the netcode
+
+Features of the `worldwide-2.4` builds that have nothing to do with the
+netcode. Each is a setting saved in the game's config.
+
+### Character dubs
+
+A character can have more than one voice -- Sonic in Japanese, say -- and
+each pilot chooses theirs.
+
+- **Choosing.** At character select, a character that has dubs gets one more
+  step before the colours: *Default*, the game's voice, then each dub
+  loaded, each heard as it comes up. The choice is kept, for that character,
+  with the profile you race with (`pilotdubs`).
+- **Everyone else.** *Options > Sound > Voice Language* (`voicelanguage`,
+  `Default` by default) is the voice heard for bots, replays and pilots who
+  chose none.
+- **Checking.** The console command `dublist` lists the dubs loaded, your
+  choices, and what the other pilots' machines said.
+
+**Installing a pack.** Put it in the `dubs` folder, next to `addons`: the
+game's folder on Windows, `~/.ringracers/dubs` with the Linux tarball,
+`~/.var/app/io.github.ringracers_worldwide.RingRacersWorldwide/.ringracers/dubs`
+with the Flatpak -- the game makes the folder at its first start. The
+alpha's downloads carry no pack. The packs
+there load at start-up, on this machine alone: a dub pack never enters a
+server's file list, is never sent to anyone, and does not make the game
+count as modified, so you can join any server with your dubs loaded, a stock
+one included. A pack holding anything but sounds and `DUBDEF` lumps is left
+out, with a warning in the console.
+
+**Online.** In WORLDWIDE mode, your choice -- the character's and the dub's
+names, never the sounds -- reaches the other players: they hear your kart in
+your dub if they have the same pack, and in the character's own voice if they
+don't. On a stock server nothing is sent: your kart speaks with your dub, the
+others with your *Voice Language*. A voice is not part of the game's state,
+so different dubs cannot desync anyone. Not yet tried online.
+
+**Making a pack.** A WAD or PK3 of sounds, with one `DUBDEF` lump per
+character and dub, written as an S_SKIN's sound lines:
+
+    skin = sonic
+    name = Japanese
+    DSKWIN = DSSNJWIN
+    DSKLOSE = DSSNJLOS
+
+- The twelve voice lines are `DSKWIN`, `DSKLOSE`, `DSKHURT1`, `DSKHURT2`,
+  `DSKATTK1`, `DSKATTK2`, `DSKBOST1`, `DSKBOST2`, `DSKSLOW`, `DSKHITEM`,
+  `DSKGLOAT` and `DSKTALK`. A line the dub leaves out stays the character's
+  own.
+- A sound lump's name is `DS` and six characters at most, as for any sound.
+- A dub's name is a single word, without spaces.
+- Up to 128 dubs, under 32 different names.
+
+**Dubs for addon characters.** A `DUBDEF` can name a character that is not
+loaded yet: the dub waits in memory, under the character's name, and applies
+as soon as the character is loaded -- by `addfile`, or downloaded from a
+server -- its step at character select included. Two things to get right:
+
+- `skin =` is the addon's internal name, the `name` of its S_SKIN, not the
+  one shown in the menus (case does not matter). A dub whose name matches no
+  character stays unused; `dublist` still shows it.
+- Give the dub's sound lumps names of their own: the game plays the most
+  recently loaded lump of a name, so an addon loaded after the pack with a
+  lump of the same name would be heard instead.
+
+Read in the code; not yet tried with an addon character.
+
+### Two players side by side
+
+*Options > HUD > 2P Splitscreen* (`split2p`): `Horizontal`, the game's one
+view above the other, or `Vertical`, side by side. Side by side, each view
+takes the 3P/4P layout of the HUD, with the item box, the ring counter and
+the position at their 2P size in its corners. Not looked at yet: OpenGL,
+Battle, the end-of-race tally.
+
+### Photo mode
+
+*PHOTO MODE*, in the pause menu, holds the game, hides the HUD and lets the
+camera go free; *LEAVE PHOTO MODE*, in the same menu, puts everything back.
+Offline and in replays only: nothing can hold a netgame.
+
+### Gyro steering
+
+For a controller with motion sensors: tilt it like a wheel to steer. It is
+each profile's own, under *Options > Profile Setup*, the profile,
+*Accessibility*:
+
+- *Gyro Steering*: `Off`, `On` or `Inverted`.
+- *Gyro Range*: how far to tilt for a full turn, 30 degrees by default.
+
+The stick and the d-pad come first: tilting steers only while they are left
+alone. The log says, for each controller opened, whether the game sees an
+accelerometer and a gyroscope; one that Steam Input shows as a plain
+controller has none.
+
+### Your keyboard layout
+
+The console, the chat and the menus' text boxes type with your system's
+keyboard layout -- AZERTY and the others -- as SRB2 2.2.15 does; the game's
+controls do not change. *Options > HUD > Online Chat Options... > Use System
+Keyboard Layout* (`textinput`), on by default. ASCII only: the game's fonts
+stop there.
+
+### WORLDWIDE's title screen
+
+An optional `worldwide.pk3` gives the title screen WORLDWIDE's Earth and
+ring, and removes a stray pixel above Sonic's head in 19 of his frames; the
+game runs the same without it. Every release download carries it (the
+Flatpak inside); for a development build on Windows or the Linux tarball,
+put
+[assets/worldwide.pk3](https://github.com/GibaxLeGrand/RingRacers_Worldwide/blob/worldwide-2.4/assets/worldwide.pk3)
+from the `worldwide-2.4` branch in the game's `data` folder. The window's
+title and icon are WORLDWIDE's in every build.
+
+### Resolutions up to 4K
+
+The video modes' list in *Options > Video* goes up to 3840x2160 (with
+2560x1440, 2560x1600 and 3200x1800), and holds your desktop's own size when
+it is none of the list -- an ultrawide, a laptop's 2880x1800. In Legacy GL,
+fullscreen draws at the desktop's size, as upstream's does: 4K there wants
+a 4K desktop. Not tried yet: the software renderer at 4K, a 21:9 screen.
+
 ## How it works
+
+It is **client-side prediction with server reconciliation**, not GGPO-style
+peer-to-peer rollback: the game keeps its authoritative server and its
+consistency check.
 
 - **Two clocks.** The confirmed world (`gametic`) runs only the tics the
   server has confirmed, in the stock lockstep, untouched. On top of it, a
@@ -56,9 +305,9 @@ Ring Racers.
   times a second.
 - **The server decides.** A server hosting with `worldwide On`, the default,
   advertises the mode, runs the correction channel, and accepts WORLDWIDE
-  clients only. A
-  WORLDWIDE client turns its prediction on when it joins such a server, and
-  plays the stock netcode, as a stock client, everywhere else.
+  clients only. A WORLDWIDE client turns its prediction on when it joins
+  such a server, and plays the stock netcode, as a stock client, everywhere
+  else.
 
 ## Where it stands
 
@@ -74,64 +323,37 @@ latency, one human driver and bots, unless said otherwise:
 - **It fits a full grid**: sixteen karts on Opulence, a heavy map, to the end
   of the race, at 6 to 7 ms of prediction work per tic -- under a quarter of
   a tic.
+- **A noisy network**, simulated: 2% packet loss is absorbed; jitter of up
+  to three tics makes the picture move back now and then.
+- **A busy server**: a server woken up late by its own machine's load no
+  longer makes its clients correct themselves for its bots.
 - **It lives next to stock 2.4**: a stock client is refused by a WORLDWIDE
   server with a message saying why; a WORLDWIDE build joins stock servers and
   hosts stock clients as a stock 2.4 would.
-- **First race from a second machine**: a Steam Machine running the Flatpak
-  build joined a WORLDWIDE server over a LAN and raced to the finish.
+- **Races from other machines**: a Steam Machine and a Steam Deck running
+  the Flatpak joined a WORLDWIDE server over a LAN and raced to the finish.
 
 **Not done yet:** two people racing each other on separate machines; a real
-Internet connection, with jitter and packet loss (the bench only delays);
-round trips above about 340 ms; smaller machines; items used on purpose;
-most maps; Battle, Grand Prix and Encore.
+Internet connection; round trips above about 340 ms; smaller machines; most
+maps; Battle, Grand Prix and Encore.
 
 The measurement journal, with every figure and the prediction written before
 each run, is [docs/WORLDWIDE.md](docs/WORLDWIDE.md) -- its *Current state*
 block first.
 
-## What this fork adds
-
-| Feature | Console switch | State |
-|---|---|---|
-| WORLDWIDE mode: one server switch, clients follow, stock clients refused | `worldwide` (server; also in the menus) | measured, checked against stock 2.4 |
-| Two-clock prediction, your own input applied at once | `rollback_twoclock` | measured, on in WORLDWIDE mode |
-| Speculation that never writes over tics already received | `rollback_cleancmds` | measured, on by default |
-| Replaying your inputs still in flight | `rollback_history`, `rollback_histreal` | measured, on in WORLDWIDE mode |
-| Keeping the speculation when the server confirms it | `rollback_keepspec` | measured, on in WORLDWIDE mode |
-| Light state-correction channel in place of full resends | `rollback_correct` (server) | measured, on in WORLDWIDE mode |
-| Raw snapshots of the level's object pools | `rollback_rawsnap` | measured, on by default |
-| No chain of rebuilds after a stall of the client | `rollback_ontime` | measured, on in WORLDWIDE mode |
-| Smooth drawing between kept passes | -- | measured |
-| Each sound heard once, and heard after a join | `rollback_soundreset` | heard, on by default |
-| No fixed input delay for the host or clients while predicting | -- | measured |
-| A cap on a rebuild's cost, for smaller machines | `rollback_rebuildbudget` | measured, off by default |
-| Restore fixes: item roulette, polyobjects, dynamic slopes, ACS references, kart reference counts, and more | -- | measured |
-| Diagnostics: snapshot and leak soaks, drift and blame logs, cost per pass, unattended test races | `rollback_test`, `rollback_soak`, `rollback_drift`, ... | in use |
-| Not netcode: typing with the system's keyboard layout (AZERTY and others) | `textinput` | checked |
-| Not netcode: WORLDWIDE's title screen, window title and icon | -- | in use |
-| Not netcode: character dubs -- each pilot's voice set per character, "Japanese" say; online in WORLDWIDE mode only | `pilotdubs`, `voicelanguage`, `dublist` | played offline and in splitscreen, 2.4 builds |
-| Not netcode: two-player splitscreen side by side | `split2p` (*Options > HUD*) | played, 2.4 builds |
-| Not netcode: photo mode -- the game held, the HUD hidden, a free camera | the pause menu | played, 2.4 builds |
-| Not netcode: steering by tilting a controller with motion sensors, each profile's | `profilegyro` (*Profiles > Accessibility*) | played, 2.4 builds |
-
-What the *Not netcode* features do, and how to set them, is under
-[Beyond the netcode](#beyond-the-netcode). Every switch, with what it does,
-is in [docs/COMMANDS.md](docs/COMMANDS.md). The order of the work left is in
-[docs/ROADMAP.md](docs/ROADMAP.md).
-
 ## Where it's going
 
-1. **A second person**: two people on two machines, on a LAN, then over the
-   Internet, then one of them hosting.
-2. **A real network** in the test bench, with jitter and loss, and the
-   samples filed by sequence number if the current scheme slips under it.
+1. **The alpha's reports**: what testers run into, fixed in the order it
+   hurts.
+2. **A second person**: two people on two machines, on a LAN, then over the
+   Internet, then one of them hosting -- and how other people's karts are
+   drawn, decided from that.
 3. **Deep round trips**: a history long enough for the players of a truly
-   worldwide lobby.
-4. **Breadth**: items used on purpose, more maps of every kind.
-5. **A public alpha**: a download on a GitHub release (Windows, a Linux
-   tarball and a Flatpak), a short install guide for Windows, Linux and the
-   Steam Deck, a place to report and send logs, and a plain list of what is
-   known to be broken.
+   worldwide lobby, set from each player's own round trip.
+4. **Breadth**: items used on purpose, more maps of every kind, the other
+   modes.
+5. **Smaller machines**: laptops, the Steam Deck, and what a correction costs
+   them.
 
 ## About AI
 
@@ -234,16 +456,15 @@ written into the repository's agent instructions:
   forward. Many of the wrong predictions in it are the AI's.
 - **Commits written with the AI say so** in their trailer.
 
-## Trying it
+## Development builds
 
-There is no release yet. Every push is built by GitHub Actions (see
+Between releases, every push is built by GitHub Actions (see
 [.github/workflows/build.yml](.github/workflows/build.yml)), and the builds
 are the runs' artifacts: downloading one needs a GitHub account, and they
 expire after 90 days.
 
 The main branch, **`worldwide-2.4`**, is built on the Ring Racers 2.4
-release: its builds play with stock 2.4 servers and clients, and it is the
-base of the coming alpha.
+release: its builds play with stock 2.4 servers and clients.
 
 - `ringracers-win64-release-<sha>`: Windows. Put the executable in an
   existing Ring Racers 2.4 folder.
@@ -256,135 +477,6 @@ The `-release` builds carry real version numbers; the others are development
 builds, which can only meet the very same build. A feature in progress lives
 on a side branch named after it (`dubs-2.4`, `photo-2.4`...) until it is
 tried and merged.
-
-**To host in WORLDWIDE mode**, just host: it is on by default. **To host
-for stock 2.4 players**, turn off *Options > Server Options > Advanced... >
-Network Connection > WORLDWIDE Mode*, or start the game with
-`+worldwide Off`, **before** anybody joins. A config saved by an earlier
-build keeps the Off it saved: turn the mode on once in that menu. **To
-join**, just connect: a WORLDWIDE client switches its prediction on by
-itself. A WORLDWIDE build meets the same WORLDWIDE builds only: an older
-or newer one is told which side to update.
-
-## Beyond the netcode
-
-Features of the `worldwide-2.4` builds that have nothing to do with the
-netcode. Each is a setting saved in the game's config.
-
-### Character dubs
-
-A character can have more than one voice -- Sonic in Japanese, say -- and
-each pilot chooses theirs.
-
-- **Choosing.** At character select, a character that has dubs gets one more
-  step before the colours: *Default*, the game's voice, then each dub
-  loaded, each heard as it comes up. The choice is kept, for that character,
-  with the profile you race with (`pilotdubs`).
-- **Everyone else.** *Options > Sound > Voice Language* (`voicelanguage`,
-  `Default` by default) is the voice heard for bots, replays and pilots who
-  chose none.
-- **Checking.** The console command `dublist` lists the dubs loaded, your
-  choices, and what the other pilots' machines said.
-
-**Installing a pack.** Put it in the `dubs` folder, next to `addons`: the
-game's folder on Windows,
-`~/.var/app/io.github.ringracers_worldwide.RingRacersWorldwide/.ringracers/dubs`
-with the Flatpak -- the game makes the folder at its first start. The packs
-there load at start-up, on this machine alone: a dub pack never enters a
-server's file list, is never sent to anyone, and does not make the game
-count as modified, so you can join any server with your dubs loaded, a stock
-one included. A pack holding anything but sounds and `DUBDEF` lumps is left
-out, with a warning in the console.
-
-**Online.** In WORLDWIDE mode, your choice -- the character's and the dub's
-names, never the sounds -- reaches the other players: they hear your kart in
-your dub if they have the same pack, and in the character's own voice if they
-don't. On a stock server nothing is sent: your kart speaks with your dub, the
-others with your *Voice Language*. A voice is not part of the game's state,
-so different dubs cannot desync anyone. Not yet tried online.
-
-**Making a pack.** A WAD or PK3 of sounds, with one `DUBDEF` lump per
-character and dub, written as an S_SKIN's sound lines:
-
-    skin = sonic
-    name = Japanese
-    DSKWIN = DSSNJWIN
-    DSKLOSE = DSSNJLOS
-
-- The twelve voice lines are `DSKWIN`, `DSKLOSE`, `DSKHURT1`, `DSKHURT2`,
-  `DSKATTK1`, `DSKATTK2`, `DSKBOST1`, `DSKBOST2`, `DSKSLOW`, `DSKHITEM`,
-  `DSKGLOAT` and `DSKTALK`. A line the dub leaves out stays the character's
-  own.
-- A sound lump's name is `DS` and six characters at most, as for any sound.
-- A dub's name is a single word, without spaces.
-- Up to 128 dubs, under 32 different names.
-
-**Dubs for addon characters.** A `DUBDEF` can name a character that is not
-loaded yet: the dub waits in memory, under the character's name, and applies
-as soon as the character is loaded -- by `addfile`, or downloaded from a
-server -- its step at character select included. Two things to get right:
-
-- `skin =` is the addon's internal name, the `name` of its S_SKIN, not the
-  one shown in the menus (case does not matter). A dub whose name matches no
-  character stays unused; `dublist` still shows it.
-- Give the dub's sound lumps names of their own: the game plays the most
-  recently loaded lump of a name, so an addon loaded after the pack with a
-  lump of the same name would be heard instead.
-
-Read in the code; not yet tried with an addon character.
-
-### Two players side by side
-
-*Options > HUD > 2P Splitscreen* (`split2p`): `Horizontal`, the game's one
-view above the other, or `Vertical`, side by side. Side by side, each view
-takes the 3P/4P layout of the HUD, with the item box, the ring counter and
-the position at their 2P size in its corners. Not looked at yet: OpenGL,
-Battle, the end-of-race tally.
-
-### Photo mode
-
-*PHOTO MODE*, in the pause menu, holds the game, hides the HUD and lets the
-camera go free; *LEAVE PHOTO MODE*, in the same menu, puts everything back.
-Offline and in replays only: nothing can hold a netgame.
-
-### Gyro steering
-
-For a controller with motion sensors: tilt it like a wheel to steer. It is
-each profile's own, under *Options > Profile Setup*, the profile,
-*Accessibility*:
-
-- *Gyro Steering*: `Off`, `On` or `Inverted`.
-- *Gyro Range*: how far to tilt for a full turn, 30 degrees by default.
-
-The stick and the d-pad come first: tilting steers only while they are left
-alone. The log says, for each controller opened, whether the game sees an
-accelerometer and a gyroscope; one that Steam Input shows as a plain
-controller has none.
-
-### Your keyboard layout
-
-The console, the chat and the menus' text boxes type with your system's
-keyboard layout -- AZERTY and the others -- as SRB2 2.2.15 does; the game's
-controls do not change. *Options > HUD > Online Chat Options... > Use System
-Keyboard Layout* (`textinput`), on by default. ASCII only: the game's fonts
-stop there.
-
-### WORLDWIDE's title screen
-
-An optional `worldwide.pk3` gives the title screen WORLDWIDE's Earth and
-ring, and removes a stray pixel above Sonic's head in 19 of his frames; the
-game runs the same without it. The Flatpak carries it; for Windows and the
-Linux tarball, put
-[assets/worldwide.pk3](https://github.com/GibaxLeGrand/RingRacers_Worldwide/blob/worldwide-2.4/assets/worldwide.pk3)
-from the `worldwide-2.4` branch in the game's `data` folder. The window's
-title and icon are WORLDWIDE's in every build.
-
-## Reporting a problem
-
-Open an [issue](https://github.com/GibaxLeGrand/RingRacers_Worldwide/issues)
-on this repository: what happened, on which map, with how many players, and
-the `latest-log.txt` from the game folder. Please never report this fork's
-bugs to Kart Krew.
 
 ## Building from source
 

@@ -10,3 +10,11 @@
 !LICENSE-3RD-PARTY.txt
 !CMakeLists.txt
 !debian-template/*
+
+# WORLDWIDE: the dub packs the release carries, and their credits (assets/dubs).
+!dubs/
+!dubs/*.wad
+!dubs/*.pk3
+!dubs/*.WAD
+!dubs/*.PK3
+!dubs/CREDITS.txt

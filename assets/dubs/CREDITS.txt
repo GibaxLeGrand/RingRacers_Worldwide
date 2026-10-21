@@ -1,0 +1,38 @@
+RING RACERS WORLDWIDE -- THE DUB PACKS' CREDITS
+===============================================
+
+The dub packs in this folder give characters another set of voice lines,
+chosen by each pilot at character select. They hold only sounds and DUBDEF
+lumps, load on your machine alone, and change nothing in the race.
+
+The voices belong to their owners and are used here without intent to
+profit, as fan works. The lines were gathered and arranged by the people
+below; Ring Racers Worldwide only converted them into dubs (loudness
+evened, files renamed, DUBDEFs written).
+
+TODO-CREDIT: check every line below, name each author as they wish to be
+named, and say where their work can be found.
+
+JapDub_Worldwide.wad -- the game's own characters, in Japanese
+  - The Japanese dub pack for Ring Racers, KL_JapDub_v1_RR.wad, by
+    TODO-CREDIT (author).
+  - Fang: Kagura Mutsuki's voice (BlazBlue). Surge: Baiken's (Guilty Gear).
+    Jet: his own Japanese lines. Arle: her own Japanese lines. Gathered by
+    Gibax; TODO-CREDIT (the games and sources to name).
+
+JapDub_Addons_Worldwide.wad -- addon characters, in Japanese
+  - From KL_JapDub_v1_RR.wad, by TODO-CREDIT (author): Gamma, Miku, Omega,
+    SA2 Sonic, Super Sonic, Ulala, Vector, Vyse -- heard once each addon is
+    loaded.
+  - Ragna: his own Japanese lines (BlazBlue), gathered by Gibax.
+  - TODO-CREDIT: the other characters of this pack, and their sources.
+
+SegaSonic_Worldwide.wad -- Sonic, "SegaSonic"
+  - From KL_SegaSonic.pk3, by TODO-CREDIT (author).
+
+TODO-CREDIT: the two other packs (the dub for Sonic and Super Sonic from
+CKV_Super_Sonic_Japanese_Voice.pk3, an SRB2Kart addon by TODO-CREDIT), and
+their file names.
+
+Dr. Robotnik's Ring Racers is by Kart Krew Dev. Sonic the Hedgehog and its
+characters belong to SEGA. Neither is affiliated with these packs.

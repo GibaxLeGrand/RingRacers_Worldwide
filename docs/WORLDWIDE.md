@@ -135,7 +135,8 @@ there, toward the public alpha.
   (8.141); two people, then over the Internet, then one driving on the
   host, are left. Blocking.
 - **5. The alpha kit**, with Linux built (8.138) and the Flatpak on a Steam
-  Deck (8.143); **14 to 18**, what announces the public alpha. Blocking.
+  Deck (8.143), under way as `v0.1.0-alpha` on `alpha-2.4` (ROADMAP item
+  5); **14 to 18**, what announces the public alpha. Blocking.
 - **7. The history's cap** past about 340 ms of round trip: 12 stays (9.15);
   a cap set from the round trip, under the ring's 18, written as
   `rollback_histauto` (9.24, `histauto-2.4`), measured nobody driving

@@ -170,6 +170,18 @@ is asked for first.**
    check there, and a desktop distribution, were not reported. The files go out on a GitHub release of the public
    repository: a CI artifact needs a GitHub account and is gone after 90
    days.
+   **Started** (2026-10-21, on `alpha-2.4`, pushed, not merged), as
+   **`v0.1.0-alpha`**: the root README rewritten for players;
+   `release/README.txt` (shipped as `README-Worldwide.txt`) and
+   `release/RELEASE_NOTES.md`; the fork's version on a release build's
+   title screen and at the head of every log (`cee585f17`); the CI's
+   `package` job -- on a tag `v*`, the game's three downloads and a
+   **draft** pre-release, published by hand (a trial by hand, run
+   39568681350, green); the assets zip -- `worldwide.pk3`, the dub packs,
+   the Steam artwork -- made at the release by `release/make_assets.py`,
+   the packs never committed (Gibax). Left: the Discord's link (item 14),
+   the packs' credits, Kart Krew's server-list rules read in the game, the
+   label seen in the game; then the tag.
 
 **Strongly advised before announcing:**
 
@@ -375,8 +387,8 @@ merged (§9); 26 is fixed and merged (9.25). Next, the dubs per pilot online
 (9.27, two machines; with a second person it is also 2(b)'s first race);
 7 driven at 428 ms (measured nobody driving, 9.26); 2(b) to 2(d) with a
 second person, a LAN first (8.135's loopback note); 5, with 14 and 15 (the
-Steam Deck run is done, 8.143); 16, 17 and 18; then the announcement. 5 can
-be written without a second person. The teaser can come as soon as the
+Steam Deck run is done, 8.143); 16, 17 and 18; then the announcement. 5 is
+under way on `alpha-2.4` (item 5), without a second person. The teaser can come as soon as the
 Discord exists, for it to point somewhere.
 
 **Branches** (Gibax, 2026-10-06). **`worldwide-2.4` is the main branch**,
@@ -401,7 +413,8 @@ as `specauth-2.4`) and `overlaydiag-2.4`, a diagnostic. `res4k-2.4` (item
 likewise (`739b4c80e`), `maketic-2.4` (item 26, 9.25) likewise
 (`abc693bb1`). `histauto-2.4` (item 7, 9.24) written and measured nobody
 driving (9.26), not merged; it branches from `064043810`, before
-`maketic`. Since `68f5eb582`,
+`maketic`. `alpha-2.4` (item 5, from `52b913a8f`) carries the alpha kit,
+merged at the release. Since `68f5eb582`,
 `worldwide-2.4` starts in a stock 2.4 folder, which is 32-bit, without
 `-noexchndl` (8.117). **Proposed scope** (the audit's, not decided):
 Race only, Windows, eight players at most unless 6 says sixteen, and the

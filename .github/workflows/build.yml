@@ -399,13 +399,14 @@ jobs:
             build/bin/ringracers*.pdb
           if-no-files-found: warn
 
-  # The release's downloads, from the release builds above: release/README.txt
-  # says what each holds, and the Windows zip and the Linux tarball are laid
-  # out as the game's folder (data/worldwide.pk3, dubs/ and the packs of
-  # assets/dubs), so that their contents copy in without replacing anything of
-  # the game's -- hence README-Worldwide.txt and LICENSE-Worldwide.txt, beside
-  # 2.4's own README.txt and LICENSE.txt. The Flatpak carries the same inside
-  # (.github/flatpak/).
+  # The release's downloads, from the release builds above (release/README.txt
+  # says what each holds): the game alone, what this source builds -- the
+  # Windows exe, the Linux binary and its lib/, the Flatpak -- with
+  # README-Worldwide.txt and LICENSE-Worldwide.txt, named so beside 2.4's own
+  # README.txt and LICENSE.txt, which they must not replace. worldwide.pk3 and
+  # the dub packs go out apart, in the assets zip, made at the release by
+  # release/make_assets.py and added to the draft by hand; the Flatpak
+  # carries worldwide.pk3 itself (.github/flatpak/).
   #
   # On a tag v*: a draft pre-release of that name, release/RELEASE_NOTES.md
   # its text, published by hand once looked at -- never by this job. Run by
@@ -429,7 +430,7 @@ jobs:
         if: github.ref_type == 'tag'
         run: |
           set -eu
-          if grep -n 'TODO-' README.md release/README.txt release/RELEASE_NOTES.md assets/dubs/CREDITS.txt; then
+          if grep -n 'TODO-' README.md release/README.txt release/RELEASE_NOTES.md release/DUBS-CREDITS.txt; then
             echo "::error::a TODO- placeholder is left in the release's texts"
             exit 1
           fi
@@ -462,17 +463,7 @@ jobs:
           base="RingRacersWorldwide-$version"
           echo "BASE=$base" >> "$GITHUB_ENV"
 
-          packs=$(find assets/dubs -maxdepth 1 -type f \( -iname '*.wad' -o -iname '*.pk3' \) 2>/dev/null | sort)
-          if [ -z "$packs" ]; then
-            echo "::warning::assets/dubs holds no dub pack: the downloads carry none"
-          fi
-
-          # What both share, laid out as the game's folder.
-          kit() {
-            mkdir -p "$1/data" "$1/dubs"
-            cp assets/worldwide.pk3 "$1/data/"
-            for p in $packs; do cp "$p" "$1/dubs/"; done
-            if [ -f assets/dubs/CREDITS.txt ]; then cp assets/dubs/CREDITS.txt "$1/dubs/"; fi
+          texts() {
             cp release/README.txt "$1/README-Worldwide.txt"
             cp LICENSE "$1/LICENSE-Worldwide.txt"
           }
@@ -484,10 +475,8 @@ jobs:
           w=out/windows
           mkdir -p "$w"
           cp "$exe" "$w/ringracers_worldwide.exe"
-          kit "$w"
-          for t in "$w"/*.txt "$w"/dubs/*.txt; do
-            if [ -f "$t" ]; then sed -i 's/$/\r/' "$t"; fi
-          done
+          texts "$w"
+          sed -i 's/$/\r/' "$w"/*.txt
           (cd "$w" && zip -q -r -X "$GITHUB_WORKSPACE/$base-windows-x64.zip" .)
 
           # Linux: the release tarball's exe and lib/, in a folder of the
@@ -500,7 +489,7 @@ jobs:
           mkdir -p "$l"
           install -m 755 "$lexe" "$l/ringracers_worldwide"
           cp -r "$src/lib" "$l/"
-          kit "$l"
+          texts "$l"
           tar -C out -czf "$base-linux-x64.tar.gz" "$base-linux-x64"
 
           fp=$(find in/flatpak -type f -name '*.flatpak' | head -n 1)

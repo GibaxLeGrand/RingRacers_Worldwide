@@ -1951,7 +1951,9 @@ void F_VersionDrawer(void)
 		}
 
 #else // Regular build
-		addtext(trans, va("%s", VERSIONSTRING));
+		// WORLDWIDE: the fork's version, the game's above it (doomdef.h).
+		addtext(trans, "Worldwide " WORLDWIDE_VERSIONSTRING);
+		addtext(trans, va("Ring Racers %s", VERSIONSTRING));
 #endif
 
 		if (compuncommitted)

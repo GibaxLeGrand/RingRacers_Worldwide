@@ -1784,6 +1784,10 @@ void D_SRB2Main(void)
 	if (M_CheckParm("-password") && M_IsNextParm())
 		D_SetPassword(M_GetNextParm());
 
+	// WORLDWIDE: which build wrote this log, for the alpha's reports (doomdef.h).
+	CONS_Printf("Ring Racers Worldwide %s, on Ring Racers %s, %s (%s %s)\n",
+		WORLDWIDE_VERSIONSTRING, VERSIONSTRING, comprevision, compdate, comptime);
+
 	CONS_Printf("Z_Init(): Init zone memory allocation daemon. \n");
 	Z_Init();
 	CON_SetLoadingProgress(LOADED_ZINIT);

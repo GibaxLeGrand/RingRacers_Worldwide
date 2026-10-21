@@ -118,6 +118,12 @@ extern char logfilename[1024];
 
 #define VERSIONSTRINGW WSTRING (VERSIONSTRING)
 
+// WORLDWIDE: this fork's own version (release/RELEASE_NOTES.md), shown on the
+// title screen of a release build and written at the head of the log. Display
+// only: VERSIONSTRING stays 2.4's, which the server browser's update check,
+// Lua and the replays' folder read.
+#define WORLDWIDE_VERSIONSTRING "v0.1.0-alpha"
+
 /* A custom URL protocol for server links. */
 #define SERVER_URL_PROTOCOL "ringracers://"
 

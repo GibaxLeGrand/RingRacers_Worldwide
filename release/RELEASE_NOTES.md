@@ -22,13 +22,14 @@ You need **Ring Racers 2.4** installed: these carry none of the game's data.
 | `RingRacersWorldwide-v0.1.0-alpha-windows-x64.zip` | Windows, 64-bit: into your Ring Racers 2.4 folder |
 | `RingRacersWorldwide-v0.1.0-alpha-linux-x64.tar.gz` | Linux x86_64 (glibc 2.35+, the system's SDL2): into a folder with the 2.4 data |
 | `RingRacersWorldwide-v0.1.0-alpha.flatpak` | Linux and the Steam Deck, beside the official Ring Racers from Flathub |
+| `RingRacersWorldwide-v0.1.0-alpha-assets.zip` | every system: WORLDWIDE's title screen (the Flatpak has it already) and the dub packs, with their credits |
 
-Each carries WORLDWIDE's title screen and the dub packs, and a
+Take your system's download and the assets. Each game download holds a
 `README-Worldwide.txt` with the steps, also
 [in the repository](https://github.com/GibaxLeGrand/RingRacers_Worldwide/blob/v0.1.0-alpha/release/README.txt).
-On Windows, the zip's contents copy into your Ring Racers 2.4 folder without
-replacing anything of the game's. `SHA256SUMS.txt` holds the files'
-checksums.
+On Windows, both zips' contents copy into your Ring Racers 2.4 folder
+without replacing anything of the game's. `SHA256SUMS.txt` holds the
+files' checksums.
 
 ## What's in it
 
@@ -43,10 +44,9 @@ checksums.
   correct themselves for its bots.
 - **Not netcode**: character dubs chosen by each pilot, with Japanese
   voices for 17 of the game's characters and a few addon ones in the
-  downloads (credits in `dubs/CREDITS.txt`); two players side by side;
-  photo mode; gyro
-  steering; resolutions up to 4K; typing with your keyboard's layout;
-  WORLDWIDE's title screen.
+  assets zip (credits in `dubs/CREDITS.txt`); two players side by side;
+  photo mode; gyro steering; resolutions up to 4K; typing with your
+  keyboard's layout; WORLDWIDE's title screen.
 
 Measured so far, on one machine with simulated latency, jitter and loss, and
 over a LAN: no input lag felt from 0 to 428 ms, a confirmed world that stays

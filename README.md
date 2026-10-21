@@ -42,26 +42,35 @@ executable and none of the game's data: get the game from
 [kartkrew.org](https://www.kartkrew.org), or from Flathub
 (`org.kartkrew.RingRacers`) for the Flatpak.
 
+The game, one download for your system:
+
 | Download | For |
 |---|---|
 | `RingRacersWorldwide-v0.1.0-alpha-windows-x64.zip` | Windows, 64-bit |
 | `RingRacersWorldwide-v0.1.0-alpha-linux-x64.tar.gz` | Linux x86_64, glibc 2.35 or newer, the system's SDL2 |
 | `RingRacersWorldwide-v0.1.0-alpha.flatpak` | Linux and the Steam Deck, beside the official Ring Racers Flatpak |
 
-Each carries WORLDWIDE's title screen and the dub packs, and comes with a
-`README-Worldwide.txt` -- the same as [release/README.txt](release/README.txt)
--- that installs it step by step. In short:
+and, for every system, **`RingRacersWorldwide-v0.1.0-alpha-assets.zip`**:
+WORLDWIDE's title screen (`data/worldwide.pk3`, which the Flatpak carries
+already) and the character dub packs (`dubs/`, with their credits).
 
-- **Windows**: copy everything in the zip into your Ring Racers 2.4 folder,
-  the one with `ringracers.exe`: its `data` folder merges with the game's,
-  and nothing of the game's is replaced. Start `ringracers_worldwide.exe`.
-  The stock game stays as it was, and both use the same profiles, progress
-  and settings.
+Each game download comes with a `README-Worldwide.txt` -- the same as
+[release/README.txt](release/README.txt) -- that installs it step by step.
+In short:
+
+- **Windows**: copy everything in the game's zip, then in the assets zip,
+  into your Ring Racers 2.4 folder, the one with `ringracers.exe`: their
+  `data` folder merges with the game's, and nothing of the game's is
+  replaced. Start `ringracers_worldwide.exe`. The stock game stays as it
+  was, and both use the same profiles, progress and settings.
 - **Linux, the tarball**: copy its contents into a folder that holds the
-  Ring Racers 2.4 data, move its `dubs` folder to `~/.ringracers/dubs`, and
-  run `./ringracers_worldwide` from there.
+  Ring Racers 2.4 data, and the assets' `data/worldwide.pk3` into its
+  `data`; put the assets' `dubs` folder at `~/.ringracers/dubs`; run
+  `./ringracers_worldwide` from the data folder.
 - **Flatpak and Steam Deck**: install the official Ring Racers from Flathub,
-  then this one (`flatpak install --user RingRacersWorldwide-v0.1.0-alpha.flatpak`).
+  then this one (`flatpak install --user RingRacersWorldwide-v0.1.0-alpha.flatpak`),
+  start it once, and copy the assets' dub packs into
+  `~/.var/app/io.github.ringracers_worldwide.RingRacersWorldwide/.ringracers/dubs`.
   On a Steam Deck, do it in desktop mode, add *Ring Racers Worldwide* to
   Steam as a non-Steam game, and play it in game mode.
 
@@ -182,10 +191,9 @@ each pilot chooses theirs.
 **Installing a pack.** Put it in the `dubs` folder, next to `addons`: the
 game's folder on Windows, `~/.ringracers/dubs` with the Linux tarball,
 `~/.var/app/io.github.ringracers_worldwide.RingRacersWorldwide/.ringracers/dubs`
-with the Flatpak -- the game makes the folder at its first start. The
-release downloads carry the packs made for this fork, with their credits
-(`dubs/CREDITS.txt`); the Flatpak links its own into that folder at each
-start. The packs
+with the Flatpak -- the game makes the folder at its first start. A
+release's assets zip carries the packs made for this fork, with their
+credits (`dubs/CREDITS.txt`). The packs
 there load at start-up, on this machine alone: a dub pack never enters a
 server's file list, is never sent to anyone, and does not make the game
 count as modified, so you can join any server with your dubs loaded, a stock
@@ -269,9 +277,9 @@ stop there.
 
 An optional `worldwide.pk3` gives the title screen WORLDWIDE's Earth and
 ring, and removes a stray pixel above Sonic's head in 19 of his frames; the
-game runs the same without it. Every release download carries it (the
-Flatpak inside); for a development build on Windows or the Linux tarball,
-put
+game runs the same without it. A release's assets zip carries it, and the
+Flatpak has it inside; for a development build on Windows or the Linux
+tarball, put
 [assets/worldwide.pk3](https://github.com/GibaxLeGrand/RingRacers_Worldwide/blob/worldwide-2.4/assets/worldwide.pk3)
 from the `worldwide-2.4` branch in the game's `data` folder. The window's
 title and icon are WORLDWIDE's in every build.

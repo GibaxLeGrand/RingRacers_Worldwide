@@ -35,22 +35,25 @@ WHAT YOU NEED
 - Linux, the Flatpak, and the Steam Deck: Flatpak, with Flathub.
 
 
-WHAT IS IN THE DOWNLOAD
------------------------
+WHAT IS IN THE DOWNLOADS
+------------------------
 
-The Windows zip and the Linux tarball are laid out as the game's folder:
+The game, one download for your system, each with README-Worldwide.txt
+(this file) and LICENSE-Worldwide.txt (the GNU General Public License,
+version 2):
 
-  ringracers_worldwide.exe   the game (ringracers_worldwide and its lib
-                             folder in the Linux tarball)
-  data/worldwide.pk3         WORLDWIDE's title screen
-  dubs/                      the dub packs, and their credits (CREDITS.txt)
-  README-Worldwide.txt       this file
-  LICENSE-Worldwide.txt      the GNU General Public License, version 2
+  ...-windows-x64.zip     ringracers_worldwide.exe
+  ...-linux-x64.tar.gz    ringracers_worldwide, and its lib folder
+  ....flatpak             a single file, worldwide.pk3 inside
 
-Nothing in them has the name of one of the game's own files, so they copy
-into a Ring Racers 2.4 folder without replacing anything.
+The assets, RingRacersWorldwide-v0.1.0-alpha-assets.zip, for every system:
 
-The Flatpak is a single file, worldwide.pk3 and the dub packs inside.
+  data/worldwide.pk3      WORLDWIDE's title screen (the Flatpak has its own)
+  dubs/                   the dub packs, and who made them (CREDITS.txt)
+
+The zips are laid out as the game's folder, and nothing in them has the
+name of one of the game's own files: they copy into a Ring Racers 2.4
+folder without replacing anything.
 
 
 INSTALLING
@@ -60,8 +63,9 @@ Windows
 
   1. Open your Ring Racers 2.4 folder: the one with ringracers.exe and
      bios.pk3 in it.
-  2. Copy everything in the zip into it. Its "data" folder merges with the
-     game's, and "dubs" is new.
+  2. Copy everything in the game's zip into it, then everything in the
+     assets zip: its "data" folder merges with the game's, and "dubs" is
+     new.
   3. Start ringracers_worldwide.exe.
 
   Your ringracers.exe stays as it was. Both use the same profiles,
@@ -69,11 +73,12 @@ Windows
 
 Linux, the tarball
 
-  1. Unpack it, and copy everything in its folder into the folder that
-     holds the Ring Racers 2.4 data (bios.pk3 and the "data" folder): its
-     "data" folder merges with the game's.
-  2. Move the "dubs" folder to ~/.ringracers/dubs (make ~/.ringracers if it
-     is not there yet): the game reads its dubs from there.
+  1. Unpack it, and copy what is in its folder (ringracers_worldwide, lib
+     and the two texts) into the folder that holds the Ring Racers 2.4 data:
+     bios.pk3 and the "data" folder.
+  2. From the assets zip: data/worldwide.pk3 into that "data" folder, and
+     the "dubs" folder to ~/.ringracers/dubs (make ~/.ringracers if it is
+     not there yet) -- the game reads its dubs from there.
   3. Run ./ringracers_worldwide from the data folder -- or, from anywhere,
      with RINGRACERSWADDIR set to it.
 
@@ -85,17 +90,20 @@ Linux, the Flatpak
        flatpak install --user flathub org.kartkrew.RingRacers
   2. Ring Racers Worldwide:
        flatpak install --user RingRacersWorldwide-v0.1.0-alpha.flatpak
-  3. Start "Ring Racers Worldwide" from your menu, or:
+  3. Start "Ring Racers Worldwide" from your menu once, or:
        flatpak run io.github.ringracers_worldwide.RingRacersWorldwide
+  4. The dubs: copy what is in the assets zip's "dubs" folder into
+     ~/.var/app/io.github.ringracers_worldwide.RingRacersWorldwide/.ringracers/dubs
+     (the first start made it). The Flatpak has worldwide.pk3 already.
 
   Settings, saves and logs go to
   ~/.var/app/io.github.ringracers_worldwide.RingRacersWorldwide/.ringracers
-  -- the dub packs too: they are linked into its dubs folder at each start.
 
 Steam Deck
 
   1. In desktop mode, open a terminal (Konsole) and follow "Linux, the
-     Flatpak" above.
+     Flatpak" above. For step 4, the file manager shows the hidden .var
+     folder with Ctrl+H.
   2. In Steam, still in desktop mode: Add a Game > Add a Non-Steam Game,
      and pick Ring Racers Worldwide.
   3. Back in game mode, it is in your library.
@@ -142,11 +150,11 @@ None of these change the race or reach a stock server.
 
 - Character dubs: a character can have more than one voice -- Sonic in
   Japanese, say -- and each pilot picks theirs at character select. The
-  packs that come with this download are in the "dubs" folder, next to
-  "addons", where other packs can go too; who made them is in
-  dubs/CREDITS.txt. Options > Sound > Voice Language is the voice for bots
-  and for pilots who picked none. Online, in WORLDWIDE mode, the others
-  hear your kart in your dub if they have the same pack.
+  assets zip's packs go in the "dubs" folder, next to "addons", where other
+  packs can go too; who made them is in dubs/CREDITS.txt. Options > Sound >
+  Voice Language is the voice for bots and for pilots who picked none.
+  Online, in WORLDWIDE mode, the others hear your kart in your dub if they
+  have the same pack.
 - Two players side by side: Options > HUD > 2P Splitscreen > Vertical.
 - Photo mode: in the pause menu, offline and in replays.
 - Gyro steering, for controllers with motion sensors: Options > Profile

@@ -49,27 +49,4 @@ if [ -n "${RINGRACERSWADDIR}" ] && [ -f "$WWPK3" ] && [ ! -e "${RINGRACERSWADDIR
 	export RINGRACERSWADDIR="$merged"
 fi
 
-# The dub packs that come with this app: the game loads dubs from the dubs
-# folder of its home (~/.ringracers, this app's own), so each one is linked
-# there at each start -- a new release's packs replace the old ones, and a
-# link to a pack this release no longer carries is removed. A file of the
-# player's own is never touched, even under the same name.
-APPDUBS=/app/share/ringracers-worldwide/dubs
-USERDUBS="$HOME/.ringracers/dubs"
-if [ -d "$APPDUBS" ]; then
-	mkdir -p "$USERDUBS"
-	for f in "$USERDUBS"/*; do
-		if [ -L "$f" ] && [ ! -e "$f" ]; then
-			case "$(readlink "$f")" in "$APPDUBS"/*) rm -f "$f" ;; esac
-		fi
-	done
-	for f in "$APPDUBS"/*; do
-		[ -f "$f" ] || continue
-		dest="$USERDUBS/$(basename "$f")"
-		if [ ! -e "$dest" ] || [ -L "$dest" ]; then
-			ln -sfn "$f" "$dest"
-		fi
-	done
-fi
-
 exec ringracers "$@"

@@ -179,9 +179,10 @@ is asked for first.**
    **draft** pre-release, published by hand (a trial by hand, run
    39568681350, green); the assets zip -- `worldwide.pk3`, the dub packs,
    the Steam artwork -- made at the release by `release/make_assets.py`,
-   the packs never committed (Gibax). Left: the Discord's link (item 14),
-   the packs' credits, Kart Krew's server-list rules read in the game, the
-   label seen in the game; then the tag.
+   the packs never committed (Gibax). The label seen in the game (9.28):
+   the title screen as written, the log's line 23rd. Left: the Discord's
+   link (item 14), the packs' credits, Kart Krew's server-list rules read
+   in the game; then the tag.
 
 **Strongly advised before announcing:**
 

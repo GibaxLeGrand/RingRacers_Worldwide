@@ -9899,3 +9899,33 @@ could reach the race:
 If 2 fails and the control holds, the dubs reach the race: a bug. If both
 fail alike, it is not the dubs -- a second human's own rebuilds are 2(b)'s
 subject (ROADMAP item 2).
+
+### 9.28 The alpha's version label, seen in the game
+
+2026-10-21, on the measuring machine. The release build of `alpha-2.4` from
+the trial run of the release workflow (CI run 39568681350, `7ddc1f7e8`,
+green; ROADMAP item 5) installed beside the others under its own name, its
+sha read in the exe, and started once to the title screen, nothing else
+(Gibax: "lance ringracers_alpha-2.4.exe pour vérifier le label à l'écran
+titre et la première ligne du log").
+
+- **The title screen**: in the bottom left corner, "Ring Racers v2.4" with
+  "Worldwide v0.1.0-alpha" below it, as `cee585f17` draws them. The logo
+  drawn was the Japanese one: that is stock 2.4's alternate title screen
+  (`M_UseAlternateTitleScreen`: `cv_alttitle` and an unlocked secret), on
+  in this machine's settings, not the fork.
+- **The log**: `Ring Racers Worldwide v0.1.0-alpha, on Ring Racers v2.4,
+  7ddc1f7 (Oct 21 2026 08:23:31)`. It is **line 23**, not the first: SDL's
+  two version lines, the setup line, Kart Krew's GPL notice,
+  `M_StartupLocale` and the WAD path come before it, since `d_main.cpp`
+  prints it in `D_SRB2Main` after those. The commit is the short revision
+  the build carries (`comprevision`), not the full sha. Stock's own line,
+  `Ring Racers v2.4 (... 7ddc1f7 alpha-2.4) SDL Windows 64-bit
+  RelWithDebInfo`, is still there, further down (line 4641).
+- **The window's title** stays "Dr. Robotnik's Ring Racers Worldwide v2.4":
+  `VERSIONSTRING`, left as it was on purpose (the server browser's update
+  check, Lua, the replays' folder), not the fork's version.
+
+The label is as written, and the kit's "label seen in the game" is done. For
+reports the line is within a log's first 25, which is enough; moving it to
+the top would take `src/`, and nothing asks for it.

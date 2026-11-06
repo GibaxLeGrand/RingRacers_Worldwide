@@ -100,8 +100,8 @@ State on 2026-10-21.
 
 ## Next, in order
 
-State on 2026-10-02, from a second audit, brought up to date on 2026-10-13
-and 2026-10-21. The numbers are the 2026-09-30 audit's, kept because
+State on 2026-10-02, from a second audit, brought up to date on 2026-10-13,
+2026-10-21 and 2026-11-06. The numbers are the 2026-09-30 audit's, kept because
 `WORLDWIDE.md` and the harness cite them; items 12 and 13 were added, then
 19 to 26. **Every launch
 is asked for first.**
@@ -120,7 +120,9 @@ is asked for first.**
    backwards 15 times as often as when computed (8.121). (b) Two people on
    two machines, on a LAN. (c) The same over the Internet. (d) One of them
    driving on the host (Phase D). How remote karts are drawn is decided
-   after that (Phase D).
+   after that (Phase D). **(b) comes before the alpha's tag** (Gibax,
+   2026-11-06): no `v0.1.0-alpha` until two people have raced on a LAN. (c)
+   and (d) are not settled: they stay filed here.
 3. ~~**A real network in the harness**~~ -- **done** (9.16, 9.20): jitter
    and loss -- `rollback_lag` only delays. The cascade showed what they do (8.129): the server files a
    sample on the tic it arrives, so a late or bunched one moves the filing,
@@ -182,7 +184,8 @@ is asked for first.**
    the packs never committed (Gibax). The label seen in the game (9.28):
    the title screen as written, the log's line 23rd. Left: the Discord's
    link (item 14), the packs' credits, Kart Krew's server-list rules read
-   in the game; then the tag.
+   in the game, two people on a LAN (item 2(b), Gibax, 2026-11-06); then the
+   tag.
 
 **Strongly advised before announcing:**
 
@@ -382,14 +385,14 @@ game's rules do not change.
     server, 14 to 26 rebuilds a window -- whether the simulation reads
     them.
 
-**Order of work** (2026-10-21): 19 is done (8.141); 4's cases, 6, 12 and
+**Order of work** (2026-11-06): 19 is done (8.141); 4's cases, 6, 12 and
 13's measurement are done (8.134 to 8.136); 3 is done (9.16); 20 to 25 are
 merged (§9); 26 is fixed and merged (9.25). Next, the dubs per pilot online
 (9.27, two machines; with a second person it is also 2(b)'s first race);
 7 driven at 428 ms (measured nobody driving, 9.26); 2(b) to 2(d) with a
 second person, a LAN first (8.135's loopback note); 5, with 14 and 15 (the
 Steam Deck run is done, 8.143); 16, 17 and 18; then the announcement. 5 is
-under way on `alpha-2.4` (item 5), without a second person. The teaser can come as soon as the
+under way on `alpha-2.4` (item 5), without a second person, but its tag waits for 2(b) (Gibax, 2026-11-06). The teaser can come as soon as the
 Discord exists, for it to point somewhere.
 
 **Branches** (Gibax, 2026-10-06). **`worldwide-2.4` is the main branch**,

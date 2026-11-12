@@ -9929,3 +9929,107 @@ titre et la première ligne du log").
 The label is as written, and the kit's "label seen in the game" is done. For
 reports the line is within a log's first 25, which is enough; moving it to
 the top would take `src/`, and nothing asks for it.
+
+### 9.29 Two people on a LAN: the session planned, the prediction
+
+2026-11-12, away from the measuring machine: nothing launched, nothing in
+`src/`.
+Gibax: "écrit la prédiction" -- ROADMAP item 2(b), which comes before the
+alpha's tag (2026-11-06). With a second person, 9.27's dubs check is its
+first race, so the two are planned as one session. The results of both go
+in **9.30**.
+
+**What is new in it.** Every WORLDWIDE race so far had one person driving:
+this machine's kart, bots computed from the client's own world (8.120), at
+most an idle host (8.123). Another person's input is guessed by repeating
+their last one, the stamp moved on a tic a guessed tic (8.123, 8.132);
+nothing else of it is moved. Read in the code (`worldwide-2.4` at
+`e0b7dc369`): a ticcmd carries the sender's view angle
+(`cmd->angle = localangle >> TICCMD_REDUCE`, `g_build_ticcmd.cpp:487`),
+and that angle moves on every tic a kart turns, the stick held still or
+not. So the repeated guess is wrong on nearly every tic the other person
+turns, as it was for the bots of 8.120, whose angle moves every tic. Two
+things are left to see: how often that rebuilds, and whether the other
+kart is drawn so that anyone sees it.
+
+**The session** (every race asked for first):
+
+- **Machines.** The measuring machine runs a dedicated server,
+  `lan_server.cfg` (`maxplayers 8`, bots fill the grid, not on the public
+  list) with `+worldwide On`, as in 8.141. Person A plays on the same
+  machine, from a client folder of its own beside the server's (as the
+  harness's `clienthome`): a loopback, 8.135's note. Person B plays on the
+  Steam Machine or the Steam Deck, on the LAN. If the laptop is free, A on
+  the laptop puts both clients on the LAN and none on a loopback.
+- **Builds**: the alpha's, `7ddc1f7e8` (CI run 39568681350): the release
+  exe for the server and for A (sha256 `36e1b856…`, the log's line 23
+  says `7ddc1f7`, 9.28), the Flatpak for B (sha256 `f0d67177…`, installed with
+  `install-steamdeck.sh` and `linux-builds/dubs`). The same netcode as
+  `adb5ee762`, 9.27's.
+- **Three races, the same map, both people driving to the finish**:
+  1. WORLDWIDE, A on Sonic in Japanese, B on Sonic in Default: 9.27's
+     check.
+  2. WORLDWIDE, both in Default: 9.27's control, and 2(b) a second time.
+  3. **The control**: the server started again with `+worldwide Off`, both
+     joining as stock clients, and `rollback_twoclock 0` typed on each at
+     the waiting map. It sets nothing, prediction being off, but zeroes the
+     counts (`K_SetTwoClock`), so the frames are counted from there.
+- **At each race's end, on the results screen, before anyone leaves** (the
+  leave puts the switches back and zeroes the counts): `rollback_keepspec`,
+  `rollback_drift`, `rollback_twoclock`, `rollback_history` and `dublist`
+  on both clients (race 3: `rollback_twoclock` and `dublist`), and
+  `rollback_relabel` on the server. Those report commands only print when
+  typed with no argument (9.27), and they are not gated in a release build:
+  `COM_AddDebugCommand`'s flag only hides them from the pause menu's list
+  (`pause-cheats.cpp`). B's console needs a keyboard, the Steam one if no
+  other. Then the three `latest-log.txt` kept.
+- **What each person says**, after each race: their own kart, and the
+  other's kart as drawn, close up and in the turns.
+
+**Prediction**, written before any run (9.27's three points stand beside
+these):
+
+1. **It holds together.** Both clients join in WORLDWIDE mode and race to
+   the finish, races 1 and 2: no kick, no timeout, no full-state resend
+   after the join, `rollback_drift` at 0.000 with no `STATE` or `SPIKE`
+   line on both. Bodies below zero are not counted in a release build
+   (8.135).
+2. **This machine's own input is not the problem.** About 2 tics deep, 1.5
+   to 2.5 inputs in flight on both clients, as at 0 latency in 8.107 (one
+   tic more on Wi-Fi). Race map: 0 to 5 rebuilds for this machine's input
+   a race on each client. A's loopback may rebuild more on the waiting map
+   (8.135: 92 in 700 passes, "newer by 1"), not in the race.
+3. **The other person rebuilds most passes.** Rebuilt for people's input:
+   **40 to 90% of the race's passes** on each client. Of the person's wrong
+   inputs, over 90% differ in the angle, and under 1% in the stamp alone
+   (8.132). Rebuilt for a bot's input: 0 to a handful, since the first
+   wrong tic's bots are built from a world still right. The upper bound is
+   8.120's `wwbots`: 89% rebuilt with seven bots guessed. One person turns
+   less often than seven bots.
+4. **It costs little at a LAN's depth.** A rebuild runs about 2 tics. On
+   the measuring machine, a pass is 3 to 8 ms on average, under Phase B's
+   gate (30% of a tic, 8.6 ms), with under 20 frames skipped a race (8.120:
+   8.0 ms at eight karts and every pass rebuilt, before raw snapshots). The
+   Steam Machine is about the same. A Steam Deck is dearer and may pass the
+   gate: that is item 13.
+5. **The other kart, as drawn.** `rollback_twoclock`'s people line, frames
+   with a pass: short steps on 20 to 60%, backwards on 0.5 to 3%; at the
+   same depth, 8.121's guessed bots were 55.6% and 1.2%. The bots' line
+   stays near the computed control (8.121's T: 1.2%, 0.08%). By eye, a
+   guess: at 2 tics the error is small, seen if at all close behind the
+   other kart in a turn, not on a straight.
+6. **The control** (race 3): no pass and no rebuild. Both people feel their
+   own kart a little late, or not at all, since a stock client on a LAN
+   waits about a round trip, 2 to 3 tics. On a LAN the two netcodes are at
+   their closest at the controls: 2(b) is about the other kart, and 2(c) is
+   where the controls differ.
+7. **The server.** `rollback_relabel`: few late wake-ups on a quiet machine,
+   and 0 wrong bot inputs on the clients whatever their number (9.25).
+
+**What it decides** (a proposal; the tag is Gibax's call). 1 failing holds
+the tag: a kick, a desync, a crash, a resend. So does 9.27's check
+failing. 3 and 5 high but unseen do not: on a LAN they are the numbers to
+compare 2(c) against, since the guessed span grows with the round trip
+(about 8 tics at 171 ms, 8.107), and the error with it. 5 seen and
+bothersome moves Phase D up, how remote karts are drawn (ROADMAP item 2),
+and whether that comes before the tag is for Gibax to decide.

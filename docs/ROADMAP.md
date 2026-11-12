@@ -101,7 +101,7 @@ State on 2026-10-21.
 ## Next, in order
 
 State on 2026-10-02, from a second audit, brought up to date on 2026-10-13,
-2026-10-21 and 2026-11-06. The numbers are the 2026-09-30 audit's, kept because
+2026-10-21, 2026-11-06 and 2026-11-12. The numbers are the 2026-09-30 audit's, kept because
 `WORLDWIDE.md` and the harness cite them; items 12 and 13 were added, then
 19 to 26. **Every launch
 is asked for first.**
@@ -118,7 +118,9 @@ is asked for first.**
    upper bound, 79 to 89% of passes rebuild at eight karts, and the bots
    drawn shake: short steps in more than half the frames with a pass,
    backwards 15 times as often as when computed (8.121). (b) Two people on
-   two machines, on a LAN. (c) The same over the Internet. (d) One of them
+   two machines, on a LAN: the session and its prediction are written
+   (9.29), with 9.27's dubs check as its first race, and a stock race as
+   its control. (c) The same over the Internet. (d) One of them
    driving on the host (Phase D). How remote karts are drawn is decided
    after that (Phase D). **(b) comes before the alpha's tag** (Gibax,
    2026-11-06): no `v0.1.0-alpha` until two people have raced on a LAN. (c)
@@ -388,7 +390,8 @@ game's rules do not change.
 **Order of work** (2026-11-06): 19 is done (8.141); 4's cases, 6, 12 and
 13's measurement are done (8.134 to 8.136); 3 is done (9.16); 20 to 25 are
 merged (§9); 26 is fixed and merged (9.25). Next, the dubs per pilot online
-(9.27, two machines; with a second person it is also 2(b)'s first race);
+(9.27, two machines; with a second person it is also 2(b)'s first race,
+one session with 2(b), planned and predicted in 9.29);
 7 driven at 428 ms (measured nobody driving, 9.26); 2(b) to 2(d) with a
 second person, a LAN first (8.135's loopback note); 5, with 14 and 15 (the
 Steam Deck run is done, 8.143); 16, 17 and 18; then the announcement. 5 is

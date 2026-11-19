@@ -101,9 +101,9 @@ State on 2026-10-21.
 ## Next, in order
 
 State on 2026-10-02, from a second audit, brought up to date on 2026-10-13,
-2026-10-21, 2026-11-06 and 2026-11-12. The numbers are the 2026-09-30 audit's, kept because
+2026-10-21, 2026-11-06, 2026-11-12 and 2026-11-19. The numbers are the 2026-09-30 audit's, kept because
 `WORLDWIDE.md` and the harness cite them; items 12 and 13 were added, then
-19 to 26. **Every launch
+19 to 27. **Every launch
 is asked for first.**
 
 **Blocking an alpha:**
@@ -387,7 +387,40 @@ game's rules do not change.
     server, 14 to 26 rebuilds a window -- whether the simulation reads
     them.
 
-**Order of work** (2026-11-06): 19 is done (8.141); 4's cases, 6, 12 and
+**Added on 2026-11-19:**
+
+27. **Ring Racers 2.5** (Kart Krew's sneak peek, 2026-11-17,
+    kartkrew.org/news): announced, **no date** -- not this year, the team
+    working on it in its spare time, then a release-candidate cycle as for
+    2.4. Kart Krew says it has no rollback. Its netplay changes land where
+    this fork's do: the ping measured anew (and the mindelay applied from
+    it), the game's speed shifted a little against double submits on a
+    listen server ("timeshift"), IPv6, better hole-punching, sigfail
+    fixes, and an online co-op Grand Prix for four, where a dropped
+    player's kart goes on as a CPU until they rejoin. Its voice changes
+    land on item 20's: a driver gets its own sound namespace, a voice is
+    replaced by `P_SKIN` or by netsafe `VoiceDub` folders, and the old
+    lump-based replacement is gone. Many gameplay changes besides (K- and
+    R-Groove, drift, items, terrain for every object, courses): a 2.5
+    game will not race a 2.4 one. 64-bit Windows builds are planned
+    upstream.
+    **What it means here.** The alpha stays on 2.4. A WORLDWIDE 2.4 build
+    will not play on 2.5 servers, so once 2.5 is out the fork follows it,
+    on a `worldwide-2.5` branch ported as 2.4's was (8.114) -- once 2.5's
+    source is public: the public `master` mirror (last commit 2026-08-31)
+    holds none of the changes above. The port's hard parts, from this
+    fork's footprint against `v2.4` (94 files, +18k lines, most in its own
+    files): `d_clisrv.c` (+991), `p_saveg.cpp` (+2337) and `d_net.cpp`
+    (+220), against the netplay changes and the new player state; then
+    the save's cost with more objects on terrain, the remote player's
+    guess with the Grooves, the co-op Grand Prix's CPU takeover, the
+    timeshift beside `rollback_maketicone` (item 26), and the dubs against
+    `VoiceDub` (`dubs/convert_replacement.py` reads the lump-based packs
+    2.5 drops). Nothing to write before 2.5's source; then what 8.x and
+    9.x measured (drift, cost, rebuilds) is measured again on 2.5 before
+    an alpha on it.
+
+**Order of work** (2026-11-06; 27 waits for 2.5's source): 19 is done (8.141); 4's cases, 6, 12 and
 13's measurement are done (8.134 to 8.136); 3 is done (9.16); 20 to 25 are
 merged (§9); 26 is fixed and merged (9.25). Next, the dubs per pilot online
 (9.27, two machines; with a second person it is also 2(b)'s first race,

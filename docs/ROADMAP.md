@@ -100,10 +100,10 @@ State on 2026-10-21.
 
 ## Next, in order
 
-State on 2026-10-02, from a second audit, brought up to date on 2026-10-13
-and 2026-10-21. The numbers are the 2026-09-30 audit's, kept because
+State on 2026-10-02, from a second audit, brought up to date on 2026-10-13,
+2026-10-21, 2026-11-06, 2026-11-12 and 2026-11-19. The numbers are the 2026-09-30 audit's, kept because
 `WORLDWIDE.md` and the harness cite them; items 12 and 13 were added, then
-19 to 26. **Every launch
+19 to 27. **Every launch
 is asked for first.**
 
 **Blocking an alpha:**
@@ -118,9 +118,13 @@ is asked for first.**
    upper bound, 79 to 89% of passes rebuild at eight karts, and the bots
    drawn shake: short steps in more than half the frames with a pass,
    backwards 15 times as often as when computed (8.121). (b) Two people on
-   two machines, on a LAN. (c) The same over the Internet. (d) One of them
+   two machines, on a LAN: the session and its prediction are written
+   (9.29), with 9.27's dubs check as its first race, and a stock race as
+   its control. (c) The same over the Internet. (d) One of them
    driving on the host (Phase D). How remote karts are drawn is decided
-   after that (Phase D).
+   after that (Phase D). **(b) comes before the alpha's tag** (Gibax,
+   2026-11-06): no `v0.1.0-alpha` until two people have raced on a LAN. (c)
+   and (d) are not settled: they stay filed here.
 3. ~~**A real network in the harness**~~ -- **done** (9.16, 9.20): jitter
    and loss -- `rollback_lag` only delays. The cascade showed what they do (8.129): the server files a
    sample on the tic it arrives, so a late or bunched one moves the filing,
@@ -170,6 +174,20 @@ is asked for first.**
    check there, and a desktop distribution, were not reported. The files go out on a GitHub release of the public
    repository: a CI artifact needs a GitHub account and is gone after 90
    days.
+   **Started** (2026-10-21, on `alpha-2.4`, pushed, not merged), as
+   **`v0.1.0-alpha`**: the root README rewritten for players;
+   `release/README.txt` (shipped as `README-Worldwide.txt`) and
+   `release/RELEASE_NOTES.md`; the fork's version on a release build's
+   title screen and at the head of every log (`cee585f17`); the CI's
+   `package` job -- on a tag `v*`, the game's three downloads and a
+   **draft** pre-release, published by hand (a trial by hand, run
+   39568681350, green); the assets zip -- `worldwide.pk3`, the dub packs,
+   the Steam artwork -- made at the release by `release/make_assets.py`,
+   the packs never committed (Gibax). The label seen in the game (9.28):
+   the title screen as written, the log's line 23rd. Left: the Discord's
+   link (item 14), the packs' credits, Kart Krew's server-list rules read
+   in the game, two people on a LAN (item 2(b), Gibax, 2026-11-06); then the
+   tag.
 
 **Strongly advised before announcing:**
 
@@ -369,14 +387,48 @@ game's rules do not change.
     server, 14 to 26 rebuilds a window -- whether the simulation reads
     them.
 
-**Order of work** (2026-10-21): 19 is done (8.141); 4's cases, 6, 12 and
+**Added on 2026-11-19:**
+
+27. **Ring Racers 2.5** (Kart Krew's sneak peek, 2026-11-17,
+    kartkrew.org/news): announced, **no date** -- not this year, the team
+    working on it in its spare time, then a release-candidate cycle as for
+    2.4. Kart Krew says it has no rollback. Its netplay changes land where
+    this fork's do: the ping measured anew (and the mindelay applied from
+    it), the game's speed shifted a little against double submits on a
+    listen server ("timeshift"), IPv6, better hole-punching, sigfail
+    fixes, and an online co-op Grand Prix for four, where a dropped
+    player's kart goes on as a CPU until they rejoin. Its voice changes
+    land on item 20's: a driver gets its own sound namespace, a voice is
+    replaced by `P_SKIN` or by netsafe `VoiceDub` folders, and the old
+    lump-based replacement is gone. Many gameplay changes besides (K- and
+    R-Groove, drift, items, terrain for every object, courses): a 2.5
+    game will not race a 2.4 one. 64-bit Windows builds are planned
+    upstream.
+    **What it means here.** The alpha stays on 2.4. A WORLDWIDE 2.4 build
+    will not play on 2.5 servers, so once 2.5 is out the fork follows it,
+    on a `worldwide-2.5` branch ported as 2.4's was (8.114) -- once 2.5's
+    source is public: the public `master` mirror (last commit 2026-08-31)
+    holds none of the changes above. The port's hard parts, from this
+    fork's footprint against `v2.4` (94 files, +18k lines, most in its own
+    files): `d_clisrv.c` (+991), `p_saveg.cpp` (+2337) and `d_net.cpp`
+    (+220), against the netplay changes and the new player state; then
+    the save's cost with more objects on terrain, the remote player's
+    guess with the Grooves, the co-op Grand Prix's CPU takeover, the
+    timeshift beside `rollback_maketicone` (item 26), and the dubs against
+    `VoiceDub` (`dubs/convert_replacement.py` reads the lump-based packs
+    2.5 drops). Nothing to write before 2.5's source; then what 8.x and
+    9.x measured (drift, cost, rebuilds) is measured again on 2.5 before
+    an alpha on it.
+
+**Order of work** (2026-11-06; 27 waits for 2.5's source): 19 is done (8.141); 4's cases, 6, 12 and
 13's measurement are done (8.134 to 8.136); 3 is done (9.16); 20 to 25 are
 merged (§9); 26 is fixed and merged (9.25). Next, the dubs per pilot online
-(9.27, two machines; with a second person it is also 2(b)'s first race);
+(9.27, two machines; with a second person it is also 2(b)'s first race,
+one session with 2(b), planned and predicted in 9.29);
 7 driven at 428 ms (measured nobody driving, 9.26); 2(b) to 2(d) with a
 second person, a LAN first (8.135's loopback note); 5, with 14 and 15 (the
-Steam Deck run is done, 8.143); 16, 17 and 18; then the announcement. 5 can
-be written without a second person. The teaser can come as soon as the
+Steam Deck run is done, 8.143); 16, 17 and 18; then the announcement. 5 is
+under way on `alpha-2.4` (item 5), without a second person, but its tag waits for 2(b) (Gibax, 2026-11-06). The teaser can come as soon as the
 Discord exists, for it to point somewhere.
 
 **Branches** (Gibax, 2026-10-06). **`worldwide-2.4` is the main branch**,
@@ -401,7 +453,8 @@ as `specauth-2.4`) and `overlaydiag-2.4`, a diagnostic. `res4k-2.4` (item
 likewise (`739b4c80e`), `maketic-2.4` (item 26, 9.25) likewise
 (`abc693bb1`). `histauto-2.4` (item 7, 9.24) written and measured nobody
 driving (9.26), not merged; it branches from `064043810`, before
-`maketic`. Since `68f5eb582`,
+`maketic`. `alpha-2.4` (item 5, from `52b913a8f`) carries the alpha kit,
+merged at the release. Since `68f5eb582`,
 `worldwide-2.4` starts in a stock 2.4 folder, which is 32-bit, without
 `-noexchndl` (8.117). **Proposed scope** (the audit's, not decided):
 Race only, Windows, eight players at most unless 6 says sixteen, and the

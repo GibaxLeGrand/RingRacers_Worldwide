@@ -77,7 +77,7 @@ modules:
       - install -Dm 755 ../.github/flatpak/ringracers-worldwide.sh -t $FLATPAK_DEST/bin
       - install -Dm 644 ../assets/worldwide.pk3 -t $FLATPAK_DEST/share/ringracers-worldwide
       - install -Dm 644 ../.github/flatpak/$FLATPAK_ID.desktop -t $FLATPAK_DEST/share/applications
-      - install -Dm 644 ../srb2.png $FLATPAK_DEST/share/icons/hicolor/256x256/apps/$FLATPAK_ID.png
+      - install -Dm 644 ../.github/flatpak/$FLATPAK_ID.png $FLATPAK_DEST/share/icons/hicolor/256x256/apps/$FLATPAK_ID.png
 
 cleanup:
   - '*.a'

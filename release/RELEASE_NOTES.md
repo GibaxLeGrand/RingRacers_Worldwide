@@ -10,8 +10,8 @@ stock 2.4 server, it plays exactly as a stock 2.4.
 over the Internet: that is what it is for. Please report what you run into
 (below). An unofficial fork by Gibax, not affiliated with or endorsed by
 Kart Krew Dev: please never report its bugs to them. This project is
-AI-assisted; how and why is in the repository's
-[README](https://github.com/GibaxLeGrand/RingRacers_Worldwide#about-ai).
+AI-assisted; how and why is in
+[ABOUT-AI.md](https://github.com/GibaxLeGrand/RingRacers_Worldwide/blob/v0.1.0-alpha/ABOUT-AI.md).
 
 ## Downloads
 

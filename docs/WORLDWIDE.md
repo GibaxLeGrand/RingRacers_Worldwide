@@ -10033,3 +10033,71 @@ compare 2(c) against, since the guessed span grows with the round trip
 (about 8 tics at 171 ms, 8.107), and the error with it. 5 seen and
 bothersome moves Phase D up, how remote karts are drawn (ROADMAP item 2),
 and whether that comes before the tag is for Gibax to decide.
+
+### 9.30 The first server on a VPS, joined from the measuring machine
+
+2026-11-20, 23:56 UTC (past midnight in France), the measuring machine;
+nothing in `src/`. Gibax: "on lance ring racers sur le serveur, et sur ce
+poste pour tester la connexion" -- the yes for both launches. 9.29 gave its
+results to 9.30; the numbering stays in the order things happen, so 2(b)'s
+results take the next free number.
+
+**The setting.** `rrw-eu`, a 4-vCPU VPS in London, installed the day
+before by the server scripts (kept with the private notes): a dedicated
+server under systemd, `-dedicated -port 5029 +worldwide On`, 16 slots, not
+on the public list, bots `Off`. Its first start. **One build on both
+sides**, `worldwide-2.4` at `0cf220d2c`, Build run 44501873179: the
+linux64-release artifact on the server, the win64-release one here (the
+string `0cf220d` is in the exe, not in the October one beside it). Since
+2026-10-20 only the icon changed in `src/`. Compatibility only compares
+`WORLDWIDE_PROTOCOL` (2, `d_clisrv.c:4644`).
+
+**Prediction, written before** (the alpha's test plan, V1 and V2): the
+service holds, 5029/udp listens, `ringserv.cfg` is run, no SDL or video
+error; a few hundred MB; CPU near 0 when empty. Direct Join by the name
+`eu.ringracersworldwide.net` resolves it, WORLDWIDE mode comes on, ping
+around 15-25 ms from France.
+
+**V1, measured.** It held. `0.0.0.0:5029` in UDP, `ringserv.cfg` run, the
+banner `Ring Racers v2.4 (Nov 19 2026 10:03:42 0cf220d worldwide-2.4) SDL
+Linux 64-bit RelWithDebInfo`, no SDL or video error, only the data
+warnings a stock server prints too (`constant ... could not be parsed`,
+`Bad sprite name`). **127 MB** resident, less than predicted. CPU: about
+**10% of one core**, empty and with a player alike (`top`), 1 to 3% of the
+machine (`vmstat`, every 2 s for 15 min), **CPU steal 0** throughout. Not
+"near 0" for its core when empty: **not explained**. One line of the
+template is unknown on a dedicated server, `Unknown command
+'pauseifunfocused'`: `cv_pauseifunfocused` is a `Player` variable
+(`cvars.cpp:431`), which a dedicated server does not register. Harmless;
+taken out of the template.
+
+**V2, measured.** A first try ended with `Network game synchronization
+aborted.` and nothing reached the server; the client's log does not say
+which address it tried. The second went in **by the name** (`Adding
+(eu.ringracersworldwide.net) to list of manually joined IPs`): the game
+resolves a name. The client: `this server runs WORLDWIDE mode --
+predicting, rollback_twoclock 4, rollback_history 12, rollback_keepspec
+on, rollback_ontime on, corrections applied`, the full state downloaded,
+`target_lag -> 0`. System ping to the VPS: **17 ms** mean (17 to 19, 20
+packets, none lost). The ping the game drew was not noted.
+
+**Two races**, Gibax alone and driving, no bots, both finished:
+
+| | `rollback_phases`, race | finished |
+|---|---|---|
+| Robotnik Coaster (from leveltime 30) | 5043 passes, 4954 kept; rebuilt for this machine's input 87, another's 0, a correction 0, otherwise 2 | 470 passes, 418 kept; this machine's input 52 |
+| Emerald Coast | 4128 passes, 4125 kept; this machine's input 1, another's 0, a correction 0, otherwise 2 | 462 passes, 3 kept; this machine's input 459 |
+
+No `Game state reloaded`, no resend, no kick, no line on the server
+between the player's arrival and the end of a race. Gibax: "ça répond pas
+mal, au tout début du lag et ensuite parfait" -- it responds well, a lag
+at the very beginning, then perfect. **Nothing in either log at that
+moment**: the only event of the start is the client taking the server's
+clock (`the server's clock at tic 5, 1790 behind the horizon this machine
+left at 1795`, 8.141). No hypothesis kept. At the intermission
+(`gamestate 2` and 3, prediction off), the server's `target_lag` for him
+climbed to 6, 14, 22, 18, 10 tics, then back to 1 or 2: **not explained**,
+outside the race.
+
+**Not done**: V3 (a race with bots to the end) and the rest of the plan;
+Gibax stopped there, and the server was stopped after.

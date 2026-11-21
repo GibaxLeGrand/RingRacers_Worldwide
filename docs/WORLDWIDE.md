@@ -10101,3 +10101,8 @@ outside the race.
 
 **Not done**: V3 (a race with bots to the end) and the rest of the plan;
 Gibax stopped there, and the server was stopped after.
+
+*Added once the 15-minute `vmstat` record ended (450 samples of 2 s, the
+two races and the intermissions): the machine at **1.8%** on average (user
+1.4, system 0.4), one sample at 9%, **CPU steal 0 in all 450**. "1 to 3%"
+above was read from its first third.*

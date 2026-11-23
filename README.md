@@ -130,7 +130,7 @@ Like Ring Racers 2.4: CMake, a C17/C++20 toolchain, SDL2. On Ubuntu 22.04:
 Windows builds are cross-compiled with llvm-mingw, and the Flatpak built from
 Kart Krew's Flathub manifest: the exact recipes are in
 [.github/workflows/build.yml](.github/workflows/build.yml). Between releases,
-every push to `worldwide-2.4` is built there; the builds are the runs'
+every push to `alpha-2.4` is built there; the builds are the runs'
 artifacts (a GitHub account needed, kept 90 days).
 
 ## Upstream, disclaimer, license

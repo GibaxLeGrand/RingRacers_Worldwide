@@ -1,8 +1,10 @@
 # Ring Racers Worldwide
 
 Fork de Ring Racers (Kart Krew) qui ajoute un netcode à prédiction côté client,
-en développement. Branche principale : `worldwide-2.4` (sur la 2.4), où l'on
-travaille, directement ou par une branche `*-2.4` fusionnée après essai.
+en développement. Branche principale : `alpha-2.4` (sur la 2.4, depuis le 2026-11-23 :
+la ligne de release de l'alpha et la branche par défaut de GitHub ; `worldwide-2.4`
+était la ligne d'avant), où l'on travaille, directement ou par une branche `*-2.4`
+fusionnée après essai.
 `rollback-netcode` est retirée (archive privée, `RingRacers_Worldwide-archive`).
 
 Ici, trois docs : [docs/WORLDWIDE.md](docs/WORLDWIDE.md) (état courant en

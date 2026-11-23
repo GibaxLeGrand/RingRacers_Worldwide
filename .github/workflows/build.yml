@@ -8,8 +8,10 @@ name: Build
 # build, and can I play it" -- and, on a tag, the release's downloads (the
 # package job, at the end).
 #
-# worldwide-2.4 is the main branch (the work ported onto the 2.4 release,
-# WORLDWIDE.md 8.114; rollback-netcode, where it began, is retired). The
+# alpha-2.4 is the main branch since 2026-11-23: the alpha's release line, and
+# GitHub's default (worldwide-2.4 was the line before it, the work ported onto
+# the 2.4 release, WORLDWIDE.md 8.114; rollback-netcode, where it began, is
+# retired). The
 # dependencies are 2.4's: SDL2, not the SDL3 upstream moved to after 2.4,
 # and WebM recording off, as 2.4's own CI built it -- except on Windows, where
 # it is on (F9, the game's video recorder), from the SDK's own libraries.
@@ -31,7 +33,7 @@ on:
   # draft release (the package job).
   push:
     branches:
-      - worldwide-2.4
+      - alpha-2.4
     tags:
       - 'v*'
     paths-ignore:

@@ -13,6 +13,7 @@
 /// \brief Demo recording and playback
 
 #include <algorithm>
+#include <type_traits>
 #include <cstddef>
 
 #include <tcb/span.hpp>
@@ -50,6 +51,7 @@
 #include "p_saveg.h" // savebuffer_t
 #include "g_party.h"
 #include "k_director.h" // K_DirectorIsEnabled
+#include "k_rollback.h" // K_RollbackSpeculating, K_RollbackPays (G_RestoreDemoWriter)
 #include "core/json.hpp"
 
 // SRB2Kart
@@ -245,7 +247,9 @@ boolean G_CompatLevel(UINT16 level)
 
 UINT8 demo_extradata[MAXPLAYERS];
 UINT8 demo_writerng; // 0=no, 1=yes, 2=yes but on a timeout
+static UINT8 demo_writerngtimeout; // tics before demo_writerng 2 writes (was a static of G_WriteDemoExtraData)
 static ticcmd_t oldcmd[MAXPLAYERS];
+static UINT32 demo_writergen; // one more at each G_BeginRecording: which recording a saved writer state is of
 
 #define DW_END        0xFF // End of extradata block
 #define DW_RNG        0xFE // Check RNG seed!
@@ -291,6 +295,12 @@ boolean G_ConsiderEndingDemoWrite(void)
 	// "safe" to have written a bit past the end
 	if (demobuf.p < demobuf.end)
 		return false;
+
+	// A speculated tic may be undone, the end of a recording may not (it saves
+	// the replay, or frees it): the tic writes nothing, and the confirmed tic
+	// that finds the buffer full ends it (WORLDWIDE.md 9.31).
+	if (K_RollbackSpeculating())
+		return true;
 
 	G_CheckDemoStatus();
 	return true;
@@ -633,14 +643,12 @@ void G_WriteDemoExtraData(void)
 		demo_writerng = 1;
 
 	{
-		static UINT8 timeout = 0;
+		if (demo_writerngtimeout) demo_writerngtimeout--;
 
-		if (timeout) timeout--;
-
-		if (demo_writerng == 1 || (demo_writerng == 2 && timeout == 0))
+		if (demo_writerng == 1 || (demo_writerng == 2 && demo_writerngtimeout == 0))
 		{
 			demo_writerng = 0;
-			timeout = 16;
+			demo_writerngtimeout = 16;
 			WRITEUINT8(demobuf.p, DW_RNG);
 
 			WRITEUINT32(demobuf.p, PRNUMSYNCED);
@@ -841,10 +849,118 @@ void G_GhostAddHit(INT32 playernum, mobj_t *victim)
 {
 	if (!demo.recording || !(demoflags & DF_GHOST))
 		return;
+	// Not on a machine whose world a rollback puts back (a predicting client):
+	// the list holds the victims with a reference, across tics when a player's
+	// ghost data skips one, and a restore frees those objects and loads others
+	// in their place -- the dangling body of WORLDWIDE.md 8.96. A replay played
+	// back only uses the hits to resync a damaged object's health.
+	if (!server && K_RollbackPays())
+		return;
 	ghostext[playernum].flags |= EZT_HIT;
 	ghostext[playernum].hits++;
 	ghostext[playernum].hitlist = static_cast<mobj_t**>(Z_Realloc(ghostext[playernum].hitlist, ghostext[playernum].hits * sizeof(mobj_t *), PU_LEVEL, NULL));
 	P_SetTarget(ghostext[playernum].hitlist + (ghostext[playernum].hits-1), victim);
+}
+
+// ---------------------------------------------------------------------------
+// The replay writer's state beside a rollback snapshot (WORLDWIDE.md 9.31)
+// ---------------------------------------------------------------------------
+//
+// A predicting client runs tics it may undo. Its replay is written as the
+// tics run, a server's way, and goes back with the world: everything the next
+// tic's writing depends on is saved with each snapshot -- where the buffer is,
+// the inputs and ghost positions each player's next one is written against,
+// the pending extra data, the RNG check's timer -- and put back with it. A tic
+// the speculation ran and the server confirmed is kept as written; one undone
+// is written over by the run that replaces it.
+
+typedef std::remove_reference_t<decltype(ghostext[0])> ghostext_t;
+
+struct demowriterstate_t
+{
+	UINT32 gen;                     // demo_writergen when saved
+	boolean recording;
+	size_t at;                      // demobuf.p - demobuf.buffer
+	ticcmd_t oldcmd[MAXPLAYERS];
+	UINT8 extradata[MAXPLAYERS];
+	UINT8 writerng;
+	UINT8 writerngtimeout;
+	mobj_t oldghost[MAXPLAYERS];
+	ghostext_t ghostext[MAXPLAYERS];
+};
+
+static_assert(sizeof (demowriterstate_t) <= DEMOWRITER_BYTES,
+	"the replay writer's state no longer fits demowriter_t: raise DEMOWRITER_BYTES");
+
+// gen, recording and at: what says whether the rest is worth reading
+#define DEMOWRITER_HEAD offsetof(demowriterstate_t, oldcmd)
+
+// Copied through this, not read in place: demowriter_t's bytes promise no
+// alignment for the state's pointers and sizes. One at a time, from the game's
+// thread only, like the snapshots it goes with.
+static demowriterstate_t demowriter_scratch;
+
+void G_SaveDemoWriter(demowriter_t *out)
+{
+	demowriterstate_t *st = &demowriter_scratch;
+
+	st->gen = demo_writergen;
+	st->recording = (demo.recording && demobuf.buffer != NULL && demobuf.p != NULL);
+	st->at = st->recording ? (size_t)(demobuf.p - demobuf.buffer) : 0;
+
+	if (st->recording)
+	{
+		memcpy(st->oldcmd, oldcmd, sizeof oldcmd);
+		memcpy(st->extradata, demo_extradata, sizeof demo_extradata);
+		st->writerng = demo_writerng;
+		st->writerngtimeout = demo_writerngtimeout;
+		memcpy(st->oldghost, oldghost, sizeof oldghost);
+		memcpy(st->ghostext, ghostext, sizeof ghostext);
+	}
+
+	// Without a recording, only the head: a dedicated server or a client not
+	// recording pays a few bytes a snapshot, not the whole state.
+	memcpy(out->bytes, st, st->recording ? sizeof *st : DEMOWRITER_HEAD);
+}
+
+boolean G_RestoreDemoWriter(const demowriter_t *in)
+{
+	demowriterstate_t *st = &demowriter_scratch;
+	INT32 i;
+
+	memcpy(st, in->bytes, DEMOWRITER_HEAD);
+
+	// Only into the recording it was saved from, and only backwards: a state
+	// from before G_BeginRecording, or of another replay, says nothing of this one.
+	if (st->recording == false || demo.recording == false || demobuf.buffer == NULL || demobuf.p == NULL
+		|| st->gen != demo_writergen || st->at > (size_t)(demobuf.p - demobuf.buffer))
+		return false;
+
+	memcpy(st, in->bytes, sizeof *st);
+
+	demobuf.p = demobuf.buffer + st->at;
+
+	memcpy(oldcmd, st->oldcmd, sizeof oldcmd);
+	memcpy(demo_extradata, st->extradata, sizeof demo_extradata);
+	demo_writerng = st->writerng;
+	demo_writerngtimeout = st->writerngtimeout;
+	memcpy(oldghost, st->oldghost, sizeof oldghost);
+
+	// Every field but the hit list, which stays this machine's own: G_GhostAddHit
+	// fills none here, and a saved pointer could outlive what it pointed to.
+	for (i = 0; i < MAXPLAYERS; i++)
+	{
+		const UINT16 hits = ghostext[i].hits;
+		mobj_t **hitlist = ghostext[i].hitlist;
+
+		ghostext[i] = st->ghostext[i];
+		ghostext[i].hits = hits;
+		ghostext[i].hitlist = hitlist;
+		if (hits == 0)
+			ghostext[i].flags &= ~EZT_HIT;
+	}
+
+	return true;
 }
 
 void G_WriteAllGhostTics(void)
@@ -2107,6 +2223,7 @@ void G_BeginRecording(void)
 		return;
 
 	demobuf.p = demobuf.buffer;
+	demo_writergen++;
 
 	demoflags = DF_GHOST;
 

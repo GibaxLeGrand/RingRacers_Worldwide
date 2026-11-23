@@ -46,6 +46,7 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "g_game.h" // players, playeringame
+#include "g_demo.h" // demowriter_t: the replay goes back with the world (9.31)
 #include "i_system.h" // I_GetPreciseTime()
 #include "i_time.h" // I_GetTime()
 #include "info.h"
@@ -114,6 +115,11 @@ typedef struct
 	// local player's slot in netcmds is written by the sending path, not by the
 	// tic, so "it must be the same" is an assumption and this is the measurement.
 	ticcmd_t usedcmds[MAXPLAYERS];
+
+	// The replay being recorded, where its writing stood when this tic's world
+	// was saved (WORLDWIDE.md 9.31): putting the world back puts the replay back
+	// with it, so a predicting client records only the timeline that stands.
+	demowriter_t demo;
 
 	size_t used;
 	tic_t tic;
@@ -304,6 +310,7 @@ static dboolean K_WriteSnapshot(rollbackslot_t *slot, tic_t tic)
 			sizeu1(slot->used));
 
 	memcpy(slot->cameras, camera, sizeof (slot->cameras));
+	G_SaveDemoWriter(&slot->demo);
 
 	{
 		// Written after P_Ticker by the keeper, so this is the input the tic
@@ -331,6 +338,18 @@ dboolean K_SaveGameState(tic_t tic)
 	return K_WriteSnapshot(&rollbackring[tic % ROLLBACK_TICS], tic);
 }
 
+static uint32_t g_demorewinds;   // restores that put the replay being recorded back too
+static uint32_t g_demonorewind;  // restores while recording that could not (another recording's slot)
+
+/** The replay being recorded goes back with the world (WORLDWIDE.md 9.31). */
+static void K_RewindDemo(rollbackslot_t *slot)
+{
+	if (G_RestoreDemoWriter(&slot->demo))
+		g_demorewinds++;
+	else if (demo.recording)
+		g_demonorewind++;
+}
+
 /** Puts the world back to what a slot holds, wherever the slot came from. */
 static dboolean K_ReadSnapshot(rollbackslot_t *slot)
 {
@@ -340,7 +359,13 @@ static dboolean K_ReadSnapshot(rollbackslot_t *slot)
 		return false;
 
 	if (slot->israw)
-		return K_ReadRawSnapshot(slot);
+	{
+		if (K_ReadRawSnapshot(slot) == false)
+			return false;
+
+		K_RewindDemo(slot);
+		return true;
+	}
 
 	if (P_SaveBufferFromExisting(&save, slot->buffer, slot->used) == false)
 		return false;
@@ -352,6 +377,7 @@ static dboolean K_ReadSnapshot(rollbackslot_t *slot)
 		return false;
 
 	memcpy(camera, slot->cameras, sizeof (slot->cameras));
+	K_RewindDemo(slot);
 
 	return true;
 }
@@ -5042,6 +5068,13 @@ static void K_ReportPassCosts(void)
 			"a speculated tic\n",
 			(uint32_t)(g_spluahooks / n), (uint32_t)(g_spcheckpos / n));
 	}
+
+	// The replay this machine records, put back with the world (9.31). Not
+	// reset with the window's costs: a race's total, the second number 0.
+	if (demo.recording || g_demorewinds || g_demonorewind)
+		CONS_Printf("rollback_demo: the replay being recorded went back with the world "
+			"%u times, %u restores could not put it back%s\n",
+			g_demorewinds, g_demonorewind, demo.recording ? "" : " (not recording now)");
 
 	K_ReportSaveProfile();
 }

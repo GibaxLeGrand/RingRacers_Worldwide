@@ -10106,3 +10106,74 @@ Gibax stopped there, and the server was stopped after.
 two races and the intermissions): the machine at **1.8%** on average (user
 1.4, system 0.4), one sample at 9%, **CPU steal 0 in all 450**. "1 to 3%"
 above was read from its first third.*
+
+### 9.31 A predicting client records its replay again: the replay goes back with the world
+
+Written on 2026-11-24, branch `replays-2.4`, on Gibax's go ("faudra fix les
+replays le plus vite possible", then "Oui, écris-la"). **Not run yet.**
+
+**Where it stood.** Since 8.96 (`ab126a1a7`, Gibax's option A) a client
+that predicts records no replay: `P_Ticker` wrote every tic it ran into the
+replay, speculated ones included, the restores never rewinding it. That
+was the alpha's known issue "No replay is recorded while you play with
+prediction". 8.96's option B -- only the confirmed tics -- was never
+written.
+
+**Read in the code before writing it**, and it changed the plan. A tic's
+replay data is not its inputs alone: `G_WriteDemoExtraData` writes what
+happened to each player (a join, a respawn, a spectator) and, now and
+then, the RNG seeds a playback checks itself against; `G_WriteAllGhostTics`
+writes each kart's position, every few tics, against the last one written;
+`G_WriteDemoTiccmd` writes each input against the last one written
+(`oldcmd[]`). All of it is the world of the tic that runs. So a kept tic
+cannot be written later, at its confirmation, from another world.
+
+**What is written instead: the replay goes back with the world.**
+- `g_demo.cpp`: `G_SaveDemoWriter` and `G_RestoreDemoWriter` save and put
+  back everything the writing of the next tic depends on -- where the
+  buffer is, `oldcmd[]`, the pending extra data, the RNG check's timer
+  (until now a static inside `G_WriteDemoExtraData`), the ghost positions
+  and their extra fields -- in a `demowriter_t` (64 KiB, opaque; a
+  `static_assert` checks the state fits), tagged with the recording it
+  belongs to (a counter `G_BeginRecording` moves on).
+- `k_rollback.c`: every snapshot (`K_WriteSnapshot`) saves it beside the
+  world; every restore (`K_ReadSnapshot`, network or raw) puts it back
+  (`K_RewindDemo`). A speculated tic's writes are undone with the tic, a
+  kept tic's stay as written -- a tic is only kept when the server's inputs
+  are the ones it ran (`K_RollbackKeepDecide`, `K_SameInput`), so what it
+  wrote is what the confirmed tic would have; a rebuild writes over them.
+  History replays (`rollback_history`) and `rollback_keepearly` go through
+  the same restore, so their corrected tics are written again too.
+- `p_tick.c` and `p_setup.cpp`: the 8.96 gates go -- a predicting client
+  writes every tic it runs, and begins a recording at a level's setup
+  (`K_RollbackSpeculating() == false` there, which a level setup always is:
+  a map change is a netxcmd).
+- Two things a speculated tic may not do, since they cannot be undone:
+  **end the recording** (`G_ConsiderEndingDemoWrite`, buffer full: it saves
+  or frees the replay; the tic writes nothing instead and the next
+  confirmed one ends it) and **keep a hit's victim**
+  (`G_GhostAddHit` takes a reference to the object, held across tics when a
+  player's ghost data skips one, and a restore frees that object and loads
+  another in its place -- 8.96's dangling body). A machine a rollback
+  restores (`!server && K_RollbackPays()`) records no hit list; a playback
+  only uses it to resync a damaged object's health.
+- `rollback_twoclock` prints `rollback_demo: the replay being recorded went
+  back with the world N times, M restores could not put it back`.
+
+Nothing changes on the wire: `WORLDWIDE_PROTOCOL` stays 2.
+
+Checked: the four files compile (`-fsyntax-only` under WSL, the
+`static_assert` included). **Not checked: any run.**
+
+**Predictions**, for the first run (a host recording, a predicting client
+recording, the same race with bots to the end, on Gibax's go):
+1. No crash, no `PARANOIA` line beyond 8.97's at the join; `rollback_demo`
+   on the client counts about one rewind a pass and **0** that could not.
+2. The client's replay saves at the end, and plays to the end with the
+   race's finish order and times, without a `demo desync` line.
+3. The host's and the client's replays carry the same number of tics and
+   the same inputs, tic for tic, up to the `TICCMD_RECEIVED` bit of a kept
+   tic's remote inputs (a guess never carries it; nothing in a tic reads it).
+Then 8.96's own case, the waiting map's restart with a recording on; a
+join in the race; 428 ms of `rollback_lag` (many rebuilds); a race on the
+modded server.

@@ -199,7 +199,7 @@ KNOWN ISSUES
 REPORTING A PROBLEM
 -------------------
 
-On the Ring Racers Worldwide Discord: TODO-DISCORD-LINK
+On the Ring Racers Worldwide Discord: https://discord.gg/SvWgptrUxm
 Or as an issue: https://github.com/GibaxLeGrand/RingRacers_Worldwide/issues
 
 Please say:

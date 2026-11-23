@@ -92,7 +92,7 @@ The full list: [release/README.txt](release/README.txt).
 
 ## Reporting a problem
 
-On the [Ring Racers Worldwide Discord](TODO-DISCORD-LINK), or as an
+On the [Ring Racers Worldwide Discord](https://discord.gg/SvWgptrUxm), or as an
 [issue](https://github.com/GibaxLeGrand/RingRacers_Worldwide/issues): what
 happened, the map, how many players, a WORLDWIDE or a stock server, your
 system -- and the `latest-log.txt` of that session, before you start the

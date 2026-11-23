@@ -25,14 +25,17 @@ JapDub_Addons_Worldwide.wad -- addon characters, in Japanese
     SA2 Sonic, Super Sonic, Ulala, Vector, Vyse -- heard once each addon is
     loaded.
   - Ragna: his own Japanese lines (BlazBlue), gathered by Gibax.
-  - TODO-CREDIT: the other characters of this pack, and their sources.
+  - CD Sonic: the SegaSonic lines below, from KL_SegaSonic.pk3.
+  - Sonic Beat: the ComoDub lines below, from
+    CKV_Super_Sonic_Japanese_Voice.pk3.
 
 SegaSonic_Worldwide.wad -- Sonic, "SegaSonic"
   - From KL_SegaSonic.pk3, by TODO-CREDIT (author).
 
-TODO-CREDIT: the two other packs (the dub for Sonic and Super Sonic from
-CKV_Super_Sonic_Japanese_Voice.pk3, an SRB2Kart addon by TODO-CREDIT), and
-their file names.
+ComoDub_Worldwide.wad and ComoDub_Addons_Worldwide.wad -- Sonic, and the
+addons' Super Sonic, "ComoDub"
+  - From CKV_Super_Sonic_Japanese_Voice.pk3, an SRB2Kart addon, by
+    TODO-CREDIT (author).
 
 Dr. Robotnik's Ring Racers is by Kart Krew Dev. Sonic the Hedgehog and its
 characters belong to SEGA. Neither is affiliated with these packs.

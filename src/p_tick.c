@@ -794,11 +794,14 @@ void P_Ticker(boolean run)
 	{
 		R_UpdateMobjInterpolators();
 
-		// A client that predicts writes no replay: every speculated tic was
-		// written too, the restores never rewinding it, and one wrote across a
-		// level's restart (WORLDWIDE.md 8.96). A replay being recorded stops
-		// where the prediction starts; P_SetupLevel begins none while it runs.
-		if (demo.recording && K_RollbackPredicting() == false)
+		// A client that predicts writes its replay as a server does, every tic
+		// it runs: the replay goes back with the world (G_SaveDemoWriter beside
+		// each rollback snapshot, WORLDWIDE.md 9.31), so a speculated tic's
+		// writes are undone with it and a kept one's stay. From 8.96 to 9.31 a
+		// predicting client recorded no replay at all. G_DemoWriterSane: a
+		// writer outside its buffer writes nothing and stops the recording,
+		// with its trace, instead of writing through it (9.34).
+		if (demo.recording && G_DemoWriterSane())
 		{
 			if (!G_ConsiderEndingDemoWrite())
 			{

@@ -87,6 +87,30 @@
 #include "discord.h"
 #endif
 
+// WORLDWIDE_PROTOCOL's guard (WORLDWIDE.md 9.33). What only WORLDWIDE builds
+// send each other, frozen at its protocol: two builds that announce the same
+// protocol must agree about every byte of it. Change one of these sizes, or add
+// a packet type or a net command, and the build stops here until
+// WORLDWIDE_PROTOCOL is raised (d_clisrv.h) and this block is written again for
+// it -- so no release speaks a protocol it does not announce. Piconet freezes
+// its wire the same way, with test vectors (piconet-protocol, relay.toml).
+// What a tic computes is not guarded here: that is the replays' and the
+// soaks' to show.
+#if WORLDWIDE_PROTOCOL == 2
+_Static_assert(sizeof (statekart_pak) == 56,
+	"statekart_pak changed size: raise WORLDWIDE_PROTOCOL (d_clisrv.h)");
+_Static_assert(sizeof (statecorrection_pak) == 22 + 56 * MAXPLAYERS,
+	"statecorrection_pak changed size: raise WORLDWIDE_PROTOCOL (d_clisrv.h)");
+_Static_assert(sizeof (clientworldwide_pak) == sizeof (clientconfig_pak) + 5,
+	"clientworldwide_pak changed size: raise WORLDWIDE_PROTOCOL (d_clisrv.h)");
+_Static_assert(PT_STATECORRECTION == NUMPACKETTYPE - 1,
+	"a packet type after PT_STATECORRECTION: raise WORLDWIDE_PROTOCOL (d_clisrv.h)");
+_Static_assert(XD_PILOTDUB == MAXNETXCMD - 1,
+	"a net command after XD_PILOTDUB: raise WORLDWIDE_PROTOCOL (d_clisrv.h)");
+#else
+#error "WORLDWIDE_PROTOCOL changed: write its packets' sizes into the guard above (WORLDWIDE.md 9.33)"
+#endif
+
 //
 // NETWORKING
 //
@@ -129,6 +153,101 @@ static tic_t savegameresendcooldown[MAXNETNODES]; // How long before we can rese
 // a counter has been declared next to the code that prints it instead of the
 // code that uses it first.
 static uint32_t suppressedresends;
+
+// Desyncs, seen (WORLDWIDE.md 9.33; Piconet's P10: a desync is detected and
+// said, never hidden). A WORLDWIDE server answers a consistency mismatch with
+// no resend: the light channel puts the karts back, and nothing else. So a
+// mismatch that lasts -- one in each 5 s cooldown window, three windows running
+// -- is something besides the karts: an object, a polyobject, the random
+// generator, a mod's Lua state. Counted per player for the level, said when it
+// lasts, and summed up at the level's end (D_DesyncSummary).
+#define DESYNC_LASTING 3                 // windows in a row that make a desync
+#define DESYNC_WINDOW (6 * TICRATE)      // the cooldown is 5 s; a second to spare
+static uint32_t desynccount[MAXPLAYERS]; // mismatches this level
+static uint8_t desyncrun[MAXPLAYERS];    // windows in a row
+static uint8_t desynclongest[MAXPLAYERS];
+static tic_t desynclast[MAXPLAYERS];     // I_GetTime() of the latest
+static tic_t desyncfrom[MAXPLAYERS];     // the tic the lasting one was first seen
+static INT32 desyncmap = -1;             // the level counted
+
+static void D_DesyncReset(void)
+{
+	memset(desynccount, 0, sizeof desynccount);
+	memset(desyncrun, 0, sizeof desyncrun);
+	memset(desynclongest, 0, sizeof desynclongest);
+	memset(desynclast, 0, sizeof desynclast);
+	memset(desyncfrom, 0, sizeof desyncfrom);
+	desyncmap = -1;
+}
+
+/** The level's desyncs, one line: called at its end (G_DoCompleted), and by
+  * the next mismatch if the level changed without one (a `map`). WORLDWIDE
+  * servers only; nothing counted is said too, so a log shows the race was
+  * watched. */
+void D_DesyncSummary(void)
+{
+	char line[512];
+	size_t len;
+	INT32 i, named = 0; // players named in the line (not "players": it hid the global array)
+
+	if (server == false || K_WorldwideServer() == false)
+		return;
+
+	len = (size_t)snprintf(line, sizeof line, "desync summary: %s --",
+		(desyncmap >= 0) ? G_BuildMapName(desyncmap) : G_BuildMapName(gamemap));
+
+	for (i = 0; i < MAXPLAYERS && len < sizeof line; i++)
+	{
+		if (desynccount[i] == 0)
+			continue;
+
+		named++;
+		len += (size_t)snprintf(line + len, sizeof line - len, " player %d (%s): %u mismatches, %u windows in a row at most%s;",
+			i + 1, player_names[i], desynccount[i], (unsigned)desynclongest[i],
+			(desynclongest[i] >= DESYNC_LASTING) ? va(", desynced from tic %u", (unsigned)desyncfrom[i]) : "");
+	}
+
+	CONS_Printf("%s%s\n", line, (named == 0) ? " no consistency mismatch" : "");
+	D_DesyncReset();
+}
+
+static void D_NoteDesync(INT32 pnum, tic_t tic)
+{
+	const tic_t now = I_GetTime();
+
+	if (pnum < 0 || pnum >= MAXPLAYERS)
+		return;
+
+	if (desyncmap >= 0 && desyncmap != gamemap)
+		D_DesyncSummary(); // the level changed before its end
+
+	desyncmap = gamemap;
+	desynccount[pnum]++;
+
+	// One mismatch a cooldown window at most: the next window's is the run's next.
+	if (desyncrun[pnum] > 0 && now - desynclast[pnum] <= DESYNC_WINDOW)
+	{
+		if (desyncrun[pnum] < UINT8_MAX)
+			desyncrun[pnum]++;
+	}
+	else
+	{
+		desyncrun[pnum] = 1;
+		desyncfrom[pnum] = tic;
+	}
+
+	desynclast[pnum] = now;
+
+	if (desyncrun[pnum] > desynclongest[pnum])
+		desynclongest[pnum] = desyncrun[pnum];
+
+	if (desyncrun[pnum] == DESYNC_LASTING)
+	{
+		CONS_Printf("desync: player %d (%s) on %s, from tic %u -- %d consistency mismatches in a row, 5 s apart, "
+			"with the corrections on: something besides the karts differs, and nothing puts it back\n",
+			pnum + 1, player_names[pnum], G_BuildMapName(gamemap), (unsigned)desyncfrom[pnum], DESYNC_LASTING);
+	}
+}
 static tic_t freezetimeout[MAXNETNODES]; // Until when can this node freeze the server before getting a timeout?
 
 // Incremented by cv_joindelay when a client joins, decremented each tic.
@@ -5904,6 +6023,7 @@ static void HandlePacketFromPlayer(SINT8 node)
 				{
 					savegameresendcooldown[node] = I_GetTime() + 5 * TICRATE;
 					suppressedresends++;
+					D_NoteDesync(netconsole, realstart); // counted, and said when it lasts (9.33)
 
 					CONS_Printf("rollback_correct: consistency mismatch for "
 						"player %d at tic %u -- resend suppressed, corrections "

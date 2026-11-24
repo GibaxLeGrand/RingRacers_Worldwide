@@ -813,6 +813,9 @@ void CL_TimeoutServerList(void);
 boolean Playing(void);
 boolean InADedicatedServer(void);
 
+// A WORLDWIDE server's consistency mismatches of the level, one line (WORLDWIDE.md 9.33).
+void D_DesyncSummary(void);
+
 // Advance client-to-client pubkey verification flow
 void UpdateChallenges(void);
 

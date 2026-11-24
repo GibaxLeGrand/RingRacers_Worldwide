@@ -46,6 +46,7 @@
 #include "doomdef.h"
 #include "doomstat.h"
 #include "g_game.h" // players, playeringame
+#include "g_demo.h" // demowriter_t: the replay goes back with the world (9.31)
 #include "i_system.h" // I_GetPreciseTime()
 #include "i_time.h" // I_GetTime()
 #include "info.h"
@@ -114,6 +115,11 @@ typedef struct
 	// local player's slot in netcmds is written by the sending path, not by the
 	// tic, so "it must be the same" is an assumption and this is the measurement.
 	ticcmd_t usedcmds[MAXPLAYERS];
+
+	// The replay being recorded, where its writing stood when this tic's world
+	// was saved (WORLDWIDE.md 9.31): putting the world back puts the replay back
+	// with it, so a predicting client records only the timeline that stands.
+	demowriter_t demo;
 
 	size_t used;
 	tic_t tic;
@@ -304,6 +310,7 @@ static dboolean K_WriteSnapshot(rollbackslot_t *slot, tic_t tic)
 			sizeu1(slot->used));
 
 	memcpy(slot->cameras, camera, sizeof (slot->cameras));
+	G_SaveDemoWriter(&slot->demo);
 
 	{
 		// Written after P_Ticker by the keeper, so this is the input the tic
@@ -331,6 +338,18 @@ dboolean K_SaveGameState(tic_t tic)
 	return K_WriteSnapshot(&rollbackring[tic % ROLLBACK_TICS], tic);
 }
 
+static uint32_t g_demorewinds;   // restores that put the replay being recorded back too
+static uint32_t g_demonorewind;  // restores while recording that could not (another recording's slot)
+
+/** The replay being recorded goes back with the world (WORLDWIDE.md 9.31). */
+static void K_RewindDemo(rollbackslot_t *slot)
+{
+	if (G_RestoreDemoWriter(&slot->demo))
+		g_demorewinds++;
+	else if (demo.recording)
+		g_demonorewind++;
+}
+
 /** Puts the world back to what a slot holds, wherever the slot came from. */
 static dboolean K_ReadSnapshot(rollbackslot_t *slot)
 {
@@ -340,7 +359,13 @@ static dboolean K_ReadSnapshot(rollbackslot_t *slot)
 		return false;
 
 	if (slot->israw)
-		return K_ReadRawSnapshot(slot);
+	{
+		if (K_ReadRawSnapshot(slot) == false)
+			return false;
+
+		K_RewindDemo(slot);
+		return true;
+	}
 
 	if (P_SaveBufferFromExisting(&save, slot->buffer, slot->used) == false)
 		return false;
@@ -352,6 +377,7 @@ static dboolean K_ReadSnapshot(rollbackslot_t *slot)
 		return false;
 
 	memcpy(camera, slot->cameras, sizeof (slot->cameras));
+	K_RewindDemo(slot);
 
 	return true;
 }
@@ -4477,6 +4503,12 @@ static const char *const g_phasename[NUMKPHASES] = {
 	"join", "intro", "POSITION", "race", "finished"
 };
 static uint32_t g_phasecount[NUMKPHASES][NUMKPC];
+
+// rollback_watch (WORLDWIDE.md 9.33): once this machine's players have all
+// finished, it only watches -- no speculation, the confirmed race drawn.
+static dboolean g_watch = true;
+static uint32_t g_watchpasses;      // passes that watched, this level
+static tic_t g_watchfrom;           // the leveltime the watching began
 static tic_t g_phasefrom[NUMKPHASES], g_phaseto[NUMKPHASES];   // the leveltimes seen in each
 static int32_t g_phase = -1;        // the phase of the latest pass; -1 before any in this level
 static int16_t g_phasemap;          // the level it is in
@@ -4508,12 +4540,22 @@ static void K_PrintPhases(const char *when)
 			c[KPC_SELF], c[KPC_OTHERS], c[KPC_CORRECTION],
 			(c[KPC_PASSES] > named) ? c[KPC_PASSES] - named : 0);
 	}
+
+	// The passes that only watched (rollback_watch, WORLDWIDE.md 9.33): this
+	// machine's players had all finished, so none speculated, and none is in
+	// the table above.
+	if (g_watchpasses > 0)
+	{
+		CONS_Printf("rollback_phases: %s, %s, watching (from leveltime %u) -- %u passes, no speculation\n",
+			K_PhaseMapName(g_phasemap), when, (uint32_t)g_watchfrom, g_watchpasses);
+	}
 }
 
 static void K_ResetPhases(void)
 {
 	memset(g_phasecount, 0, sizeof g_phasecount);
 	g_phase = -1;
+	g_watchpasses = 0;
 }
 
 /** The phase of the level at a frontier whose leveltime is lt, never behind
@@ -5042,6 +5084,13 @@ static void K_ReportPassCosts(void)
 			"a speculated tic\n",
 			(uint32_t)(g_spluahooks / n), (uint32_t)(g_spcheckpos / n));
 	}
+
+	// The replay this machine records, put back with the world (9.31). Not
+	// reset with the window's costs: a race's total, the second number 0.
+	if (demo.recording || g_demorewinds || g_demonorewind)
+		CONS_Printf("rollback_demo: the replay being recorded went back with the world "
+			"%u times, %u restores could not put it back%s\n",
+			g_demorewinds, g_demonorewind, demo.recording ? "" : " (not recording now)");
 
 	K_ReportSaveProfile();
 }
@@ -6986,14 +7035,47 @@ static void K_NoteDrawnOffset(void);
 static dboolean K_KeepUseCorrection(tic_t frontier);
 static void K_KeepNoteKarts(int32_t s);
 
+/** Is this machine only watching the race (rollback_watch, WORLDWIDE.md 9.33)?
+  * Its players have all finished: no input of its own matters any more, and a
+  * finished kart is driven by the server as a bot (K_PlayerUsesBotMovement is
+  * true for `exiting`), which this machine's pad then contradicted on almost
+  * every pass -- 9.30's Emerald Coast rebuilt 459 of its 462 finished passes
+  * for this machine's input. So it stops guessing and draws the confirmed race,
+  * as Piconet's watching game does (spectate.cpp: never predicts, never rolls
+  * back). The drawn world goes back the depth of the last speculation once, at
+  * the finish. Spectators are left as they were: their join is a measured path
+  * (8.105, 8.141). */
+static dboolean K_RollbackWatching(void)
+{
+	int32_t i;
+
+	if (g_watch == false || gamestate != GS_LEVEL)
+		return false;
+
+	for (i = 0; i <= (int32_t)splitscreen; i++)
+	{
+		const int32_t p = g_localplayers[i];
+
+		if (p < 0 || p >= MAXPLAYERS || playeringame[p] == false || players[p].spectator)
+			return false;
+
+		// Finished, or timed out (P_DoTimeOver: no contest, never `exiting`).
+		if (players[p].exiting == 0 && (players[p].pflags & PF_NOCONTEST) == 0)
+			return false;
+	}
+
+	return true;
+}
+
 dboolean K_RollbackKeepArm(void)
 {
 	const int32_t s = (int32_t)(g_confirmedtic % ROLLBACK_TICS);
 
 	g_keeparmed = g_keepkept = false;
 
+	// Watching: nothing kept, so the pass goes back to the confirmed world.
 	if (g_keepspec == false || g_twoclock <= 0 || g_nullspec || g_speculated == false
-		|| gamestate != GS_LEVEL || g_keeptic[s] != g_confirmedtic)
+		|| gamestate != GS_LEVEL || g_keeptic[s] != g_confirmedtic || K_RollbackWatching())
 		return false;
 
 	// The world stays at the speculation's head; the netcode is handed the
@@ -7449,6 +7531,16 @@ void K_RollbackSpeculate(void)
 
 	if (K_RollbackTwoClock() <= 0)
 		return;
+
+	// Only watching (9.33): the pass already went back to the confirmed world
+	// (K_RollbackKeepArm keeps nothing then), and nothing is guessed on top.
+	if (K_RollbackWatching())
+	{
+		if (g_watchpasses == 0)
+			g_watchfrom = leveltime;
+		g_watchpasses++;
+		return;
+	}
 
 	K_NotePassPhase();
 
@@ -9893,6 +9985,42 @@ static void Command_RollbackCascadeLog_f(void)
 			: "off"));
 }
 
+/** Console command: rollback_watch [0/1]
+  *
+  * Client side (WORLDWIDE.md 9.33). On, the default: once this machine's
+  * players have all finished, it only watches -- no speculation, the confirmed
+  * race drawn (K_RollbackWatching). Off: it predicts to the level's end, as
+  * before -- the control. */
+static void Command_RollbackWatch_f(void)
+{
+	if (COM_Argc() > 1)
+		g_watch = (atoi(COM_Argv(1)) != 0);
+
+	CONS_Printf("rollback_watch: %s -- %u passes watched this level\n",
+		(g_watch ? "on -- no speculation once this machine's players have all finished"
+			: "off -- predicting to the level's end"), g_watchpasses);
+}
+
+/** Console command: rollback_desync
+  *
+  * Server side, for testing (WORLDWIDE.md 9.33): parts the server's world from
+  * every client's, once -- one draw from its random generator, which the light
+  * corrections do not carry -- so that the desync count can be seen counting.
+  * The next level's seed brings everyone together again. */
+static void Command_RollbackDesync_f(void)
+{
+	if (server == false || netgame == false || gamestate != GS_LEVEL)
+	{
+		CONS_Printf("rollback_desync: on a server, in a level, only\n");
+		return;
+	}
+
+	(void)P_RandomByte(PR_UNDEFINED);
+
+	CONS_Printf("rollback_desync: the server's random generator drawn once at tic %u, "
+		"ahead of every client's\n", (uint32_t)gametic);
+}
+
 void K_RegisterRollbackStuff(void)
 {
 	// Debug commands rather than plain ones: they are diagnostics, and being
@@ -9939,4 +10067,6 @@ void K_RegisterRollbackStuff(void)
 	COM_AddDebugCommand("rollback_rebuildbudget", Command_RollbackRebuildBudget_f);
 	COM_AddDebugCommand("rollback_slowtic", Command_RollbackSlowTic_f);
 	COM_AddDebugCommand("rollback_cascadelog", Command_RollbackCascadeLog_f);
+	COM_AddDebugCommand("rollback_watch", Command_RollbackWatch_f);
+	COM_AddDebugCommand("rollback_desync", Command_RollbackDesync_f);
 }

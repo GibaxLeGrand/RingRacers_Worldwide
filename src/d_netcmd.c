@@ -1214,7 +1214,11 @@ static void Got_NameAndColor(const UINT8 **cp, INT32 playernum)
 
 	for (i = 0; i <= splitscreen; i++)
 	{
-		if (playernum == g_localplayers[i])
+		// P_IsMachineLocalPlayer: a dedicated server outside the slots keeps
+		// g_localplayers[0] at 0, a person's slot, and never sent that name --
+		// counting it here took snacpending[0] below zero and stopped the
+		// server at the slot-0 player's first rename (WORLDWIDE.md 9.34, ww16cmds).
+		if (playernum == g_localplayers[i] && P_IsMachineLocalPlayer(p))
 		{
 			snacpending[i]--;
 

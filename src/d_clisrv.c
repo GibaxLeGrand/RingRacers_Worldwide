@@ -188,7 +188,7 @@ void D_DesyncSummary(void)
 {
 	char line[512];
 	size_t len;
-	INT32 i, players = 0;
+	INT32 i, named = 0; // players named in the line (not "players": it hid the global array)
 
 	if (server == false || K_WorldwideServer() == false)
 		return;
@@ -201,13 +201,13 @@ void D_DesyncSummary(void)
 		if (desynccount[i] == 0)
 			continue;
 
-		players++;
+		named++;
 		len += (size_t)snprintf(line + len, sizeof line - len, " player %d (%s): %u mismatches, %u windows in a row at most%s;",
 			i + 1, player_names[i], desynccount[i], (unsigned)desynclongest[i],
 			(desynclongest[i] >= DESYNC_LASTING) ? va(", desynced from tic %u", (unsigned)desyncfrom[i]) : "");
 	}
 
-	CONS_Printf("%s%s\n", line, (players == 0) ? " no consistency mismatch" : "");
+	CONS_Printf("%s%s\n", line, (named == 0) ? " no consistency mismatch" : "");
 	D_DesyncReset();
 }
 

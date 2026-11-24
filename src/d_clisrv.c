@@ -87,6 +87,30 @@
 #include "discord.h"
 #endif
 
+// WORLDWIDE_PROTOCOL's guard (WORLDWIDE.md 9.33). What only WORLDWIDE builds
+// send each other, frozen at its protocol: two builds that announce the same
+// protocol must agree about every byte of it. Change one of these sizes, or add
+// a packet type or a net command, and the build stops here until
+// WORLDWIDE_PROTOCOL is raised (d_clisrv.h) and this block is written again for
+// it -- so no release speaks a protocol it does not announce. Piconet freezes
+// its wire the same way, with test vectors (piconet-protocol, relay.toml).
+// What a tic computes is not guarded here: that is the replays' and the
+// soaks' to show.
+#if WORLDWIDE_PROTOCOL == 2
+_Static_assert(sizeof (statekart_pak) == 56,
+	"statekart_pak changed size: raise WORLDWIDE_PROTOCOL (d_clisrv.h)");
+_Static_assert(sizeof (statecorrection_pak) == 22 + 56 * MAXPLAYERS,
+	"statecorrection_pak changed size: raise WORLDWIDE_PROTOCOL (d_clisrv.h)");
+_Static_assert(sizeof (clientworldwide_pak) == sizeof (clientconfig_pak) + 5,
+	"clientworldwide_pak changed size: raise WORLDWIDE_PROTOCOL (d_clisrv.h)");
+_Static_assert(PT_STATECORRECTION == NUMPACKETTYPE - 1,
+	"a packet type after PT_STATECORRECTION: raise WORLDWIDE_PROTOCOL (d_clisrv.h)");
+_Static_assert(XD_PILOTDUB == MAXNETXCMD - 1,
+	"a net command after XD_PILOTDUB: raise WORLDWIDE_PROTOCOL (d_clisrv.h)");
+#else
+#error "WORLDWIDE_PROTOCOL changed: write its packets' sizes into the guard above (WORLDWIDE.md 9.33)"
+#endif
+
 //
 // NETWORKING
 //

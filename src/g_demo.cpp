@@ -290,6 +290,7 @@ static const char *G_DemoWriterEventName(char what)
 	{
 		case 'R': return "buffer made (G_RecordDemo), writer unset, extra = which buffer";
 		case 'P': return "a snapshot from before the recording began: writer put back to its start, extra = at";
+		case 'n': return "a restore before the recording began: nothing written yet, nothing to put back";
 		case 'B': return "recording begun (G_BeginRecording), gen moved on";
 		case 'H': return "header written (G_BeginRecording), extra = its size";
 		case 'b': return "G_BeginRecording skipped: the writer was already set";
@@ -1090,6 +1091,17 @@ boolean G_RestoreDemoWriter(const demowriter_t *in)
 	demowriterstate_t *st = &demowriter_scratch;
 
 	memcpy(st, in->bytes, DEMOWRITER_HEAD);
+
+	// The buffer made, the recording not begun yet (writer unset), and the
+	// snapshot from before it too: no tic has been written, so the replay is
+	// already where that world is -- nothing to put back, nothing that failed.
+	// 9.34's third run: these were its "2 restores could not put it back" a
+	// level ([w] 5, writer unset), counted as failures though nothing was lost.
+	if (st->recording == false && demo.recording && demobuf.buffer != NULL && demobuf.p == NULL)
+	{
+		G_DemoWriterEvent('n', 0, st->gen, demowriter_restoreprints++ < 8);
+		return true;
+	}
 
 	// Saved after this level's buffer was made, before its recording began: the
 	// writer goes back to the recording's start (9.34).
@@ -2067,6 +2079,7 @@ void G_RecordDemo(const char *name)
 	demo.buffer = &demobuf;
 	demo_buffergen++;
 	demowriter_beginvalid = false;
+	demowriter_restoreprints = 0;
 	G_DemoWriterEvent('R', demo_buffergen, 0, true);
 
 	/* FIXME: This whole file is in a wretched state. Take a

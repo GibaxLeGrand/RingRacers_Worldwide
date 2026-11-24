@@ -248,6 +248,20 @@ void G_SetDemoCheckpointTiming(player_t *player, tic_t time, UINT8 checkpoint);
 
 boolean G_CheckDemoTitleEntry(void);
 
+// A predicting client's replay goes back with its world (WORLDWIDE.md 9.31):
+// every rollback snapshot keeps the replay writer's state beside the world's
+// (k_rollback.c), and putting the world back puts the replay back to the same
+// tic -- a speculated tic's writes are undone with the tic, a kept tic's stay.
+// Opaque here; g_demo.cpp checks that its state fits.
+#define DEMOWRITER_BYTES (64*1024)
+typedef struct
+{
+	UINT8 bytes[DEMOWRITER_BYTES];
+} demowriter_t;
+
+void G_SaveDemoWriter(demowriter_t *out);
+boolean G_RestoreDemoWriter(const demowriter_t *in);
+
 typedef enum
 {
 	DEMO_ATTRACT_OFF = 0,

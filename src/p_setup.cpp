@@ -25,7 +25,7 @@
 
 #include "p_local.h"
 #include "p_setup.h"
-#include "k_rollback.h" // K_RollbackPredicting
+#include "k_rollback.h" // K_RollbackSpeculating
 #include "k_dubs.h" // K_LoadDubDefs (WORLDWIDE.md 8.142)
 #include "p_spec.h"
 #include "p_saveg.h"
@@ -8195,9 +8195,11 @@ static void P_InitGametype(void)
 
 	// Start recording replay in multiplayer with a temp filename
 	//@TODO I'd like to fix dedis crashing when recording replays for the future too...
-	// Not on a client that predicts (K_RollbackPredicting, WORLDWIDE.md 8.96).
+	// Not from inside a speculation, which a level is never set up in anyway (a
+	// map change is a netxcmd, and only the confirmed loop runs those). A
+	// predicting client records again since WORLDWIDE.md 9.31 (8.96: it did not).
 	if (gamestate == GS_LEVEL && !demo.playback && multiplayer && !dedicated
-		&& K_RollbackPredicting() == false)
+		&& K_RollbackSpeculating() == false)
 	{
 		char buf[MAX_WADPATH];
 		char ver[128];

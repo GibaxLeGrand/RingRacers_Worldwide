@@ -250,6 +250,7 @@ UINT8 demo_writerng; // 0=no, 1=yes, 2=yes but on a timeout
 static UINT8 demo_writerngtimeout; // tics before demo_writerng 2 writes (was a static of G_WriteDemoExtraData)
 static ticcmd_t oldcmd[MAXPLAYERS];
 static UINT32 demo_writergen; // one more at each G_BeginRecording: which recording a saved writer state is of
+static UINT32 demo_buffergen; // one more at each G_RecordDemo: which level's buffer (9.34)
 
 // ---------------------------------------------------------------------------
 // The replay writer's identity, traced (WORLDWIDE.md 9.34)
@@ -287,7 +288,8 @@ static const char *G_DemoWriterEventName(char what)
 {
 	switch (what)
 	{
-		case 'R': return "buffer made (G_RecordDemo), writer unset";
+		case 'R': return "buffer made (G_RecordDemo), writer unset, extra = which buffer";
+		case 'P': return "a snapshot from before the recording began: writer put back to its start, extra = at";
 		case 'B': return "recording begun (G_BeginRecording), gen moved on";
 		case 'H': return "header written (G_BeginRecording), extra = its size";
 		case 'b': return "G_BeginRecording skipped: the writer was already set";
@@ -296,7 +298,7 @@ static const char *G_DemoWriterEventName(char what)
 		case 'S': return "replay saved (G_SaveDemo), extra = its size";
 		case 'V': return "writer state saved beside a snapshot changed recording or gen, extra = at";
 		case 'W': return "writer state restored, extra = at";
-		case 'w': return "writer state refused while recording, extra = why (1 not saved recording, 2 no buffer, 4 no writer, 8 another gen, 16 ahead)";
+		case 'w': return "writer state refused while recording, extra = why (1 not saved recording, 2 no buffer, 4 no writer, 8 another gen, 16 ahead, 32 another buffer)";
 		case 'X': return "a tic found the writer outside its buffer";
 		case 'N': return "a tic ran before the recording began (writer unset): nothing written";
 	}
@@ -1009,6 +1011,7 @@ struct demowriterstate_t
 	UINT32 gen;                     // demo_writergen when saved
 	boolean recording;
 	size_t at;                      // demobuf.p - demobuf.buffer
+	UINT32 buffergen;               // demo_buffergen when saved: which level's buffer (9.34)
 	ticcmd_t oldcmd[MAXPLAYERS];
 	UINT8 extradata[MAXPLAYERS];
 	UINT8 writerng;
@@ -1028,13 +1031,22 @@ static_assert(sizeof (demowriterstate_t) <= DEMOWRITER_BYTES,
 // thread only, like the snapshots it goes with.
 static demowriterstate_t demowriter_scratch;
 
-void G_SaveDemoWriter(demowriter_t *out)
-{
-	demowriterstate_t *st = &demowriter_scratch;
+// The writer as G_BeginRecording left it, header written, no tic yet (9.34).
+// A snapshot taken after this level's buffer was made but before the recording
+// began -- the speculation runs on one, a tic or two at each level's start --
+// holds a world from before the replay's first tic: putting it back puts the
+// writer back to here. Without it those restores could not put the replay back
+// (2 a level in 9.34's second run), and the tics speculated on them stayed in it.
+static demowriterstate_t demowriter_beginstate;
+static boolean demowriter_beginvalid;
+static UINT32 demowriter_restoreprints; // refusals and rewinds to the start printed, this recording
 
+static void G_CaptureDemoWriter(demowriterstate_t *st)
+{
 	st->gen = demo_writergen;
 	st->recording = (demo.recording && demobuf.buffer != NULL && demobuf.p != NULL);
 	st->at = st->recording ? (size_t)(demobuf.p - demobuf.buffer) : 0;
+	st->buffergen = demo_buffergen;
 
 	if (st->recording)
 	{
@@ -1045,6 +1057,13 @@ void G_SaveDemoWriter(demowriter_t *out)
 		memcpy(st->oldghost, oldghost, sizeof oldghost);
 		memcpy(st->ghostext, ghostext, sizeof ghostext);
 	}
+}
+
+void G_SaveDemoWriter(demowriter_t *out)
+{
+	demowriterstate_t *st = &demowriter_scratch;
+
+	G_CaptureDemoWriter(st);
 
 	// Without a recording, only the head: a dedicated server or a client not
 	// recording pays a few bytes a snapshot, not the whole state.
@@ -1064,15 +1083,27 @@ void G_SaveDemoWriter(demowriter_t *out)
 	}
 }
 
+static void G_ApplyDemoWriter(const demowriterstate_t *st);
+
 boolean G_RestoreDemoWriter(const demowriter_t *in)
 {
 	demowriterstate_t *st = &demowriter_scratch;
-	INT32 i;
 
 	memcpy(st, in->bytes, DEMOWRITER_HEAD);
 
+	// Saved after this level's buffer was made, before its recording began: the
+	// writer goes back to the recording's start (9.34).
+	if (st->recording == false && demo.recording && demobuf.buffer != NULL && demobuf.p != NULL
+		&& st->buffergen == demo_buffergen && demowriter_beginvalid
+		&& demowriter_beginstate.buffergen == demo_buffergen && demowriter_beginstate.gen == demo_writergen)
+	{
+		G_ApplyDemoWriter(&demowriter_beginstate);
+		G_DemoWriterEvent('P', demowriter_beginstate.at, st->gen, demowriter_restoreprints++ < 8);
+		return true;
+	}
+
 	// Only into the recording it was saved from, and only backwards: a state
-	// from before G_BeginRecording, or of another replay, says nothing of this one.
+	// of another replay says nothing of this one.
 	if (st->recording == false || demo.recording == false || demobuf.buffer == NULL || demobuf.p == NULL
 		|| st->gen != demo_writergen || st->at > (size_t)(demobuf.p - demobuf.buffer))
 	{
@@ -1085,15 +1116,23 @@ boolean G_RestoreDemoWriter(const demowriter_t *in)
 			if (demobuf.p == NULL) why |= 4;
 			if (st->gen != demo_writergen) why |= 8;
 			if (demobuf.buffer != NULL && demobuf.p != NULL && st->at > (size_t)(demobuf.p - demobuf.buffer)) why |= 16;
-			G_DemoWriterEvent('w', why, st->gen, false);
+			if (st->buffergen != demo_buffergen) why |= 32;
+			G_DemoWriterEvent('w', why, st->gen, demowriter_restoreprints++ < 8);
 		}
 		return false;
 	}
 
 	memcpy(st, in->bytes, sizeof *st);
+	G_ApplyDemoWriter(st);
+	G_DemoWriterEvent('W', st->at, st->gen, false);
+	return true;
+}
+
+static void G_ApplyDemoWriter(const demowriterstate_t *st)
+{
+	INT32 i;
 
 	demobuf.p = demobuf.buffer + st->at;
-	G_DemoWriterEvent('W', st->at, st->gen, false);
 
 	memcpy(oldcmd, st->oldcmd, sizeof oldcmd);
 	memcpy(demo_extradata, st->extradata, sizeof demo_extradata);
@@ -1114,8 +1153,6 @@ boolean G_RestoreDemoWriter(const demowriter_t *in)
 		if (hits == 0)
 			ghostext[i].flags &= ~EZT_HIT;
 	}
-
-	return true;
 }
 
 void G_WriteAllGhostTics(void)
@@ -2028,7 +2065,9 @@ void G_RecordDemo(const char *name)
 
 	demo.recording = true;
 	demo.buffer = &demobuf;
-	G_DemoWriterEvent('R', 0, 0, true);
+	demo_buffergen++;
+	demowriter_beginvalid = false;
+	G_DemoWriterEvent('R', demo_buffergen, 0, true);
 
 	/* FIXME: This whole file is in a wretched state. Take a
 	look at G_WriteAllGhostTics and G_WriteDemoTiccmd, they
@@ -2383,6 +2422,7 @@ void G_BeginRecording(void)
 
 	demobuf.p = demobuf.buffer;
 	demo_writergen++;
+	demowriter_restoreprints = 0;
 	G_DemoWriterEvent('B', 0, 0, true);
 
 	demoflags = DF_GHOST;
@@ -2617,6 +2657,10 @@ void G_BeginRecording(void)
 				ghostext[i].flags |= EZT_FLIP;
 		}
 	}
+
+	// What a snapshot from before this tic puts the writer back to (9.34).
+	G_CaptureDemoWriter(&demowriter_beginstate);
+	demowriter_beginvalid = demowriter_beginstate.recording;
 
 	G_DemoWriterEvent('H', (demobuf.p && demobuf.buffer) ? (size_t)(demobuf.p - demobuf.buffer) : 0, 0, true);
 }

@@ -10178,6 +10178,39 @@ Then 8.96's own case, the waiting map's restart with a recording on; a
 join in the race; 428 ms of `rollback_lag` (many rebuilds); a race on the
 modded server.
 
+*Annotated 2026-11-24, before any run (Gibax: "écris aussi les cas durs de
+9.31"): the hard cases as runs nobody drives.*
+- *8.96's own case is in every `join` run already: 2.4 restarts the waiting
+  map 3 s after a second human enters (`K_CheckSpectateStatus`,
+  `mapreset`), and `wwreplay join`'s client records from that restart with
+  a speculation standing. Nothing to add.*
+- *A join in the race: `playtest.sh wwreplaylate`, without `join`. The
+  client joins by its own `rollback_join` about 2290 server tics in, the
+  race map 25 s in. 2.4 lets a joiner in mid-race only while one human
+  races (here the host; it refuses once two do) and restarts the race map
+  3 s later, so both replays begin at that restart.*
+- *428 ms: `playtest.sh wwreplay join lag=15`.*
+- *Each followed by `replaycheck.sh <tag>` (`wwreplaylate`,
+  `wwreplay_join_lag15`). The modded server is not run here: its mods are
+  the VPS's.*
+
+*`replaycheck.sh` itself is fixed the same day: it took the replays newer
+than `playlog_<tag>.txt`, which `playtest.sh` copies once the client has
+quit -- after the replays were saved -- so it would have found none. It now
+takes the ones newer than `runstart_<tag>.stamp`, touched as `playtest.sh`
+starts. Predictions:*
+4. *`wwreplay join`: the client's log shows `RR_TESTRUN` loaded again after
+   its entry, and prediction 1 holds through it (no crash, no `PARANOIA`
+   line beyond 8.97's).*
+5. *`wwreplaylate`: the server's log has "Guest entered the game" about
+   2290 tics in and the race map loaded again about 3 s later; no crash, no
+   `PARANOIA` line; `rollback_demo` 0 that could not; both replays play to
+   the end with 0 desync lines, the client's in the stock 2.4 exe too
+   (`STOCK=1 replaycheck.sh wwreplaylate`).*
+6. *`wwreplay join lag=15`: `rollback_demo` about one rewind a pass, as at
+   6 tics, and 0 that could not, with many more rebuilds; 0 desync lines for
+   host and client (`replaycheck.sh wwreplay_join_lag15`).*
+
 ### 9.32 Sixteen people on a dedicated server: the server outside the player slots
 
 Written on 2026-11-24, branch `dedicated16-2.4` (`fda2d0384`, from

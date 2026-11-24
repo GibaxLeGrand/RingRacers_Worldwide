@@ -10106,3 +10106,170 @@ Gibax stopped there, and the server was stopped after.
 two races and the intermissions): the machine at **1.8%** on average (user
 1.4, system 0.4), one sample at 9%, **CPU steal 0 in all 450**. "1 to 3%"
 above was read from its first third.*
+
+### 9.31 A predicting client records its replay again: the replay goes back with the world
+
+Written on 2026-11-24, branch `replays-2.4`, on Gibax's go ("faudra fix les
+replays le plus vite possible", then "Oui, écris-la"). **Not run yet.**
+
+**Where it stood.** Since 8.96 (`ab126a1a7`, Gibax's option A) a client
+that predicts records no replay: `P_Ticker` wrote every tic it ran into the
+replay, speculated ones included, the restores never rewinding it. That
+was the alpha's known issue "No replay is recorded while you play with
+prediction". 8.96's option B -- only the confirmed tics -- was never
+written.
+
+**Read in the code before writing it**, and it changed the plan. A tic's
+replay data is not its inputs alone: `G_WriteDemoExtraData` writes what
+happened to each player (a join, a respawn, a spectator) and, now and
+then, the RNG seeds a playback checks itself against; `G_WriteAllGhostTics`
+writes each kart's position, every few tics, against the last one written;
+`G_WriteDemoTiccmd` writes each input against the last one written
+(`oldcmd[]`). All of it is the world of the tic that runs. So a kept tic
+cannot be written later, at its confirmation, from another world.
+
+**What is written instead: the replay goes back with the world.**
+- `g_demo.cpp`: `G_SaveDemoWriter` and `G_RestoreDemoWriter` save and put
+  back everything the writing of the next tic depends on -- where the
+  buffer is, `oldcmd[]`, the pending extra data, the RNG check's timer
+  (until now a static inside `G_WriteDemoExtraData`), the ghost positions
+  and their extra fields -- in a `demowriter_t` (64 KiB, opaque; a
+  `static_assert` checks the state fits), tagged with the recording it
+  belongs to (a counter `G_BeginRecording` moves on).
+- `k_rollback.c`: every snapshot (`K_WriteSnapshot`) saves it beside the
+  world; every restore (`K_ReadSnapshot`, network or raw) puts it back
+  (`K_RewindDemo`). A speculated tic's writes are undone with the tic, a
+  kept tic's stay as written -- a tic is only kept when the server's inputs
+  are the ones it ran (`K_RollbackKeepDecide`, `K_SameInput`), so what it
+  wrote is what the confirmed tic would have; a rebuild writes over them.
+  History replays (`rollback_history`) and `rollback_keepearly` go through
+  the same restore, so their corrected tics are written again too.
+- `p_tick.c` and `p_setup.cpp`: the 8.96 gates go -- a predicting client
+  writes every tic it runs, and begins a recording at a level's setup
+  (`K_RollbackSpeculating() == false` there, which a level setup always is:
+  a map change is a netxcmd).
+- Two things a speculated tic may not do, since they cannot be undone:
+  **end the recording** (`G_ConsiderEndingDemoWrite`, buffer full: it saves
+  or frees the replay; the tic writes nothing instead and the next
+  confirmed one ends it) and **keep a hit's victim**
+  (`G_GhostAddHit` takes a reference to the object, held across tics when a
+  player's ghost data skips one, and a restore frees that object and loads
+  another in its place -- 8.96's dangling body). A machine a rollback
+  restores (`!server && K_RollbackPays()`) records no hit list; a playback
+  only uses it to resync a damaged object's health.
+- `rollback_twoclock` prints `rollback_demo: the replay being recorded went
+  back with the world N times, M restores could not put it back`.
+
+Nothing changes on the wire: `WORLDWIDE_PROTOCOL` stays 2.
+
+Checked: the four files compile (`-fsyntax-only` under WSL, the
+`static_assert` included). **Not checked: any run.**
+
+**Predictions**, for the first run (a host recording, a predicting client
+recording, the same race with bots to the end, on Gibax's go):
+1. No crash, no `PARANOIA` line beyond 8.97's at the join; `rollback_demo`
+   on the client counts about one rewind a pass and **0** that could not.
+2. The client's replay saves at the end, and plays to the end with the
+   race's finish order and times, without a `demo desync` line.
+3. The host's and the client's replays carry the same number of tics and
+   the same inputs, tic for tic, up to the `TICCMD_RECEIVED` bit of a kept
+   tic's remote inputs (a guess never carries it; nothing in a tic reads it).
+Then 8.96's own case, the waiting map's restart with a recording on; a
+join in the race; 428 ms of `rollback_lag` (many rebuilds); a race on the
+modded server.
+
+### 9.32 Sixteen people on a dedicated server: the server outside the player slots
+
+Written on 2026-11-24, branch `dedicated16-2.4` (`fda2d0384`, from
+`alpha-2.4` at `27d37bf42`), on Gibax's word ("on finit qu'avec 15
+joueurs... J'voudrais remédier à ce souci", then "Oui, route A"). **Not
+compiled** -- the machine it was written on has no compiler; the CI will
+say -- **and not run.**
+
+**Where it stood.** A dedicated server seats fifteen: it keeps slot 0 as
+its own identity (`dedicated ? MAXPLAYERS-1 : MAXPLAYERS` in the caps, the
+first free slot searched from 1). Every net command it sends is player 0's
+(`netconsole = 0` for its node 0), every client is told so at its join
+(`servercfg.serverplayer`, one byte), and about twenty checks in the
+handlers trust player 0 as the server (`playernum != serverplayer`). A
+person in slot 0 would inherit all of it: the server's rights on every
+machine, an input overwritten by the one the dedicated server sends for
+player 0 each tic, a kick of slot 0 that ends the server's own game, Lua's
+`server`. `MAXPLAYERS` 17 would change every per-player array, packet and
+replay, and a WORLDWIDE build could no longer play on a stock 2.4 server.
+
+**What is written: in WORLDWIDE mode the server holds no slot.** A
+WORLDWIDE server lets in WORLDWIDE clients only (8.80), so every machine
+in such a game can know the rule.
+- `serverplayer` is -1 on a dedicated server with `worldwide On`
+  (`D_SetServerIdentity`, at the server's reset and when the switch
+  changes, which only happens with nobody else connected) and on its
+  clients, which read 0xFF for it in the server's config. Everything else
+  -- a stock server, a WORLDWIDE build in vanilla mode, a listen server, a
+  replay -- keeps slot 0 or its own player. `D_ServerOutside()` is
+  `serverplayer < 0`, the one test everything below hangs on.
+- The server's own net commands are filed under `SERVERCMDS` (16), not
+  slot 0's: its `PT_TEXTCMD` from node 0 lands there, `SV_SendTics` sends
+  that bucket (the textcmd's player byte is a `UINT8`, the storage a hash),
+  and `ExtraDataTicker` runs it first, as the server's was, **as player 0's
+  with `D_IsServerCmd()` true** -- every handler indexes its arrays with the
+  number it is given, so it gets a real one. The handlers' checks of who
+  sent a command use `D_IsServerCmd(playernum)`; one left comparing with
+  `serverplayer` fails closed, since no player is -1. Commands already
+  filed when the identity changes (a startup script's netvars) are
+  renumbered with it; slot 0 and `SERVERCMDS` share a hash chain, checked
+  at compile time.
+- Its node 0 is no player: its input is dropped like a node's without one
+  (`netconsole` -1), and it builds none (`CreateNewLocalCMD`).
+- The caps, the first free slot, the join's count and the bots
+  (`K_UpdateMatchRaceBots`, on every machine) count sixteen; `kick` and
+  `ban` take slot 0; a kick of slot 0 no longer ends the server's game;
+  slot 0 is not exempt from the ping kick; `P_IsMachineLocalPlayer` is
+  false for every kart on such a server.
+- It sends none of a player's own commands (name and colours, preferences,
+  dub, party, cheats, the mid-race votes; `D_PlayersOwnXCmd`, refused at the
+  sending and, should one come anyway, at the running, with the rest of its
+  tic), and votes for its bots and its timeouts only.
+- Its chat lines and map-queue requests come from source 16, shown under
+  the shout name, never a player's; a say or map-queue packet whose source
+  is past the players is dropped (it was read out of bounds before).
+- Lua: `server` is nil there, and a Lua console command the server runs
+  gets nil for the player. **An addon that reads `server.<field>` errors
+  there** -- not a crash, but its function stops: the modded server's 112
+  mods are to be watched before it runs this.
+- `listbans`, `unban` and `causecfail` know the server as the host.
+- Two log lines say which it is: the server's "server identity: outside
+  the player slots (WORLDWIDE mode) -- 16 seats" (or "slot 0 -- 15 seats"
+  when it goes back), the client's "server identity: the server holds no
+  player slot -- 16 seats".
+
+`WORLDWIDE_PROTOCOL` is 3: a build of protocol 2 and one of 3 refuse each
+other, so this goes out as `v0.2.0`, not as a fix release. Upstream's
+crash when bots fill every slot and a person joins (8.128,
+`playernode[16]`) is untouched, and reachable at sixteen as at fifteen.
+
+**How it is checked** (each run on Gibax's go). The harness: `playtest.sh
+ww16 dedicated join` -- a dedicated WORLDWIDE server, the client joined
+alone into slot 0, then fifteen bots at the race map
+(`playserver_ww16.cfg`, `playclient_ww16.cfg`). `playtest.sh` now takes
+`karts=16` on a dedicated server whose scenario turns WORLDWIDE mode on.
+
+**Predictions**, for that first run:
+1. The server prints "server identity: outside the player slots" once,
+   after `worldwide on`, and the `cheats` and `antigrief` set before it take
+   effect (their lines in its log): the renumbering.
+2. The client prints "server identity: the server holds no player slot";
+   `nodes` shows it alone in slot 0 before the race map and sixteen karts
+   after it.
+3. The server's two `say` lines reach the client under the shout name,
+   never under its own player's; `listbans` runs on the server. No "Illegal
+   ... command", no "dropped with the rest of its tic" on either side.
+4. The race holds as `wwwindows` at eight karts (8.99): no kick, no
+   full-state resend, `rollback_drift` 0.000, a pass under Phase B's gate
+   at sixteen (8.136).
+Then, by hand, with a second person: the slot-0 player kicked from the
+server's console (the server goes on), its name changed, a vote; the four
+compatibility cases of 8.135 again -- a stock 2.4 client refused, a
+WORLDWIDE client on a stock server, a WORLDWIDE dedicated server in vanilla
+mode at fifteen ("slot 0 -- 15 seats"), a protocol 2 build refused with
+its message; and a race on the modded server, its Lua errors counted.

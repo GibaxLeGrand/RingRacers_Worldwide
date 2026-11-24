@@ -262,6 +262,11 @@ typedef struct
 void G_SaveDemoWriter(demowriter_t *out);
 boolean G_RestoreDemoWriter(const demowriter_t *in);
 
+// Whether a tic may write the replay: false when the writer is unset (a tic
+// before G_BeginRecording) or points outside its buffer -- then it also stops
+// the recording and prints the writer's last changes (WORLDWIDE.md 9.34).
+boolean G_DemoWriterSane(void);
+
 typedef enum
 {
 	DEMO_ATTRACT_OFF = 0,

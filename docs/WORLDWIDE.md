@@ -10273,3 +10273,85 @@ compatibility cases of 8.135 again -- a stock 2.4 client refused, a
 WORLDWIDE client on a stock server, a WORLDWIDE dedicated server in vanilla
 mode at fifteen ("slot 0 -- 15 seats"), a protocol 2 build refused with
 its message; and a race on the modded server, its Lua errors counted.
+
+### 9.33 For `v0.1.1`: desyncs seen, no prediction once finished, the protocol guarded
+
+Written on 2026-11-24, branch `v011-2.4` (from `alpha-2.4` at `f2d112444`),
+on Gibax's word ("Oui, écris-les"), from the study of Piconet, F-Zero GX's
+online rollback: its points 1, 2 and 5. Ideas only, no code: Piconet is GPL-3.0-or-later, this fork's
+sources say GPL version 2. `replays-2.4` (9.31) is merged into the branch,
+so that one build carries all of `v0.1.1` (`af340b860`). Nothing changes on
+the wire: `WORLDWIDE_PROTOCOL` stays 2. **Not compiled** -- the machine it
+was written on has none; the CI will say -- **and not run.**
+
+**Desyncs, seen** (`e3086df56`; Piconet's P10: a desync is detected and
+said, never hidden). A WORLDWIDE server answers a consistency mismatch with
+no resend (8.4, `K_RollbackCorrectSuppress`), the light channel puts the
+karts back, and `Consistancy()` only sums the players' position and item and
+the random generator (`MOBJCONSISTANCY` is off). So a mismatch that lasts is
+something besides the karts -- an object, a polyobject, the generator, a
+mod's Lua -- which nothing puts back, and until now it was one "resend
+suppressed" line every 5 s. The server now counts them per player for the
+level: one in each 5 s cooldown window, three windows running make a
+`desync: player N (name) on MAP, from tic T -- 3 consistency mismatches in a
+row ...` line, once; and at the level's end (`G_DoCompleted`), every level a
+WORLDWIDE server runs, a `desync summary: MAP -- ...` line, or "no
+consistency mismatch". `rollback_desync` (server, for testing) draws the
+server's generator once, which the corrections do not carry, so that the
+count can be seen counting.
+
+**No prediction once finished** (`33a3dac1e`, `rollback_watch`, on by
+default). 9.30's Emerald Coast rebuilt 459 of its 462 finished passes for
+this machine's input: after the finish the server drives the kart as a bot
+(`K_PlayerUsesBotMovement` is true for `exiting`), which this machine's pad
+contradicts -- supposed, not shown. Piconet's watching game never predicts.
+Once this machine's players have all finished or been timed out (`exiting`,
+or `PF_NOCONTEST` from `P_DoTimeOver`), `K_RollbackKeepArm` keeps nothing,
+the pass goes back to the confirmed world, and `K_RollbackSpeculate` runs
+nothing on top: the confirmed race is drawn. The drawn world goes back the
+last speculation's depth once, at the finish -- its look is for Gibax's
+eyes in a driven race. Spectators are left as they were: their join is a
+measured path (8.105, 8.141). Those passes are a line of `rollback_phases`
+("watching (from leveltime L) -- N passes, no speculation"), not counted in
+its table. `rollback_watch 0` predicts to the level's end, as before: the
+control.
+
+**The protocol guarded** (`9d033ea4c`; Piconet freezes its wire with test
+vectors). `d_clisrv.c` stops the build if what only WORLDWIDE builds send
+each other changes at protocol 2: `statekart_pak` 56 bytes,
+`statecorrection_pak` 22 + 56 a slot, `clientworldwide_pak` 5 bytes past
+`clientconfig_pak`, `PT_STATECORRECTION` and `XD_PILOTDUB` last of their
+lists; and any other protocol number stops it until the block is written for
+it. `dedicated16-2.4` (9.32, protocol 3) will have to write it when merged.
+
+**How it is checked**, unattended (Gibax away, the measuring machine alone;
+each run on his go): `playtest.sh wwdesync join`, `playtest.sh wwwatch0
+join` then `playtest.sh wwwatch join` -- wwlong's race to its end, the kart
+nobody drives timed out about 30 s after half the grid has finished -- and
+9.31's `playtest.sh wwreplay join`, then `STOCK=1 replaycheck.sh`, which
+plays the client's replay with the stock 2.4 exe as well.
+
+**Predictions**, written before any run:
+1. The CI builds the branch on Windows and Linux. If the guard stops it, the
+   sizes above were miscounted by hand, not the protocol changed: the
+   number is put right, nothing else.
+2. `wwdesync`: no "consistency mismatch" line on the server before its
+   `rollback_desync` (about 2100 tics into the race -- the session's
+   control); after it, a "resend suppressed" line for the client about every
+   5 s to the race's end, one `desync:` line 10 to 15 s after the draw, and
+   at the time over a `desync summary` naming the client alone, its windows
+   in a row about as many as its mismatches, desynced from about the draw's
+   tic. No kick, no resend, the race to its end.
+3. `wwwatch0` and `wwwatch` run the same race to its end, `rollback_drift`
+   0.000 in both, and their servers' `desync summary` says "no consistency
+   mismatch".
+4. `wwwatch0` (the control): a "finished" line in `rollback_phases` and no
+   "watching" line. `wwwatch`: a "watching (from leveltime L)" line, L the
+   control's "finished" start within a few tics, its passes about as many as
+   the control's finished ones; no "finished" line, or one of a pass or two;
+   no speculated pass after L.
+5. `wwreplay`: 9.31's predictions; and the client's replay, played by the
+   stock 2.4 exe, reaches its end with no "Demo playback has desynced" line.
+Then, driven, by Gibax: a race finished by hand -- 9.30's 459 of 462 under
+the control, none speculated under `rollback_watch` -- and how the drawn
+world's step back at the line looks.

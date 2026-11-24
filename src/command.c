@@ -1851,7 +1851,7 @@ static void Got_NetVar(const UINT8 **p, INT32 playernum)
 	const char *svalue;
 	boolean stealth;
 
-	if (playernum != serverplayer && !IsPlayerAdmin(playernum) && !serverloading)
+	if (!D_IsServerCmd(playernum) && !IsPlayerAdmin(playernum) && !serverloading)
 	{
 		// not from server or remote admin, must be hacked/buggy client
 		CONS_Alert(CONS_WARNING, M_GetText("Illegal netvar command received from %s\n"), player_names[playernum]);

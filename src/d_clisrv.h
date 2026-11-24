@@ -328,7 +328,8 @@ struct clientconfig_pak
 // the stock one while it runs WORLDWIDE mode. WORLDWIDE_PROTOCOL goes up when
 // two WORLDWIDE builds can no longer play together.
 #define WORLDWIDE_MAGIC "RRWW"
-#define WORLDWIDE_PROTOCOL 2 // 2: XD_PILOTDUB, which a protocol 1 build would kick for (WORLDWIDE.md 9.7)
+#define WORLDWIDE_PROTOCOL 3 // 2: XD_PILOTDUB, which a protocol 1 build would kick for (WORLDWIDE.md 9.7);
+                             // 3: a dedicated server outside the player slots (9.32)
 
 struct clientworldwide_pak
 {
@@ -812,6 +813,19 @@ void CL_TimeoutServerList(void);
 // Is there a game running
 boolean Playing(void);
 boolean InADedicatedServer(void);
+
+// A dedicated server in WORLDWIDE mode holds no player slot, so sixteen people
+// fit where a stock dedicated server keeps slot 0 for itself (WORLDWIDE.md 9.32).
+// serverplayer is then -1 -- on the server, and on its clients, which read 0xFF
+// for it in the server's config -- and the server's own net commands travel apart,
+// numbered SERVERCMDS, run as player 0's with D_IsServerCmd true. Every check that
+// still compares a player with serverplayer then fails closed: no player is -1.
+#define SERVERCMDS MAXPLAYERS
+boolean D_ServerOutside(void);
+boolean D_ServerHoldsASlot(void);
+boolean D_IsServerCmd(INT32 playernum);
+void D_SetServerIdentity(void);
+UINT8 D_ServerSaySource(void);
 
 // Advance client-to-client pubkey verification flow
 void UpdateChallenges(void);

@@ -262,6 +262,55 @@ typedef struct textcmdtic_s
 ticcmd_t netcmds[BACKUPTICS][MAXPLAYERS];
 static textcmdtic_t *textcmds[TEXTCMD_HASH_SIZE] = {NULL};
 
+// The server's own net commands are running, filed apart under SERVERCMDS
+// because the server holds no slot (D_ServerOutside, WORLDWIDE.md 9.32).
+static boolean g_runningservercmd = false;
+
+// Slot 0's commands and SERVERCMDS share a hash chain, so the server's pending
+// commands move between the two by their number alone (D_RenumberTextcmds).
+#if (SERVERCMDS & (TEXTCMD_HASH_SIZE - 1)) != 0
+#error "SERVERCMDS and slot 0 must share a textcmd hash chain"
+#endif
+
+// The server's commands already filed when its identity changes -- a
+// dedicated server's startup script turning WORLDWIDE mode on after setting
+// netvars -- follow it to their new number, or nothing would run them.
+static void D_RenumberTextcmds(INT32 from, INT32 to)
+{
+	INT32 h;
+
+	for (h = 0; h < TEXTCMD_HASH_SIZE; h++)
+	{
+		textcmdtic_t *textcmdtic;
+
+		for (textcmdtic = textcmds[h]; textcmdtic; textcmdtic = textcmdtic->next)
+		{
+			textcmdplayer_t *found = NULL, *taken = NULL;
+			textcmdplayer_t *entry;
+
+			for (entry = textcmdtic->playercmds[0]; entry; entry = entry->next)
+			{
+				if (entry->playernum == from)
+					found = entry;
+				else if (entry->playernum == to)
+					taken = entry;
+			}
+
+			if (found == NULL)
+				continue;
+
+			if (taken != NULL)
+			{
+				CONS_Alert(CONS_WARNING, "server identity: tic %u has commands under both %d and %d -- left as they are\n",
+					(unsigned)textcmdtic->tic, from, to);
+				continue;
+			}
+
+			found->playernum = to;
+		}
+	}
+}
+
 
 static tic_t stop_spamming[MAXPLAYERS];
 
@@ -409,8 +458,38 @@ void RegisterNetXCmd(netxcmd_t id, void (*cmd_f)(const UINT8 **p, INT32 playernu
 	listnetxcmd[id] = cmd_f;
 }
 
+// The commands a player sends about itself: its name and colours, its
+// preferences, its dub, its party, its cheats, its votes. A server outside the
+// slots has no self for them to be about -- run as its commands, they would
+// land on player 0, somebody's kart -- so it sends none (WORLDWIDE.md 9.32).
+static boolean D_PlayersOwnXCmd(UINT8 id)
+{
+	switch (id)
+	{
+		case XD_NAMEANDCOLOR:
+		case XD_WEAPONPREF:
+		case XD_PILOTDUB:
+		case XD_PARTYINVITE:
+		case XD_ACCEPTPARTYINVITE:
+		case XD_CANCELPARTYINVITE:
+		case XD_LEAVEPARTY:
+		case XD_CHEAT:
+		case XD_CALLZVOTE:
+		case XD_SETZVOTE:
+			return true;
+		default:
+			return false;
+	}
+}
+
 void SendNetXCmdForPlayer(UINT8 playerid, netxcmd_t id, const void *param, size_t nparam)
 {
+	if (dedicated && D_ServerOutside() && D_PlayersOwnXCmd((UINT8)id))
+	{
+		CONS_Debug(DBG_NETPLAY, "server outside the slots: net command %d not sent, it is a player's own\n", id);
+		return;
+	}
+
 	// Never from a speculated tic.
 	//
 	// localtextcmd is netcode state rather than world state, so the archive does
@@ -550,16 +629,47 @@ static UINT8* D_GetTextcmd(tic_t tic, INT32 playernum)
 	return textcmdplayer->cmd;
 }
 
+// The textcmd buckets, in the order they are sent and run: the server's own
+// first, then each player's. A server that holds a slot files its own in slot
+// 0's; one outside the slots files them under SERVERCMDS (WORLDWIDE.md 9.32).
+#define TEXTCMD_BUCKETS (MAXPLAYERS + 1)
+
+static INT32 D_TextcmdBucket(INT32 k)
+{
+	if (D_ServerOutside())
+		return (k == 0 ? SERVERCMDS : k - 1);
+
+	return k; // SERVERCMDS last, and never live
+}
+
+static boolean D_TextcmdBucketLive(INT32 bucket)
+{
+	if (bucket == SERVERCMDS)
+		return D_ServerOutside();
+
+	if (bucket < 0 || bucket >= MAXPLAYERS)
+		return false;
+
+	return (playeringame[bucket] || (bucket == 0 && D_ServerOutside() == false));
+}
+
 static boolean ExtraDataTicker(void)
 {
 	boolean anyNetCmd = false;
-	INT32 i;
+	INT32 k;
 
-	for (i = 0; i < MAXPLAYERS; i++)
+	for (k = 0; k < TEXTCMD_BUCKETS; k++)
 	{
-		if (playeringame[i] || i == 0)
+		const INT32 bucket = D_TextcmdBucket(k);
+		const boolean fromserver = (bucket == SERVERCMDS);
+
+		// The server's own commands run as player 0's, with D_IsServerCmd true:
+		// every handler indexes its arrays with the number it is given.
+		const INT32 i = (fromserver ? 0 : bucket);
+
+		if (D_TextcmdBucketLive(bucket))
 		{
-			const UINT8 *bufferstart = D_GetExistingTextcmd(gametic, i);
+			const UINT8 *bufferstart = D_GetExistingTextcmd(gametic, bucket);
 
 			if (bufferstart)
 			{
@@ -569,18 +679,28 @@ static boolean ExtraDataTicker(void)
 				curpos += 2;
 				while (curpos < bufferend)
 				{
+					if (fromserver && D_PlayersOwnXCmd(*curpos))
+					{
+						// Never sent (SendNetXCmdForPlayer); its length is the
+						// handler's to read, so the rest of the bucket goes too.
+						CONS_Alert(CONS_WARNING, "server outside the slots: its net command %d is a player's own -- dropped with the rest of its tic\n", *curpos);
+						break;
+					}
+
 					if (*curpos < MAXNETXCMD && listnetxcmd[*curpos])
 					{
 						const UINT8 id = *curpos;
 						curpos++;
-						DEBFILE(va("executing x_cmd %s ply %u ", netxcmdnames[id - 1], i));
+						DEBFILE(va("executing x_cmd %s ply %u%s ", netxcmdnames[id - 1], i, (fromserver ? " (server)" : "")));
+						g_runningservercmd = fromserver;
 						(listnetxcmd[id])(&curpos, i);
+						g_runningservercmd = false;
 						DEBFILE("done\n");
 						anyNetCmd = true;
 					}
 					else
 					{
-						if (server)
+						if (server && fromserver == false)
 						{
 							SendKick(i, KICK_MSG_CON_FAIL);
 							DEBFILE(va("player %d kicked [gametic=%u] reason as follows:\n", i, gametic));
@@ -1162,7 +1282,7 @@ static void SV_SendServerInfo(INT32 node, tic_t servertime)
 	netbuffer->u.serverinfo.leveltime = (tic_t)LONG(leveltime);
 
 	netbuffer->u.serverinfo.numberofplayer = (UINT8)D_NumPlayers();
-	netbuffer->u.serverinfo.maxplayer = (UINT8)(min((dedicated ? MAXPLAYERS-1 : MAXPLAYERS), cv_maxconnections.value));
+	netbuffer->u.serverinfo.maxplayer = (UINT8)(min(((dedicated && !D_ServerOutside()) ? MAXPLAYERS-1 : MAXPLAYERS), cv_maxconnections.value));
 
 	if (!node)
 		netbuffer->u.serverinfo.refusereason = 0;
@@ -1337,7 +1457,7 @@ static boolean SV_SendServerConfig(INT32 node)
 	netbuffer->u.servercfg.modifiedgame = (UINT8)modifiedgame;
 	netbuffer->u.servercfg.dedicated = (boolean)dedicated;
 
-	netbuffer->u.servercfg.maxplayer = (UINT8)(min((dedicated ? MAXPLAYERS-1 : MAXPLAYERS), cv_maxconnections.value));
+	netbuffer->u.servercfg.maxplayer = (UINT8)(min(((dedicated && !D_ServerOutside()) ? MAXPLAYERS-1 : MAXPLAYERS), cv_maxconnections.value));
 	netbuffer->u.servercfg.allownewplayer = cv_allownewplayer.value;
 	netbuffer->u.servercfg.discordinvites = (boolean)cv_discordinvites.value;
 
@@ -2980,7 +3100,7 @@ static void Command_Ban(void)
 		UINT8 *p = buf;
 		const SINT8 pn = nametonum(COM_Argv(1));
 
-		if (pn == -1 || pn == 0)
+		if (pn == -1 || (pn == 0 && !D_ServerOutside()))
 			return;
 
 		WRITEUINT8(p, pn);
@@ -3032,7 +3152,7 @@ static void Command_Kick(void)
 		UINT8 *p = buf;
 		const SINT8 pn = nametonum(COM_Argv(1));
 
-		if (pn == -1 || pn == 0)
+		if (pn == -1 || (pn == 0 && !D_ServerOutside()))
 			return;
 
 		// Special case if we are trying to kick a player who is downloading the game state:
@@ -3094,7 +3214,7 @@ static void Got_KickCmd(const UINT8 **p, INT32 playernum)
 	}
 
 	// Is playernum authorized to make this kick?
-	if (playernum != serverplayer && !IsPlayerAdmin(playernum)
+	if (!D_IsServerCmd(playernum) && !IsPlayerAdmin(playernum)
 		/*&& !(playernode[playernum] != UINT8_MAX && playerpernode[playernode[playernum]] == 2
 		&& nodetoplayer2[playernode[playernum]] == pnum)*/)
 	{
@@ -3285,7 +3405,9 @@ static void Got_KickCmd(const UINT8 **p, INT32 playernum)
 			break;
 	}
 
-	if (playernode[pnum] == playernode[consoleplayer])
+	// A dedicated server has no player of its own to be kicked; outside the
+	// slots, slot 0 is somebody's, and its kick must not end the server's game.
+	if (!(dedicated && D_ServerOutside()) && playernode[pnum] == playernode[consoleplayer])
 	{
 		LUA_HookBool(false, HOOK(GameQuit)); //Lua hooks handled differently now
 
@@ -3570,7 +3692,7 @@ void Joinable_OnChange(void)
 	if (!server)
 		return;
 
-	maxplayer = (UINT8)(min((dedicated ? MAXPLAYERS-1 : MAXPLAYERS), cv_maxconnections.value));
+	maxplayer = (UINT8)(min(((dedicated && !D_ServerOutside()) ? MAXPLAYERS-1 : MAXPLAYERS), cv_maxconnections.value));
 
 	WRITEUINT8(p, maxplayer);
 	WRITEUINT8(p, cv_allownewplayer.value);
@@ -3697,12 +3819,11 @@ void SV_ResetServer(void)
 	cl_redownloadinggamestate = false;
 
 	if (dedicated)
-	{
 		nodeingame[0] = true;
-		serverplayer = 0;
-	}
-	else
-		serverplayer = consoleplayer;
+
+	// Slot 0 for a dedicated server, none for one in WORLDWIDE mode (9.32),
+	// this machine's own player otherwise.
+	D_SetServerIdentity();
 
 	if (server)
 		servernode = 0;
@@ -3861,7 +3982,7 @@ static void Got_AddPlayer(const UINT8 **p, INT32 playernum)
 	player_t *newplayer;
 	uint8_t public_key[PUBKEYLENGTH];
 
-	if (playernum != serverplayer && !IsPlayerAdmin(playernum))
+	if (!D_IsServerCmd(playernum) && !IsPlayerAdmin(playernum))
 	{
 		// protect against hacked/buggy client
 		CONS_Alert(CONS_WARNING, M_GetText("Illegal add player command received from %s\n"), player_names[playernum]);
@@ -3990,7 +4111,7 @@ static void Got_RemovePlayer(const UINT8 **p, INT32 playernum)
 {
 	SINT8 pnum, reason;
 
-	if (playernum != serverplayer && !IsPlayerAdmin(playernum))
+	if (!D_IsServerCmd(playernum) && !IsPlayerAdmin(playernum))
 	{
 		// protect against hacked/buggy client
 		CONS_Alert(CONS_WARNING, M_GetText("Illegal remove player command received from %s\n"), player_names[playernum]);
@@ -4020,7 +4141,7 @@ static void Got_AddBot(const UINT8 **p, INT32 playernum)
 	UINT8 difficulty = DIFFICULTBOT;
 	botStyle_e style = BOT_STYLE_NORMAL;
 
-	if (playernum != serverplayer && !IsPlayerAdmin(playernum))
+	if (!D_IsServerCmd(playernum) && !IsPlayerAdmin(playernum))
 	{
 		// protect against hacked/buggy client
 		CONS_Alert(CONS_WARNING, M_GetText("Illegal add player command received from %s\n"), player_names[playernum]);
@@ -4044,7 +4165,7 @@ static void Got_ServerMutePlayer(const UINT8 **p, INT32 playernum)
 {
 	UINT8 forplayer = READUINT8(*p);
 	UINT8 muted = READUINT8(*p);
-	if (playernum != serverplayer)
+	if (!D_IsServerCmd(playernum))
 	{
 		CONS_Alert(CONS_WARNING, M_GetText("Illegal server mute player cmd from %s\n"), player_names[playernum]);
 		if (server)
@@ -4069,7 +4190,7 @@ static void Got_ServerTempMutePlayer(const UINT8 **p, INT32 playernum)
 {
 	UINT8 forplayer = READUINT8(*p);
 	UINT8 muted = READUINT8(*p);
-	if (playernum != serverplayer)
+	if (!D_IsServerCmd(playernum))
 	{
 		CONS_Alert(CONS_WARNING, M_GetText("Illegal server mute player cmd from %s\n"), player_names[playernum]);
 		if (server)
@@ -4103,7 +4224,7 @@ static void Got_ServerDeafenPlayer(const UINT8 **p, INT32 playernum)
 {
 	UINT8 forplayer = READUINT8(*p);
 	UINT8 deafened = READUINT8(*p);
-	if (playernum != serverplayer)
+	if (!D_IsServerCmd(playernum))
 	{
 		CONS_Alert(CONS_WARNING, M_GetText("Illegal server deafen player cmd from %s\n"), player_names[playernum]);
 		if (server)
@@ -4141,7 +4262,7 @@ static boolean SV_AddWaitingPlayers(SINT8 node, UINT8 *availabilities, player_co
 
 				// search for a free playernum
 				// we can't solely use playeringame since it is not updated here
-				for (newplayernum = dedicated ? 1 : 0; newplayernum < MAXPLAYERS; newplayernum++)
+				for (newplayernum = (dedicated && !D_ServerOutside()) ? 1 : 0; newplayernum < MAXPLAYERS; newplayernum++)
 				{
 					if (playeringame[newplayernum])
 						continue;
@@ -4355,6 +4476,65 @@ boolean InADedicatedServer(void)
 	return Playing() && (dedicated || connectedtodedicated);
 }
 
+// ----------------------------------------------------------------------------
+// A dedicated server outside the player slots (WORLDWIDE.md 9.32)
+//
+// A stock dedicated server keeps slot 0 as its own identity: every net command
+// it sends is player 0's, and every machine trusts player 0 as the server. So it
+// seats fifteen. In WORLDWIDE mode -- whose server lets in WORLDWIDE clients
+// only, so every machine knows the rule -- it holds no slot: serverplayer is -1,
+// its commands are filed apart under SERVERCMDS, and they run as player 0's with
+// D_IsServerCmd true. A check left comparing with serverplayer fails closed.
+
+boolean D_ServerOutside(void)
+{
+	return (serverplayer < 0);
+}
+
+boolean D_ServerHoldsASlot(void)
+{
+	return (InADedicatedServer() && D_ServerOutside() == false);
+}
+
+boolean D_IsServerCmd(INT32 playernum)
+{
+	if (D_ServerOutside() == false)
+		return (playernum == serverplayer);
+
+	return g_runningservercmd;
+}
+
+// The server's identity, from what it is: run at its reset and when its
+// WORLDWIDE switch changes, which only happens with nobody else connected.
+void D_SetServerIdentity(void)
+{
+	const boolean wasoutside = D_ServerOutside();
+
+	if (dedicated)
+		serverplayer = (cv_worldwide.value ? -1 : 0);
+	else
+		serverplayer = consoleplayer;
+
+	// Its commands already filed follow it (a startup script's netvars).
+	if (server && dedicated && wasoutside != D_ServerOutside())
+	{
+		if (D_ServerOutside())
+			D_RenumberTextcmds(0, SERVERCMDS);
+		else
+			D_RenumberTextcmds(SERVERCMDS, 0);
+
+		CONS_Printf("server identity: %s\n", (D_ServerOutside()
+			? "outside the player slots (WORLDWIDE mode) -- 16 seats"
+			: "slot 0 -- 15 seats"));
+	}
+}
+
+// Who the server's own chat lines are from: its slot, or none.
+UINT8 D_ServerSaySource(void)
+{
+	return (D_ServerOutside() ? SERVERCMDS : (UINT8)servernode);
+}
+
 boolean SV_SpawnServer(void)
 {
 #ifdef TESTERS
@@ -4485,13 +4665,14 @@ static void SV_SendRefuse(INT32 node, const char *reason)
 // used at txtcmds received to check packetsize bound
 static size_t TotalTextCmdPerTic(tic_t tic)
 {
-	INT32 i;
+	INT32 k;
 	size_t total = 1; // num of textcmds in the tic (ntextcmd byte)
 
-	for (i = 0; i < MAXPLAYERS; i++)
+	for (k = 0; k < TEXTCMD_BUCKETS; k++)
 	{
+		const INT32 i = D_TextcmdBucket(k);
 		UINT8 *textcmd = D_GetExistingTextcmd(tic, i);
-		if ((!i || playeringame[i]) && textcmd)
+		if (D_TextcmdBucketLive(i) && textcmd)
 			total += 3 + ((UINT16*)textcmd)[0]; // "+2" for size and playernum
 	}
 
@@ -4538,10 +4719,10 @@ static void HandleConnect(SINT8 node)
 	// Sal: Dedicated mode is INCREDIBLY hacked together.
 	// If a server filled out, then it'd overwrite the host and turn everyone into weird husks.....
 	// It's too much effort to legimately fix right now. Just prevent it from reaching that state.
-	UINT8 maxplayers = min((dedicated ? MAXPLAYERS-1 : MAXPLAYERS), cv_maxconnections.value);
+	UINT8 maxplayers = min(((dedicated && !D_ServerOutside()) ? MAXPLAYERS-1 : MAXPLAYERS), cv_maxconnections.value);
 	UINT8 connectedplayers = 0;
 
-	for (i = dedicated ? 1 : 0; i < MAXPLAYERS; i++)
+	for (i = (dedicated && !D_ServerOutside()) ? 1 : 0; i < MAXPLAYERS; i++)
 	{
 		// We use this to count players because it is affected by SV_AddWaitingPlayers when
 		// more than one client joins on the same tic, unlike playeringame and D_NumPlayers.
@@ -5131,7 +5312,10 @@ static void HandlePacketFromAwayNode(SINT8 node)
 #endif
 
 			nodeingame[(UINT8)servernode] = true;
-			serverplayer = netbuffer->u.servercfg.serverplayer;
+			// 0xFF: a server outside the player slots (WORLDWIDE.md 9.32).
+			serverplayer = (netbuffer->u.servercfg.serverplayer == 0xFF ? -1 : netbuffer->u.servercfg.serverplayer);
+			if (serverplayer < 0)
+				CONS_Printf("server identity: the server holds no player slot -- 16 seats (WORLDWIDE.md 9.32)\n");
 			doomcom->numslots = SHORT(netbuffer->u.servercfg.totalslotnum);
 			mynode = netbuffer->u.servercfg.clientnode;
 			if (serverplayer >= 0)
@@ -5260,6 +5444,21 @@ static void PT_Say(int node)
 
 	say_pak say = netbuffer->u.say;
 
+	// The server itself, outside the slots (WORLDWIDE.md 9.32): from its own
+	// node only, and none of a player's checks are about it.
+	if (D_ServerOutside() && say.source == SERVERCMDS)
+	{
+		if (node != servernode)
+			return;
+
+		DoSayCommand(say.message, say.target, say.flags, say.source);
+		return;
+	}
+
+	// No player of that number: nothing below may index with it.
+	if (say.source >= MAXPLAYERS)
+		return;
+
 	// Check for a spoofed source.
 	if (say.source == serverplayer)
 	{
@@ -5333,8 +5532,15 @@ static void PT_ReqMapQueue(int node)
 
 	reqmapqueue_pak reqmapqueue = netbuffer->u.reqmapqueue;
 
+	// The server itself, outside the slots, or a number that is no player
+	// (WORLDWIDE.md 9.32).
+	const boolean fromserver = (D_ServerOutside() && reqmapqueue.source == SERVERCMDS);
+
+	if (fromserver == false && reqmapqueue.source >= MAXPLAYERS)
+		return;
+
 	// Check for a spoofed source.
-	if (reqmapqueue.source == serverplayer)
+	if (reqmapqueue.source == serverplayer || fromserver)
 	{
 		// Servers aren't guaranteed to have a playernode, dedis exist.
 		if (node != servernode)
@@ -5390,7 +5596,7 @@ static void PT_ReqMapQueue(int node)
 
 			Z_Free(title);
 		}
-		DoSayCommand(maprevealmsg, 0, HU_SHOUT, servernode);
+		DoSayCommand(maprevealmsg, 0, HU_SHOUT, D_ServerSaySource());
 
 		return;
 	}
@@ -5684,8 +5890,12 @@ static void HandlePacketFromPlayer(SINT8 node)
 
 	txtpak = NULL;
 
+	// A dedicated server's own node. Holding slot 0, it speaks as player 0;
+	// outside the slots it is no player -- its input is dropped like a node's
+	// without one, and its net commands are filed apart (PT_TEXTCMD below,
+	// WORLDWIDE.md 9.32).
 	if (dedicated && node == 0)
-		netconsole = 0;
+		netconsole = (D_ServerOutside() ? -1 : 0);
 	else
 		netconsole = nodetoplayer[node];
 #ifdef PARANOIA
@@ -5962,10 +6172,14 @@ static void HandlePacketFromPlayer(SINT8 node)
 			else if (netbuffer->packettype == PT_TEXTCMD4)
 				netconsole = nodetoplayer4[node];
 
+			// The server's own commands, when it is outside the slots (9.32).
+			if (dedicated && node == 0 && D_ServerOutside() && netbuffer->packettype == PT_TEXTCMD)
+				netconsole = SERVERCMDS;
+
 			if (client)
 				break;
 
-			if (netconsole < 0 || netconsole >= MAXPLAYERS)
+			if (netconsole < 0 || (netconsole >= MAXPLAYERS && netconsole != SERVERCMDS))
 				Net_UnAcknowledgePacket(node);
 			else
 			{
@@ -7111,7 +7325,7 @@ static void SV_SendTics(void)
 {
 	tic_t realfirsttic, lasttictosend, i;
 	UINT32 n;
-	INT32 j;
+	INT32 k;
 	size_t packsize;
 	UINT8 *bufpos;
 	UINT8 *ntextcmd;
@@ -7196,12 +7410,13 @@ static void SV_SendTics(void)
 			{
 				ntextcmd = bufpos++;
 				*ntextcmd = 0;
-				for (j = 0; j < MAXPLAYERS; j++)
+				for (k = 0; k < TEXTCMD_BUCKETS; k++)
 				{
+					const INT32 j = D_TextcmdBucket(k); // SERVERCMDS: the server's own (9.32)
 					UINT8 *textcmd = D_GetExistingTextcmd(i, j);
 					INT32 size = textcmd ? ((UINT16*)textcmd)[0] : 0;
 
-					if ((!j || playeringame[j]) && size)
+					if (D_TextcmdBucketLive(j) && size)
 					{
 						(*ntextcmd)++;
 						WRITEUINT8(bufpos, j);
@@ -7236,7 +7451,12 @@ static void CreateNewLocalCMD(UINT8 p, INT32 realtics)
 		G_MoveTiccmd(&localcmds[p][i], &localcmds[p][i-1], 1);
 	}
 
-	G_BuildTiccmd(&localcmds[p][0], realtics, p+1);
+	// A dedicated server outside the slots has no kart to steer: player 0 is
+	// somebody's, and what it sent would be dropped anyway (WORLDWIDE.md 9.32).
+	if (dedicated && D_ServerOutside())
+		memset(&localcmds[p][0], 0, sizeof (ticcmd_t));
+	else
+		G_BuildTiccmd(&localcmds[p][0], realtics, p+1);
 	localcmds[p][0].flags |= TICCMD_RECEIVED;
 
 	// rollback_ontime (WORLDWIDE.md 8.132): no stamp the same as the one before.
@@ -7431,9 +7651,9 @@ boolean TryRunTics(tic_t realtics)
 		{
 			int32_t p;
 
-			for (p = 0; p < MAXPLAYERS; p++)
+			for (p = 0; p <= SERVERCMDS; p++)
 			{
-				if ((playeringame[p] || p == 0) && D_GetExistingTextcmd(t, p) != NULL)
+				if (D_TextcmdBucketLive(p) && D_GetExistingTextcmd(t, p) != NULL)
 				{
 					textcmds = true;
 					break;
@@ -7806,7 +8026,7 @@ static inline void PingUpdate(void)
 	{
 		for (i = 0; i < MAXPLAYERS; i++)
 		{
-			if (!playeringame[i] || P_IsMachineLocalPlayer(&players[i]))
+			if (!playeringame[i] || (P_IsMachineLocalPlayer(&players[i]) && !(dedicated && D_ServerOutside())))
 			{
 				pingtimeout[i] = 0;
 				continue;
@@ -8367,7 +8587,9 @@ void NetUpdate(void)
 			}
 			else if (dedicatedidle == DEDICATEDIDLETIME)
 			{
-				if (D_GetExistingTextcmd(gametic, 0) || D_GetExistingTextcmd(gametic+1, 0))
+				const INT32 own = (D_ServerOutside() ? SERVERCMDS : 0); // its own commands (9.32)
+
+				if (D_GetExistingTextcmd(gametic, own) || D_GetExistingTextcmd(gametic+1, own))
 				{
 					CONS_Printf("DEDICATED: Awakening from idle (Netxcmd detected...)\n");
 					dedicatedidle = 0;
@@ -8817,7 +9039,7 @@ void DoSayPacketFromCommand(SINT8 target, size_t usedargs, UINT8 flags)
 		strlcat(msg, COM_Argv(ix + usedargs), msgspace);
 	}
 
-	DoSayPacket(target, flags, consoleplayer, msg);
+	DoSayPacket(target, flags, ((dedicated && D_ServerOutside()) ? SERVERCMDS : consoleplayer), msg);
 }
 
 void DoVoicePacket(SINT8 target, UINT64 frame, const UINT8* opusdata, size_t len)
@@ -8836,5 +9058,13 @@ void SendServerNotice(SINT8 target, char *message)
 {
 	if (client)
 		return;
-	DoSayCommand(message, target + 1, HU_PRIVNOTICE, servernode);
+
+	// A notice for the server itself, outside the slots: its console (9.32).
+	if (target < 0 || target >= MAXPLAYERS)
+	{
+		CONS_Printf("%s\n", message);
+		return;
+	}
+
+	DoSayCommand(message, target + 1, HU_PRIVNOTICE, D_ServerSaySource());
 }

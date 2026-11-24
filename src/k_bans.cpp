@@ -413,7 +413,8 @@ static void SV_BanSearch(boolean remove)
 
 void Command_Listbans(void)
 {
-	if (netgame && consoleplayer != serverplayer)
+	// The host: its player, or a dedicated server outside the slots (9.32).
+	if (netgame && consoleplayer != serverplayer && !(server && D_ServerOutside()))
 	{
 		CONS_Printf("You must be the netgame host to do this.\n");
 		return;
@@ -423,7 +424,7 @@ void Command_Listbans(void)
 
 void Command_Unban(void)
 {
-	if (netgame && consoleplayer != serverplayer)
+	if (netgame && consoleplayer != serverplayer && !(server && D_ServerOutside()))
 	{
 		CONS_Printf("You must be the netgame host to do this.\n");
 		return;

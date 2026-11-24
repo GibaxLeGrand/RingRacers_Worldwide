@@ -1024,6 +1024,13 @@ boolean P_IsMachineLocalPlayer(const player_t *player)
 		return false;
 	}
 
+	// A dedicated server outside the slots plays nobody: its g_localplayers[0]
+	// is 0, which is somebody's kart (WORLDWIDE.md 9.32).
+	if (dedicated && D_ServerOutside())
+	{
+		return false;
+	}
+
 	for (i = 0; i <= splitscreen; i++)
 	{
 		if (player == &players[g_localplayers[i]])

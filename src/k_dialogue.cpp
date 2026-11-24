@@ -276,11 +276,17 @@ void Dialogue::SetDismissable(bool value)
 
 bool Dialogue::Held(void)
 {
+	if (serverplayer < 0) // a dedicated server outside the slots holds no button (WORLDWIDE.md 9.32)
+		return false;
+
 	return ((players[serverplayer].cmd.buttons & BT_VOTE) == BT_VOTE);
 }
 
 bool Dialogue::Pressed(void)
 {
+	if (serverplayer < 0)
+		return false;
+
 	return (
 		((players[serverplayer].cmd.buttons & BT_VOTE) == BT_VOTE) &&
 		((players[serverplayer].oldcmd.buttons & BT_VOTE) == 0)

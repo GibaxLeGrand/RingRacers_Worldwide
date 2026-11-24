@@ -311,6 +311,8 @@ int LUA_PushGlobals(lua_State *L, const char *word)
 		return 1;
 	// end local player variables
 	} else if (fastcmp(word,"server")) {
+		if (serverplayer < 0) // a dedicated server outside the slots (WORLDWIDE.md 9.32)
+			return 0;
 		if ((!multiplayer || !netgame) && !playeringame[serverplayer])
 			return 0;
 		LUA_PushUserdata(L, &players[serverplayer], META_PLAYER);
@@ -772,6 +774,8 @@ lpushed_t LUA_RawPushUserdata(lua_State *L, void *data)
 
 int LUA_PushServerPlayer(lua_State *L)
 {
+	if (serverplayer < 0) // a dedicated server outside the slots (WORLDWIDE.md 9.32)
+		return 0;
 	if ((!multiplayer || !(netgame || demo.playback)) && !playeringame[serverplayer])
 		return 0;
 	LUA_PushUserdata(L, &players[serverplayer], META_PLAYER);

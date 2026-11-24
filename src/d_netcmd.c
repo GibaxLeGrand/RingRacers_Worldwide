@@ -2389,6 +2389,12 @@ void D_ModifyClientVote(UINT8 player, SINT8 voted)
 			return;
 		}
 	}
+	else if (dedicated && D_ServerOutside() && !(playeringame[player] && players[player].bot))
+	{
+		// A dedicated server outside the slots votes for its bots and its
+		// timeouts only: its "local player", slot 0, is somebody (WORLDWIDE.md 9.32).
+		return;
+	}
 
 	// Context value -- if context has changed, then discard vote update.
 	// This is to prevent votes being registered from different vote types.
@@ -2902,7 +2908,7 @@ static void Got_Mapcmd(const UINT8 **cp, INT32 playernum)
 
 	forceresetplayers = deferencoremode = false;
 
-	if (playernum != serverplayer && !IsPlayerAdmin(playernum))
+	if (!D_IsServerCmd(playernum) && !IsPlayerAdmin(playernum))
 	{
 		CONS_Alert(CONS_WARNING, M_GetText("Illegal map change received from %s\n"), player_names[playernum]);
 		if (server)
@@ -2928,12 +2934,12 @@ static void Got_Mapcmd(const UINT8 **cp, INT32 playernum)
 		UINT8 size = READUINT8(*cp);
 		UINT8 roundnum = READUINT8(*cp);
 
-		if (playernum != serverplayer // Clients, even admin clients, don't have full roundqueue data
+		if (!D_IsServerCmd(playernum) // Clients, even admin clients, don't have full roundqueue data
 			|| position > size // Sanity check A (intentionally not a >= comparison)
 			|| size > ROUNDQUEUE_MAX) // Sanity Check B (ditto)
 		{
 			CONS_Alert(CONS_WARNING, M_GetText("Illegal round-queue data received from %s\n"), player_names[playernum]);
-			if (server && playernum != serverplayer)
+			if (server && !D_IsServerCmd(playernum))
 				SendKick(playernum, KICK_MSG_CON_FAIL);
 			return;
 		}
@@ -3097,7 +3103,7 @@ void Handle_MapQueueSend(UINT16 newmapnum, UINT16 newgametype, boolean newencore
 	reqmapqueue->newmapnum = newmapnum;
 	reqmapqueue->flags = flags;
 	reqmapqueue->newgametype = newgametype;
-	reqmapqueue->source = consoleplayer;
+	reqmapqueue->source = ((dedicated && D_ServerOutside()) ? SERVERCMDS : consoleplayer); // 9.32
 
 	HSendPacket(servernode, false, 0, sizeof(reqmapqueue_pak));
 
@@ -3293,7 +3299,7 @@ static void Got_MapQueuecmd(const UINT8 **cp, INT32 playernum)
 
 	queueposition = READUINT8(*cp);
 
-	if (playernum != serverplayer)
+	if (!D_IsServerCmd(playernum))
 	{
 		CONS_Alert(CONS_WARNING, M_GetText("Illegal map queue command received from %s\n"), player_names[playernum]);
 		if (server)
@@ -3385,7 +3391,7 @@ static void Got_Pause(const UINT8 **cp, INT32 playernum)
 	UINT8 dedicatedpause = false;
 	const char *playername;
 
-	if (netgame && !cv_pause.value && playernum != serverplayer && !IsPlayerAdmin(playernum))
+	if (netgame && !cv_pause.value && !D_IsServerCmd(playernum) && !IsPlayerAdmin(playernum))
 	{
 		CONS_Alert(CONS_WARNING, M_GetText("Illegal pause command received from %s\n"), player_names[playernum]);
 		if (server)
@@ -3447,7 +3453,7 @@ static void Got_RandomSeed(const UINT8 **cp, INT32 playernum)
 
 	seed = READUINT32(*cp);
 
-	if (playernum != serverplayer) // it's not from the server, wtf?
+	if (!D_IsServerCmd(playernum)) // it's not from the server, wtf?
 		return;
 
 	// Sal: this seems unused, so this is probably fine?
@@ -3601,7 +3607,7 @@ static void Got_Setscore(const UINT8 **cp, INT32 playernum)
 	UINT8 edit_player = READUINT8(*cp);
 	UINT32 desired_score = READUINT32(*cp);
 
-	if (playernum != serverplayer && !IsPlayerAdmin(playernum))
+	if (!D_IsServerCmd(playernum) && !IsPlayerAdmin(playernum))
 	{
 		CONS_Alert(CONS_WARNING, M_GetText("Illegal setscore command received from %s\n"), player_names[playernum]);
 		if (server)
@@ -3744,7 +3750,7 @@ static void Got_Spectate(const UINT8 **cp, INT32 playernum)
 	}
 
 	if (playernum != playerconsole[edit_player]
-	&& playernum != serverplayer
+	&& !D_IsServerCmd(playernum)
 	&& IsPlayerAdmin(playernum) == false)
 	{
 		CONS_Alert(CONS_WARNING, M_GetText("Illegal spectate command received from player %s\n"), player_names[playernum]);
@@ -3799,7 +3805,7 @@ static void Got_TeamChange(const UINT8 **cp, INT32 playernum)
 	UINT8 new_team = READUINT8(*cp);
 	UINT8 edit_player = READUINT8(*cp);
 
-	if (playernum != serverplayer && IsPlayerAdmin(playernum) == false)
+	if (!D_IsServerCmd(playernum) && IsPlayerAdmin(playernum) == false)
 	{
 		CONS_Alert(CONS_WARNING, M_GetText("Illegal team change received from player %s\n"), player_names[playernum]);
 		if (server)
@@ -3978,9 +3984,9 @@ static void Got_Verification(const UINT8 **cp, INT32 playernum)
 {
 	INT16 num = READUINT8(*cp);
 
-	if (playernum != serverplayer) // it's not from the server (hacker or bug)
+	if (!D_IsServerCmd(playernum)) // it's not from the server (hacker or bug)
 	{
-		CONS_Alert(CONS_WARNING, M_GetText("Illegal verification received from %s (serverplayer is %s)\n"), player_names[playernum], player_names[serverplayer]);
+		CONS_Alert(CONS_WARNING, M_GetText("Illegal verification received from %s (serverplayer is %s)\n"), player_names[playernum], (serverplayer >= 0 ? player_names[serverplayer] : "nobody"));
 		if (server)
 			SendKick(playernum, KICK_MSG_CON_FAIL);
 		return;
@@ -4021,9 +4027,9 @@ static void Got_Removal(const UINT8 **cp, INT32 playernum)
 {
 	UINT8 num = READUINT8(*cp);
 
-	if (playernum != serverplayer) // it's not from the server (hacker or bug)
+	if (!D_IsServerCmd(playernum)) // it's not from the server (hacker or bug)
 	{
-		CONS_Alert(CONS_WARNING, M_GetText("Illegal demotion received from %s (serverplayer is %s)\n"), player_names[playernum], player_names[serverplayer]);
+		CONS_Alert(CONS_WARNING, M_GetText("Illegal demotion received from %s (serverplayer is %s)\n"), player_names[playernum], (serverplayer >= 0 ? player_names[serverplayer] : "nobody"));
 		if (server)
 			SendKick(playernum, KICK_MSG_CON_FAIL);
 		return;
@@ -4309,7 +4315,7 @@ static void Got_MotD_f(const UINT8 **cp, INT32 playernum)
 		if (!isprint(mymotd[i]) || mymotd[i] == ';')
 			kick = true;
 
-	if ((playernum != serverplayer && !IsPlayerAdmin(playernum)) || kick)
+	if ((!D_IsServerCmd(playernum) && !IsPlayerAdmin(playernum)) || kick)
 	{
 		CONS_Alert(CONS_WARNING, M_GetText("Illegal motd change received from %s\n"), player_names[playernum]);
 		if (server)
@@ -4365,7 +4371,7 @@ static void Got_RunSOCcmd(const UINT8 **cp, INT32 playernum)
 	char filename[256];
 	filestatus_t ncs = FS_NOTCHECKED;
 
-	if (playernum != serverplayer && !IsPlayerAdmin(playernum))
+	if (!D_IsServerCmd(playernum) && !IsPlayerAdmin(playernum))
 	{
 		CONS_Alert(CONS_WARNING, M_GetText("Illegal runsoc command received from %s\n"), player_names[playernum]);
 		if (server)
@@ -4579,7 +4585,7 @@ static void Got_RequestAddfilecmd(const UINT8 **cp, INT32 playernum)
 		if (!isprint(filename[i]) || filename[i] == ';')
 			kick = true;
 
-	if ((playernum != serverplayer && !IsPlayerAdmin(playernum)) || kick)
+	if ((!D_IsServerCmd(playernum) && !IsPlayerAdmin(playernum)) || kick)
 	{
 		CONS_Alert(CONS_WARNING, M_GetText("Illegal addfile command received from %s\n"), player_names[playernum]);
 		SendKick(playernum, KICK_MSG_CON_FAIL);
@@ -4626,7 +4632,7 @@ static void Got_Addfilecmd(const UINT8 **cp, INT32 playernum)
 	READSTRINGN(*cp, filename, 240);
 	READMEM(*cp, md5sum, 16);
 
-	if (playernum != serverplayer)
+	if (!D_IsServerCmd(playernum))
 	{
 		CONS_Alert(CONS_WARNING, M_GetText("Illegal addfile command received from %s\n"), player_names[playernum]);
 		if (server)
@@ -5647,7 +5653,7 @@ static void Got_ExitLevelcmd(const UINT8 **cp, INT32 playernum)
 	if (gameaction == ga_completed)
 		return;
 
-	if (playernum != serverplayer && !IsPlayerAdmin(playernum))
+	if (!D_IsServerCmd(playernum) && !IsPlayerAdmin(playernum))
 	{
 		CONS_Alert(CONS_WARNING, M_GetText("Illegal exitlevel command received from %s\n"), player_names[playernum]);
 		if (server)
@@ -5669,7 +5675,7 @@ static void Got_SetupVotecmd(const UINT8 **cp, INT32 playernum)
 	INT16 tempVoteLevels[VOTE_NUM_LEVELS][2];
 	INT32 i;
 
-	if (playernum != serverplayer && !IsPlayerAdmin(playernum)) // admin shouldn't be able to set up vote...
+	if (!D_IsServerCmd(playernum) && !IsPlayerAdmin(playernum)) // admin shouldn't be able to set up vote...
 	{
 		CONS_Alert(CONS_WARNING, M_GetText("Illegal vote setup received from %s\n"), player_names[playernum]);
 		if (server)
@@ -5757,14 +5763,14 @@ static void Got_ModifyVotecmd(const UINT8 **cp, INT32 playernum)
 	if (targetID >= MAXPLAYERS)
 	{
 		// only the server is allowed to send these
-		if (playernum != serverplayer)
+		if (!D_IsServerCmd(playernum))
 		{
 			goto fail;
 		}
 	}
 	else if (playeringame[targetID] == true && players[targetID].bot == true)
 	{
-		if (playernum != serverplayer)
+		if (!D_IsServerCmd(playernum))
 		{
 			goto fail;
 		}
@@ -5798,7 +5804,7 @@ static void Got_PickVotecmd(const UINT8 **cp, INT32 playernum)
 	SINT8 level = READSINT8(*cp);
 	SINT8 anger = READSINT8(*cp);
 
-	if (playernum != serverplayer && !IsPlayerAdmin(playernum))
+	if (!D_IsServerCmd(playernum) && !IsPlayerAdmin(playernum))
 	{
 		CONS_Alert(CONS_WARNING, M_GetText("Illegal vote setup received from %s\n"), player_names[playernum]);
 		if (server)
@@ -5817,7 +5823,7 @@ static void Got_ScheduleTaskcmd(const UINT8 **cp, INT32 playernum)
 	seconds = READINT16(*cp);
 	READSTRING(*cp, command);
 
-	if (playernum != serverplayer && !IsPlayerAdmin(playernum))
+	if (!D_IsServerCmd(playernum) && !IsPlayerAdmin(playernum))
 	{
 		CONS_Alert(CONS_WARNING,
 				M_GetText ("Illegal schedule task received from %s\n"),
@@ -5843,7 +5849,7 @@ static void Got_ScheduleClearcmd(const UINT8 **cp, INT32 playernum)
 {
 	(void)cp;
 
-	if (playernum != serverplayer && !IsPlayerAdmin(playernum))
+	if (!D_IsServerCmd(playernum) && !IsPlayerAdmin(playernum))
 	{
 		CONS_Alert(CONS_WARNING,
 				M_GetText ("Illegal schedule clear received from %s\n"),
@@ -5870,7 +5876,7 @@ static void Got_Automatecmd(const UINT8 **cp, INT32 playernum)
 	READSTRING(*cp, command);
 
 	if (
-		(playernum != serverplayer && !IsPlayerAdmin(playernum))
+		(!D_IsServerCmd(playernum) && !IsPlayerAdmin(playernum))
 		|| (eventID >= AEV__MAX)
 	)
 	{
@@ -7664,7 +7670,7 @@ void Maxplayers_OnChange(void)
 
 void Got_DiscordInfo(const UINT8 **p, INT32 playernum)
 {
-	if (playernum != serverplayer /*&& !IsPlayerAdmin(playernum)*/)
+	if (!D_IsServerCmd(playernum) /*&& !IsPlayerAdmin(playernum)*/)
 	{
 		// protect against hacked/buggy client
 		CONS_Alert(CONS_WARNING, M_GetText("Illegal Discord info command received from %s\n"), player_names[playernum]);

@@ -561,8 +561,9 @@ void DoSayCommand(char *message, SINT8 target, UINT8 flags, UINT8 source)
 	char buf[3 + HU_MAXMSGLEN];
 	char *p = buf;
 
-	// Enforce shout for the dedicated server.
-	if (dedicated && source == serverplayer && !(flags & HU_CSAY))
+	// Enforce shout for the dedicated server -- in its slot, or outside the
+	// slots (WORLDWIDE.md 9.32).
+	if (dedicated && (source == serverplayer || (D_ServerOutside() && source == SERVERCMDS)) && !(flags & HU_CSAY))
 	{
 		flags |= HU_SHOUT;
 	}
@@ -695,7 +696,7 @@ static void Got_Saycmd(const UINT8 **p, INT32 playernum)
 	CONS_Debug(DBG_NETPLAY,"Received SAY cmd from Player %d (%s)\n", playernum+1, player_names[playernum]);
 
 	// Only server can ever legitimately send this
-	if (playernum != serverplayer)
+	if (!D_IsServerCmd(playernum))
 		return;
 
 	target = READSINT8(*p);
@@ -703,6 +704,35 @@ static void Got_Saycmd(const UINT8 **p, INT32 playernum)
 	playernum = READUINT8(*p);
 	msg = buf;
 	READSTRINGN(*p, msg, HU_MAXMSGLEN);
+
+	// The server's own line, when it is outside the slots (WORLDWIDE.md 9.32):
+	// it is nobody's, so it is told apart before anything below takes a player
+	// by its number. Always a shout or a centred message (DoSayCommand).
+	if (playernum >= MAXPLAYERS)
+	{
+		if (!D_ServerOutside() || playernum != SERVERCMDS)
+			return;
+
+		if (flags & HU_CSAY)
+		{
+			HU_SetCEchoDuration(5);
+			I_OutputMsg("Server message: ");
+			HU_DoCEcho(msg);
+		}
+		else if (target == 0 || (target > 0 && consoleplayer == target-1))
+		{
+			char color_prefix[2];
+
+			sprintf(color_prefix, "%c", '\x80' + (cv_shoutcolor.value == -1 ? 0 : cv_shoutcolor.value));
+			HU_AddChatText(va("%s<%s\x82~%s%s>\x80 %s%s",
+				(target > 0 ? "\x82[PM]" : ""), color_prefix, color_prefix,
+				((flags & HU_PRIVNOTICE) ? "SERVER" : cv_shoutname.zstring), color_prefix, msg), false);
+
+			if (cv_chatnotifications.value)
+				S_StartSound(NULL, sfx_sysmsg);
+		}
+		return;
+	}
 
 	//check for invalid characters (0x80 or above)
 	{

@@ -266,7 +266,7 @@ void Got_LuaFile(const UINT8 **cp, INT32 playernum)
 	FILE **pf = NULL;
 	UINT8 success = READUINT8(*cp); // The first (and only) byte indicates whether the file could be opened
 
-	if (playernum != serverplayer)
+	if (!D_IsServerCmd(playernum))
 	{
 		CONS_Alert(CONS_WARNING, M_GetText("Illegal luafile command received from %s\n"), player_names[playernum]);
 		if (server)

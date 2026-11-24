@@ -79,7 +79,7 @@ void Got_Luacmd(const UINT8 **cp, INT32 playernum)
 	lua_pop(gL, 1); // pop flags
 
 	// requires server/admin and the player is not one of them
-	if ((flags & 1) && playernum != serverplayer && !IsPlayerAdmin(playernum))
+	if ((flags & 1) && !D_IsServerCmd(playernum) && !IsPlayerAdmin(playernum))
 		goto deny;
 
 	lua_rawgeti(gL, -1, 1); // push function from command info table
@@ -97,7 +97,12 @@ void Got_Luacmd(const UINT8 **cp, INT32 playernum)
 		return;
 	}
 
-	LUA_PushUserdata(gL, &players[playernum], META_PLAYER);
+	// The server outside the slots is no player: its commands get nil, not
+	// player 0, who is somebody (WORLDWIDE.md 9.32).
+	if (D_ServerOutside() && D_IsServerCmd(playernum))
+		lua_pushnil(gL);
+	else
+		LUA_PushUserdata(gL, &players[playernum], META_PLAYER);
 	for (i = 1; i < argc; i++)
 	{
 		strlcpy(buf, argv[i], 255);
@@ -202,7 +207,10 @@ void COM_Lua_f(void)
 		CONS_Alert(CONS_WARNING, "lua command stack overflow (%d, need %s more)\n", lua_gettop(gL), sizeu1(COM_Argc() + 1));
 		return;
 	}
-	LUA_PushUserdata(gL, &players[playernum], META_PLAYER);
+	if (dedicated && D_ServerOutside()) // no player of its own (9.32)
+		lua_pushnil(gL);
+	else
+		LUA_PushUserdata(gL, &players[playernum], META_PLAYER);
 	for (i = 1; i < COM_Argc(); i++)
 		lua_pushstring(gL, COM_Argv(i));
 	LUA_Call(gL, (int)COM_Argc(), 0, 1); // COM_Argc is 1-based, so this will cover the player we passed too.

@@ -3960,6 +3960,12 @@ void Worldwide_OnChange(void)
 		return;
 	}
 
+	// A dedicated server in WORLDWIDE mode holds no player slot (9.32): its
+	// identity follows the switch, which only moves with nobody else here. A
+	// client keeps the identity its server gave it, whatever it types.
+	if (server)
+		D_SetServerIdentity();
+
 	CONS_Printf("worldwide: %s\n",
 		(cv_worldwide.value
 			? "on -- corrections every " TOSTR2(WORLDWIDE_CORRECTRATE) " tics instead of "

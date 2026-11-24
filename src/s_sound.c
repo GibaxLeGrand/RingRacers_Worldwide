@@ -2750,9 +2750,9 @@ static void Got_PlaySound(const UINT8 **cp, INT32 playernum)
 {
 	INT32 sound_id = READINT32(*cp);
 
-	if (playernum != serverplayer && !IsPlayerAdmin(playernum)) // hacked client, or disasterous bug
+	if (!D_IsServerCmd(playernum) && !IsPlayerAdmin(playernum)) // hacked client, or disasterous bug
 	{
-		CONS_Alert(CONS_WARNING, M_GetText("Illegal playsound received from %s (serverplayer is %s)\n"), player_names[playernum], player_names[serverplayer]);
+		CONS_Alert(CONS_WARNING, M_GetText("Illegal playsound received from %s (serverplayer is %s)\n"), player_names[playernum], (serverplayer >= 0 ? player_names[serverplayer] : "nobody"));
 		if (server)
 			SendKick(playernum, KICK_MSG_CON_FAIL);
 		return;

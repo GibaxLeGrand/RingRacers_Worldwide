@@ -274,7 +274,7 @@ void Command_CauseCfail_f(void)
 	REQUIRE_CHEATS;
 	REQUIRE_INLEVEL;
 
-	if (consoleplayer == serverplayer)
+	if (consoleplayer == serverplayer || (server && D_ServerOutside())) // 9.32
 	{
 		CONS_Printf(M_GetText("Only remote players can use this command.\n"));
 		return;

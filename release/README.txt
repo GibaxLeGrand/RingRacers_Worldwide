@@ -177,8 +177,7 @@ None of these change the race or reach a stock server.
 KNOWN ISSUES
 ------------
 
-- TODO-GIBAX: still true? Two people on two machines over the Internet:
-  not raced yet. Until now,
+- Two people on two machines over the Internet: not raced yet. Until now,
   one driver with bots, on simulated latency, jitter and packet loss, and
   races over a LAN. Your reports are what this alpha is for.
 - Other people are guessed until their real input arrives (their last

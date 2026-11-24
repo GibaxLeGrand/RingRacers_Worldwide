@@ -10,9 +10,7 @@ corrects the prediction. On a stock 2.4 server, it plays exactly as a stock
 **Nothing changes on the wire:** v0.1.0-alpha and v0.1.1-alpha players race
 together, on each other's servers. Nobody has to update at once.
 
-**This is an alpha.** TODO-GIBAX: say here how far it has been raced by
-people over the Internet since v0.1.0-alpha (the first notes said "never").
-Please report what you run into (below). An unofficial fork by Gibax, not
+**This is an alpha.** Please report what you run into (below). An unofficial fork by Gibax, not
 affiliated with or endorsed by Kart Krew Dev: please never report its bugs
 to them. This project is AI-assisted; how and why is in
 [ABOUT-AI.md](https://github.com/GibaxLeGrand/RingRacers_Worldwide/blob/v0.1.1-alpha/ABOUT-AI.md).
@@ -76,8 +74,7 @@ of a tic of prediction work.
 
 ## Known issues
 
-- TODO-GIBAX: still true? Not raced yet by two people on two machines, nor
-  over the Internet.
+- Not raced yet by two people on two machines, nor over the Internet.
 - Other people's karts can jump a little when their real input arrives.
 - Above about 340 ms of round trip, what you see trails your newest input
   by a few tics.

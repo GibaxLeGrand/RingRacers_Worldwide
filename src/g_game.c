@@ -4895,6 +4895,9 @@ static void G_DoCompleted(void)
 {
 	INT32 i;
 
+	// A WORLDWIDE server says the level's desyncs, counted or none (WORLDWIDE.md 9.33).
+	D_DesyncSummary();
+
 	// We do this here so Challenges-related sounds aren't insta-killed
 	S_StopSounds();
 

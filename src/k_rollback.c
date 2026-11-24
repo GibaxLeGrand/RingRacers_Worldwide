@@ -9893,6 +9893,26 @@ static void Command_RollbackCascadeLog_f(void)
 			: "off"));
 }
 
+/** Console command: rollback_desync
+  *
+  * Server side, for testing (WORLDWIDE.md 9.33): parts the server's world from
+  * every client's, once -- one draw from its random generator, which the light
+  * corrections do not carry -- so that the desync count can be seen counting.
+  * The next level's seed brings everyone together again. */
+static void Command_RollbackDesync_f(void)
+{
+	if (server == false || netgame == false || gamestate != GS_LEVEL)
+	{
+		CONS_Printf("rollback_desync: on a server, in a level, only\n");
+		return;
+	}
+
+	(void)P_RandomByte(PR_UNDEFINED);
+
+	CONS_Printf("rollback_desync: the server's random generator drawn once at tic %u, "
+		"ahead of every client's\n", (uint32_t)gametic);
+}
+
 void K_RegisterRollbackStuff(void)
 {
 	// Debug commands rather than plain ones: they are diagnostics, and being
@@ -9939,4 +9959,5 @@ void K_RegisterRollbackStuff(void)
 	COM_AddDebugCommand("rollback_rebuildbudget", Command_RollbackRebuildBudget_f);
 	COM_AddDebugCommand("rollback_slowtic", Command_RollbackSlowTic_f);
 	COM_AddDebugCommand("rollback_cascadelog", Command_RollbackCascadeLog_f);
+	COM_AddDebugCommand("rollback_desync", Command_RollbackDesync_f);
 }

@@ -10428,3 +10428,206 @@ and the guard above is written for 3 with protocol 2's sizes: 9.32 changed
 no size, only who the server is. Such a build refuses the public alpha's
 builds (protocol 2) and is refused by them. `replays-2.4` and
 `dedicated16-2.4` are left as they are, for the releases to be split again.*
+
+### 9.34 `v011-2.4`'s first unattended run: every joining client crashed in its replay
+
+Run on 2026-11-24 from 13:07, on the measuring machine, on Gibax's go for the
+series (`alpha/tests-2026-11-24-apres-midi.md`, `943e4c48b`, the exe checked
+against `HEAD` by the harness).
+
+**What happened.** `wwdesync join`, `wwwatch0 join`, `wwwatch join` and
+`wwreplay join`: the client crashed every time (4 of 4), 30-50 s in, on the
+first speculated tic after the waiting map's restart -- the restart 2.4 makes
+3 s after a second human enters (9.31's annotation). The server never did.
+The client's last lines, each time: `Map is now "RR_TESTRUN"`, the join and
+race phases' lines, `rollback_phases: RR_TESTRUN -- race from leveltime 0`,
+then `Process killed by signal: SIGSEGV`. The stack, from `cdb` attached to
+the crashed client while its message box was up (`cdb_wwwatch0_join_*` in the
+game folder): `G_WriteDemoExtraData` (`g_demo.cpp:561`) <- `P_Ticker` <-
+`G_Ticker` <- `K_RunSpeculatedTic` <- `K_RollbackSpeculate` <- `TryRunTics`.
+The faulting instruction, from the disassembly, is
+`mov byte ptr [rax], sil` with `rax` loaded from `demobuf.p`: the writer
+pointed at `0x100a`. So 9.31 crashes where its predictions 1 and 4 said it
+would not, on the case they named (8.96's restart).
+
+*The series did not stop at the first crash: the script stopped, as reported,
+did not, and ran on to its 8th run, every joining client crashing the same
+way (`ww16` and `ww16cmds` ended in 23 s, their clients' windows closed by
+hand). Nothing of that run is a measurement. The rule since: each test's
+result is checked before the next one starts, and the first one not validated
+stops the series; a crash is watched for during the run.*
+
+**Not found by reading**: where `0x100a` comes from. Read and ruled out: the
+restore puts `demobuf.p` back only into a recording of the same `gen` with a
+buffer and a writer (`G_RestoreDemoWriter`); the raw snapshot's heads and pools
+do not hold `demobuf`; its neighbours in memory (`demo_extradata`,
+`demo_writerng`, `g_buffer_sizes`, `ghostext`) are written with their own
+sizes. Noted: 4106 bytes is about the size of a multiplayer replay's header,
+and `G_ResetDemoRecording` and `G_CheckDemoStatus` free the buffer without
+unsetting the writer -- both leads, neither shown.
+
+**What is written** (`f8b463277` on `v011-2.4`, pushed on Gibax's word:
+"Tu corriges le crash et maintenant", "Corrige, et relance"):
+- `G_DemoWriterSane`, before a tic writes the replay: a writer that is unset (a
+  tic before `G_BeginRecording`, which stock never runs) writes nothing that
+  tic; a writer outside its buffer writes nothing, **stops the recording** and
+  prints its trace. A crash becomes a lost replay and a log line.
+- The trace: the writer's last 32 changes of identity (buffer made, recording
+  begun or skipped and its header's size, freed unsaved, reset, saved; the
+  writer state saved beside a snapshot when it changes kind; every restore and
+  every refusal while recording, with why). The rare ones go to the log as
+  they happen (`rollback_demo: [R] ...`, `[B]`, `[H]`, `[F]`, `[Z]`, `[S]`,
+  `[V]`, `[N]`), the whole ring when a writer is found broken.
+
+**Predictions**, written before the run:
+1. No crash in any of the eleven runs.
+2. If the guard fires ("the replay writer points outside its buffer"), it
+   fires in every `join` run, at the waiting map's restart, and its ring names
+   the event that left the writer at `buffer + 0x100a` with no buffer, or a
+   buffer it does not belong to. The series then stops there, as the rule says
+   (a replay lost is not 9.31 validated), and that event is what gets fixed.
+3. If it does not fire, 9.31's predictions 1 to 6 hold as written.
+
+*Fixed before this run: 9.31's annotation names the 428 ms run's logs
+`wwreplay_join_lag15`; `playtest.sh` puts `_lag<n>` before `_join`, so they
+are `wwreplay_lag15_join`, and `replaycheck.sh wwreplay_join_lag15` would have
+refused (no such run). The test sheet and `replaycheck.sh`'s comment carry the
+right tag.*
+
+*Annotated the same day, after the rerun on `f8b463277` (13:25-13:38,
+`serie_v011-2.4_20261124-132535.txt` in the game folder), stopped by its own
+check at run 2.*
+- *Prediction 1 held: no crash in two runs, where the first build crashed 4
+  of 4. The guard never fired ("points outside its buffer": 0).*
+- *The trace showed the crash's precondition at every level's start, both
+  runs, every level: `[R]` (buffer made, writer unset), then a **speculated**
+  tic before `G_BeginRecording` -- `[N]`, `rollback_demo: [N] gametic 793,
+  leveltime 0, speculated ... writer 0000000000000000` -- then `[B]` and `[H]`
+  (header 4030-4038 bytes; 4030 + 76 is 0x100a). The first build wrote that
+  tic through an unset writer. The guard skips it.*
+- *A second defect it uncovered: "2 restores could not put it back" a level
+  (4 over two levels in run 1, 3 in run 2). The speculation restores a
+  snapshot taken between `[R]` and `[B]`, whose writer state says "not
+  recording", so the writer stayed where the speculated tics had left it.
+  Written in `8b20aad12`: such a snapshot puts the writer back to the
+  recording's start (`[P]`). Predicted: "0 restores could not" in every run,
+  and a `[P]` line or two at each level's start.*
+- *Run 1, `wwdesync join`: validated, as prediction 2 says -- no mismatch
+  before the draw at tic 5501, mismatches from 5502, one `desync:` line,
+  the summary naming the client alone (18 mismatches, 18 windows in a row,
+  desynced from 5502), drift 0.000, no resend.*
+- *Run 2, `wwwatch0 join`: stopped. Prediction 4 wanted a "finished" line
+  in the control's `rollback_phases`; there is none, and there cannot be:
+  `K_PassPhase` opens "finished" on `exiting` only, and a kart nobody drives
+  ends by the time over ("Guest ran out of time" on the server),
+  `PF_NOCONTEST`, never `exiting`. `K_RollbackWatching` takes both, so
+  `rollback_watch` itself is not concerned. The prediction is wrong, not the
+  build. Corrected for the rerun: the control has "Guest ran out of time" on
+  the server and no "watching" line; `wwwatch` has both. Its summary held
+  ("no consistency mismatch"). A "finished" line needs a driven finish --
+  the test Gibax keeps for himself.*
+
+*Annotated again: the third run, on `8b20aad12` (13:42), printed the
+refusals for the first time -- `[w] gametic 800 ... writer
+0000000000000000 ... extra 5` at the waiting map's restart, `[w] gametic
+1402 ... extra 5` at the race's start: 1 (saved not recording) + 4 (writer
+unset). So the "2 restores could not put it back" a level were restores
+**before** the recording began, with nothing written yet -- nothing lost,
+counted as a failure. `8b20aad12`'s `[P]` answers another case, a restore
+after the recording began of a snapshot from before it, which this run had
+not shown by then. Stopped by hand (`STOP_SERIE`) since run 1's check could
+no longer pass; corrected in the counter, not in the check
+(`G_RestoreDemoWriter`: such a restore is `[n]`, nothing to put back).
+Predicted for the next run: "0 restores could not" in every run that
+records; an `[n]` at each level's start; a `[P]` only if that other case
+happens.*
+
+*Annotated again, 14:30: on `b85c298` runs 1 to 4 are validated (run 3 at
+the second try -- its first try, 14:07, crashed the client at the next map's
+opening, RR_LASVEGAS, once in two, no stack: open; a crashed client is now
+caught by `cdb`, stack and minidump, before it is killed). Run 5 stopped on
+the harness, not the build: `replaycheck.sh` looked for the client's replay
+under `clienthome/`, but the logs say the host writes
+`.\media\replay\online\...` and the client `.\ringracers\media\...`, both
+under the game folder -- it found NONE for the client and played the
+client's replay as the host's. That playback reported 0 desync lines.
+`replaycheck.sh` now takes each machine's replay from its own log's last
+"Demo ... recorded" line.*
+
+*Corrected, 14:50: the "0 desync lines" above counted nothing. No replay
+was ever played by `replaycheck.sh`: `-playdemo` opens srb2home + the name
+given (`Command_Playdemo_f`), the harness gave the full path, every
+instance logged "Unable to playdemo .\ringracers\D:/..." and sat on the
+title screen. The rerun of run 5 (14:29) hung on that until stopped at
+14:45, and stopping the game alone let `replaycheck.sh` start the next
+playback -- the series now kills the whole run on a stop or a timeout.
+`replaycheck.sh` copies each replay under `ringracers/replaycheck/` and
+names it from there, with 900 s a playback; a replay not played says "NOT
+PLAYED", never "0 desync lines".*
+
+*Run 5, 14:47-14:59, on `b85c298`: the host's replay and the client's,
+played by the v011 exe, each to its end (about 2 min, the race's length,
+"Playing back demo", the instance quitting by itself): **0 desync lines**
+each -- 9.31 prediction 2 holds. The stock 2.4 exe refused the client's
+replay ("Unable to playdemo"): its header reads version 0, subversion 0,
+demo version 20 -- a DEVELOP build zeroes VERSION and SUBVERSION
+(`doomdef.h:168`), so every release exe marks such a replay outdated. 9.33
+prediction 5 could not hold with the dev build the harness measures; it
+needs the release build of the same commit, a run of its own. Run 5 counted
+validated for v011; run 9 runs without `STOCK=1` for the same reason.*
+
+*Run 6, `ww16 dedicated join`, validated at 15:06 after a false stop at
+15:02: the only person on an empty dedicated server races from its join,
+never a spectator, so nobody prints "entered the game" (its `rollback_join`
+answers "already in the game", the grid shows `p0-LOCAL` and 15 bots; the
+harness's check now reads those). 9.32 predictions 2 to 4 hold: the client
+alone in slot 0 then sixteen karts, "the server holds no player slot", both
+`say` lines under `<~SERVER>`, no "Illegal", nothing dropped, no resend, no
+kick, drift 0.000. Prediction 1 held in substance: "outside the player
+slots" printed three times, not once -- the saved `worldwide` was on at
+startup, then `+worldwide off`, then the scenario's `worldwide on`.*
+
+*Run 7, `ww16cmds`, found a defect of 9.32: the dedicated server stopped on
+`I_Error(): snacpending[0] negative!` at tic 1646, the moment the slot-0
+client renamed itself. `Got_NameAndColor` counts down a name change this
+machine sent by matching `g_localplayers[i]`, which stays 0 -- the person's
+slot -- on a server outside the slots; `P_IsMachineLocalPlayer` had been
+patched for that, not this. Fixed in `e6c5fe98e` (it asks
+`P_IsMachineLocalPlayer` too). The harness watched for "killed by signal"
+only and missed it; it watches `I_Error` now. The vote and the kick were
+never reached: 9.32 predictions 5 to 8 still unmeasured.*
+
+*Annotated at 16:05, the series' end: **all eleven runs validated on
+`e6c5fe98e`**, the final build (`seriefinale_v011-2.4_20261124-151424.txt`
+in the game folder, each run checked before the next, 15:14-16:01): runs 7
+to 11 first, then 1 to 6 again on this build.*
+- *Run 7, `ww16cmds`: 9.32 predictions 5 to 8 hold -- the server's own vote
+  starts nothing; "Guest renamed to WW16renamed" on both sides; "WW16renamed
+  called a vote to RTV", the level ends, the next map (RR_GRAVTECHDIMENSION)
+  loads; "WW16renamed has been kicked (No reason given)", the server's
+  `nodes` without slot 0 and its `say` after the kick. No crash: the
+  `snacpending` fix holds.*
+- *Run 8, `wwreplaylate`: 9.31 prediction 5 holds -- "Guest entered the
+  game" in the race, the race map loaded again after it, 605 rewinds and 0
+  that could not, no `PARANOIA`, no crash, replays saved on both sides. Run 9:
+  both replays played to the end with v011, 0 desync lines each.*
+- *Run 10, `wwreplay join lag=15` (428 ms): 9.31 prediction 6 holds -- 487
+  rebuilds for an input that differed, 470 rewinds and 0 that could not, no
+  crash, no resend. Run 11: both replays to the end, 0 desync lines each.*
+- *Runs 1 to 6 again on `e6c5fe98e`, all validated as on `b85c298`: the
+  desync seen from tic 5501 (19 mismatches, the client alone), the control
+  with no "watching" line, `wwwatch` watching from leveltime 6725 with 546
+  passes and no crash at the next map (RR_JOYPOLIS), RR_TESTRUN reloaded
+  after the join with 0 replay restores lost, both replays 0 desync, sixteen
+  karts on the dedicated server.*
+- *Open: the client crash of 14:07 (run 3's first try, the next map
+  RR_LASVEGAS), seen once in four passes of run 3, no stack. The series now
+  catches a crashed or `I_Error`-stopped instance with `cdb` (stack +
+  minidump) before killing it.*
+- *Not run, by Gibax's word ("pas grave pour le replay sur le stock 2.4"):
+  the replays played by the stock 2.4 exe. Still for Gibax: one driven
+  finish, `wwwatch0` then `wwwatch` (9.30's 459 of 462).*
+- *For the releases: the replay fixes (`f8b463277`, `8b20aad12`,
+  `b85c29825`) belong to `v0.1.1` (protocol 2) and are to be carried to
+  `replays-2.4`; the `snacpending` fix (`e6c5fe98e`) goes with sixteen people
+  on a dedicated server, `v0.2.0`.*

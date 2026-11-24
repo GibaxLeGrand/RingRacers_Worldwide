@@ -10274,6 +10274,37 @@ WORLDWIDE client on a stock server, a WORLDWIDE dedicated server in vanilla
 mode at fifteen ("slot 0 -- 15 seats"), a protocol 2 build refused with
 its message; and a race on the modded server, its Lua errors counted.
 
+*Annotated the same day, before any run (Gibax: "Oui, écris-le"): the kick,
+the name and the vote need no second person. They are commands, and the
+harness's two instances are enough: `playtest.sh ww16cmds dedicated join`
+(`playserver_ww16cmds.cfg`, `playclient_ww16cmds.cfg`). As `ww16` up to the
+race map; then the server's own `zvote_call RUNITBACK`; the client renames
+itself (`name WW16renamed`) and calls `zvote_call RTV` -- the only person
+there, so its own vote carries it; the intermission, the map vote
+(`votetime 10`), the next map; then `kick 0` from the server's console, with
+`kicktime 0` (a kick is otherwise a 20-minute ban of the address, and every
+harness client is 127.0.0.1). Predictions:*
+5. *The server's own vote starts nothing: no "called a vote" line for it, no
+   map restart. Outside the slots its command would be the slot-0 player's,
+   and `SendNetXCmdForPlayer` does not send it -- no "is a player's own --
+   dropped" warning either, which would mean it reached a bucket.*
+6. *"Guest renamed to WW16renamed" in both logs; the server's next `nodes`
+   shows slot 0 under the new name.*
+7. *The server prints "WW16renamed called a vote to RTV" (a server or an
+   admin prints it, nobody else); the level ends without a finish, on the
+   server's exit command run from its own bucket; the intermission, the map
+   vote and the next map follow on both sides; no "Illegal ... command".*
+8. *"WW16renamed has been kicked (No reason given)" in the server's log, then
+   its `nodes` without slot 0 and its `say` after the kick: the server goes
+   on. The client's `nodes` after it prints no player. The next harness run
+   joins as usual (no ban).*
+*Not in a log: the map vote's ballots (the server's own vote for slot 0,
+refused by `D_ModifyClientVote`). Fixed the same day: `playserver_ww16.cfg`
+quit about 4500 server tics in, inside the client's last window (it ends
+about 5090, the client starting 14 s later), and `playserver_wwreplay.cfg`
+at 7000 against the client's 7090: both servers now wait for the harness to
+stop them.*
+
 ### 9.33 For `v0.1.1`: desyncs seen, no prediction once finished, the protocol guarded
 
 Written on 2026-11-24, branch `v011-2.4` (from `alpha-2.4` at `f2d112444`),

@@ -10631,3 +10631,20 @@ to 11 first, then 1 to 6 again on this build.*
   `b85c29825`) belong to `v0.1.1` (protocol 2) and are to be carried to
   `replays-2.4`; the `snacpending` fix (`e6c5fe98e`) goes with sixteen people
   on a dedicated server, `v0.2.0`.*
+
+*Annotated at 17:00: `v0.1.1-alpha` prepared on its own branch,
+`v011-release-2.4` (from `af340b860`, protocol 2, without sixteen people on
+a dedicated server): the three replay fixes cherry-picked (`bc6246d88`,
+`12dd0edd6`, `86667acd0`), `D_DesyncSummary`'s `players` renamed `named`
+(`e1c59c99e`, the `-Wshadow`), the version and the release texts
+(`c4032ff20`, three `TODO-GIBAX` left for Gibax). The CI builds all nine
+jobs. Its development build, run by the same series (runs 1 to 5 and 8 to
+11; 6 and 7 are the sixteen people's), 16:18-16:59: **all nine validated**
+-- the log names "Ring Racers Worldwide v0.1.1-alpha"; the desync seen from
+tic 5501 (19 mismatches, the client alone); the control with no "watching"
+line; `wwwatch` watching from leveltime 7007, 548 passes, no crash at the
+next map (RR_REGALRUIN); RR_TESTRUN reloaded after the join; 0 replay
+restores lost in every run (454 to 748 rewinds); the join in the race; 478
+rebuilds at 428 ms; every replay, host's and client's, played to its end
+with 0 desync lines. Not tagged, nothing published, nothing merged into
+`alpha-2.4`.*

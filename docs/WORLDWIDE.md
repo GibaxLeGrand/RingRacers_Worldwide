@@ -10355,3 +10355,12 @@ plays the client's replay with the stock 2.4 exe as well.
 Then, driven, by Gibax: a race finished by hand -- 9.30's 459 of 462 under
 the control, none speculated under `rollback_watch` -- and how the drawn
 world's step back at the line looks.
+
+*Added the same day, before any run (Gibax: "idéalement, tu peux déjà
+merge toutes les v011 dans un exe de test, pour simplifier"):
+`dedicated16-2.4` (9.32) is merged into `v011-2.4` too (`943e4c48b`), so one
+build carries 9.31, 9.32 and 9.33, and is tested at once. It is protocol 3,
+and the guard above is written for 3 with protocol 2's sizes: 9.32 changed
+no size, only who the server is. Such a build refuses the public alpha's
+builds (protocol 2) and is refused by them. `replays-2.4` and
+`dedicated16-2.4` are left as they are, for the releases to be split again.*

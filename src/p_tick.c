@@ -798,8 +798,10 @@ void P_Ticker(boolean run)
 		// it runs: the replay goes back with the world (G_SaveDemoWriter beside
 		// each rollback snapshot, WORLDWIDE.md 9.31), so a speculated tic's
 		// writes are undone with it and a kept one's stay. From 8.96 to 9.31 a
-		// predicting client recorded no replay at all.
-		if (demo.recording)
+		// predicting client recorded no replay at all. G_DemoWriterSane: a
+		// writer outside its buffer writes nothing and stops the recording,
+		// with its trace, instead of writing through it (9.34).
+		if (demo.recording && G_DemoWriterSane())
 		{
 			if (!G_ConsiderEndingDemoWrite())
 			{

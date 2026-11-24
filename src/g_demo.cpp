@@ -251,6 +251,134 @@ static UINT8 demo_writerngtimeout; // tics before demo_writerng 2 writes (was a 
 static ticcmd_t oldcmd[MAXPLAYERS];
 static UINT32 demo_writergen; // one more at each G_BeginRecording: which recording a saved writer state is of
 
+// ---------------------------------------------------------------------------
+// The replay writer's identity, traced (WORLDWIDE.md 9.34)
+// ---------------------------------------------------------------------------
+//
+// v011-2.4's first run: a predicting client wrote its replay at 0x100a, on the
+// first speculated tic after the waiting map's restart (G_WriteDemoExtraData,
+// demobuf.p, read from the crash's registers). Where that pointer came from was
+// not found by reading. So every change of the writer's identity -- a buffer
+// made, a recording begun or ended, a writer state restored or refused -- goes
+// into a small ring here, the rare ones into the log as they happen; and a tic
+// whose writer points outside its buffer writes nothing, stops the recording
+// and prints the ring, instead of writing through it.
+
+struct demowriterevent_t
+{
+	char what;
+	UINT8 speculating;
+	UINT8 recording;
+	tic_t gametic;
+	tic_t leveltime;
+	UINT32 gen;         // demo_writergen at the event
+	UINT32 othergen;    // the restored state's, for a restore
+	const UINT8 *buffer;
+	const UINT8 *p;
+	const UINT8 *end;
+	size_t extra;
+};
+
+#define DEMOWRITER_EVENTS 32
+static demowriterevent_t demowriter_events[DEMOWRITER_EVENTS];
+static UINT32 demowriter_nevents;
+
+static const char *G_DemoWriterEventName(char what)
+{
+	switch (what)
+	{
+		case 'R': return "buffer made (G_RecordDemo), writer unset";
+		case 'B': return "recording begun (G_BeginRecording), gen moved on";
+		case 'H': return "header written (G_BeginRecording), extra = its size";
+		case 'b': return "G_BeginRecording skipped: the writer was already set";
+		case 'F': return "buffer freed unsaved (G_CheckDemoStatus)";
+		case 'Z': return "buffer freed (G_ResetDemoRecording)";
+		case 'S': return "replay saved (G_SaveDemo), extra = its size";
+		case 'V': return "writer state saved beside a snapshot changed recording or gen, extra = at";
+		case 'W': return "writer state restored, extra = at";
+		case 'w': return "writer state refused while recording, extra = why (1 not saved recording, 2 no buffer, 4 no writer, 8 another gen, 16 ahead)";
+		case 'X': return "a tic found the writer outside its buffer";
+		case 'N': return "a tic ran before the recording began (writer unset): nothing written";
+	}
+	return "?";
+}
+
+static void G_PrintDemoWriterEvent(const demowriterevent_t *e)
+{
+	CONS_Printf("rollback_demo: [%c] gametic %u, leveltime %u%s, gen %u (other %u), recording %d, "
+		"buffer %p, writer %p, end %p, extra %s -- %s\n",
+		e->what, e->gametic, e->leveltime, e->speculating ? ", speculated" : "", e->gen, e->othergen,
+		e->recording, (const void *)e->buffer, (const void *)e->p, (const void *)e->end,
+		sizeu1(e->extra), G_DemoWriterEventName(e->what));
+}
+
+static void G_DemoWriterEvent(char what, size_t extra, UINT32 othergen, boolean print)
+{
+	demowriterevent_t *e = &demowriter_events[demowriter_nevents++ % DEMOWRITER_EVENTS];
+
+	e->what = what;
+	e->speculating = K_RollbackSpeculating() ? 1 : 0;
+	e->recording = demo.recording ? 1 : 0;
+	e->gametic = gametic;
+	e->leveltime = leveltime;
+	e->gen = demo_writergen;
+	e->othergen = othergen;
+	e->buffer = demobuf.buffer;
+	e->p = demobuf.p;
+	e->end = demobuf.end;
+	e->extra = extra;
+
+	if (print)
+		G_PrintDemoWriterEvent(e);
+}
+
+// G_RecordDemo keeps this much past demobuf.end, never counted in demobuf.size
+#define DEMO_DEADSPACE 2048
+
+boolean G_DemoWriterSane(void)
+{
+	static UINT32 unsetreported;
+	UINT32 i, first;
+
+	if (!demo.recording)
+		return true;
+
+	// G_RecordDemo has made the buffer, G_BeginRecording (P_PostLoadLevel) has
+	// not run yet: stock never runs a tic there; say so the first time one does.
+	if (demobuf.buffer != NULL && demobuf.p == NULL)
+	{
+		if (unsetreported != demo_writergen + 1)
+		{
+			unsetreported = demo_writergen + 1;
+			G_DemoWriterEvent('N', 0, 0, true);
+		}
+		return false;
+	}
+
+	if (demobuf.buffer != NULL && demobuf.p >= demobuf.buffer
+		&& demobuf.p <= demobuf.buffer + demobuf.size + DEMO_DEADSPACE)
+		return true;
+
+	G_DemoWriterEvent('X', 0, 0, false);
+
+	CONS_Alert(CONS_WARNING, "rollback_demo: the replay writer points outside its buffer "
+		"(buffer %p, writer %p, end %p, size %s) on gametic %u, leveltime %u%s -- "
+		"nothing written, this recording stopped (WORLDWIDE.md 9.34). Its last %u events, oldest first:\n",
+		(const void *)demobuf.buffer, (const void *)demobuf.p, (const void *)demobuf.end,
+		sizeu1(demobuf.size), gametic, leveltime, K_RollbackSpeculating() ? ", a speculated tic" : "",
+		(unsigned)std::min<UINT32>(demowriter_nevents, DEMOWRITER_EVENTS));
+
+	first = (demowriter_nevents > DEMOWRITER_EVENTS) ? demowriter_nevents - DEMOWRITER_EVENTS : 0;
+	for (i = first; i < demowriter_nevents; i++)
+		G_PrintDemoWriterEvent(&demowriter_events[i % DEMOWRITER_EVENTS]);
+
+	// Stopped, not freed: the buffer pointer may be the broken half.
+	// G_RecordDemo frees it at the next level, as ever.
+	demo.recording = false;
+	demobuf.p = NULL;
+	return false;
+}
+
 #define DW_END        0xFF // End of extradata block
 #define DW_RNG        0xFE // Check RNG seed!
 
@@ -921,6 +1049,19 @@ void G_SaveDemoWriter(demowriter_t *out)
 	// Without a recording, only the head: a dedicated server or a client not
 	// recording pays a few bytes a snapshot, not the whole state.
 	memcpy(out->bytes, st, st->recording ? sizeof *st : DEMOWRITER_HEAD);
+
+	// Traced when what the snapshots carry changes kind (9.34): once a level.
+	{
+		static boolean lastrecording;
+		static UINT32 lastgen;
+
+		if (st->recording != lastrecording || st->gen != lastgen)
+		{
+			lastrecording = st->recording;
+			lastgen = st->gen;
+			G_DemoWriterEvent('V', st->at, st->gen, true);
+		}
+	}
 }
 
 boolean G_RestoreDemoWriter(const demowriter_t *in)
@@ -934,11 +1075,25 @@ boolean G_RestoreDemoWriter(const demowriter_t *in)
 	// from before G_BeginRecording, or of another replay, says nothing of this one.
 	if (st->recording == false || demo.recording == false || demobuf.buffer == NULL || demobuf.p == NULL
 		|| st->gen != demo_writergen || st->at > (size_t)(demobuf.p - demobuf.buffer))
+	{
+		if (demo.recording)
+		{
+			size_t why = 0;
+
+			if (st->recording == false) why |= 1;
+			if (demobuf.buffer == NULL) why |= 2;
+			if (demobuf.p == NULL) why |= 4;
+			if (st->gen != demo_writergen) why |= 8;
+			if (demobuf.buffer != NULL && demobuf.p != NULL && st->at > (size_t)(demobuf.p - demobuf.buffer)) why |= 16;
+			G_DemoWriterEvent('w', why, st->gen, false);
+		}
 		return false;
+	}
 
 	memcpy(st, in->bytes, sizeof *st);
 
 	demobuf.p = demobuf.buffer + st->at;
+	G_DemoWriterEvent('W', st->at, st->gen, false);
 
 	memcpy(oldcmd, st->oldcmd, sizeof oldcmd);
 	memcpy(demo_extradata, st->extradata, sizeof demo_extradata);
@@ -1873,6 +2028,7 @@ void G_RecordDemo(const char *name)
 
 	demo.recording = true;
 	demo.buffer = &demobuf;
+	G_DemoWriterEvent('R', 0, 0, true);
 
 	/* FIXME: This whole file is in a wretched state. Take a
 	look at G_WriteAllGhostTics and G_WriteDemoTiccmd, they
@@ -2220,10 +2376,14 @@ void G_BeginRecording(void)
 	player_t *player = &players[consoleplayer];
 
 	if (demobuf.p)
+	{
+		G_DemoWriterEvent('b', 0, 0, true);
 		return;
+	}
 
 	demobuf.p = demobuf.buffer;
 	demo_writergen++;
+	G_DemoWriterEvent('B', 0, 0, true);
 
 	demoflags = DF_GHOST;
 
@@ -2457,6 +2617,8 @@ void G_BeginRecording(void)
 				ghostext[i].flags |= EZT_FLIP;
 		}
 	}
+
+	G_DemoWriterEvent('H', (demobuf.p && demobuf.buffer) ? (size_t)(demobuf.p - demobuf.buffer) : 0, 0, true);
 }
 
 void srb2::write_current_demo_standings(const srb2::StandingsJson& standings)
@@ -4347,6 +4509,7 @@ boolean G_CheckDemoStatus(void)
 		return true;
 	}
 
+	G_DemoWriterEvent('F', 0, 0, true);
 	Z_Free(demobuf.buffer);
 
 	demo.recording = false;
@@ -4357,6 +4520,7 @@ boolean G_CheckDemoStatus(void)
 
 void G_ResetDemoRecording(void)
 {
+	G_DemoWriterEvent('Z', 0, 0, true);
 	Z_Free(demobuf.buffer);
 	demo.recording = false;
 }
@@ -4460,6 +4624,7 @@ void G_SaveDemo(void)
 	md5_buffer((char *)p+16, (demobuf.buffer + length) - (p+16), p);
 #endif
 
+	G_DemoWriterEvent('S', (size_t)(demobuf.p - demobuf.buffer), 0, true);
 	bool saved = FIL_WriteFile(demoname, demobuf.buffer, demobuf.p - demobuf.buffer); // finally output the file.
 	G_ResetDemoRecording();
 

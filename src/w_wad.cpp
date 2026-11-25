@@ -1641,6 +1641,12 @@ UINT8 W_LumpExists(const char *name)
 // We can do an O(n) conversion back and forth, which is
 // better than nothing, but still kind of annoying to do.
 // It was either this or killing musicwads lmao ~toast 180925
+//
+// WORLDWIDE (WORLDWIDE.md 9.35): musicwads are the same on both sides only for
+// the stock music files. The dubs of <home>/dubs come after them, and each
+// machine has its own: dubwads of them here, maybe none on the other side. So
+// they count as local files too, ahead of any other: the network numbers the
+// files as if no machine had any dub. With no dub here, nothing changes.
 
 lumpnum_t W_LumpIntoNetSave(lumpnum_t lump)
 {
@@ -1660,7 +1666,8 @@ lumpnum_t W_LumpIntoNetSave(lumpnum_t lump)
 	}
 
 	// Count previous local files the client might not have.
-	UINT32 i = (mainwads + musicwads), localoffset = 0;
+	// WORLDWIDE: the dubs first (a dub's own lumps are not important: refused above).
+	UINT32 i = (mainwads + musicwads), localoffset = dubwads;
 	for (; i < wad; i++)
 	{
 		if (wadfiles[i]->important)
@@ -1695,8 +1702,16 @@ lumpnum_t W_LumpFromNetSave(lumpnum_t lump)
 		return lump;
 	}
 
+	// WORLDWIDE: a number among the stock music files is the same on both sides
+	// (none is ever sent: they are not important). Past them, the dubs here come
+	// first among the local files the server would ignore.
+	if (netwad < (UINT32)(mainwads + musicwads - dubwads))
+	{
+		return lump;
+	}
+
 	// Count previous local files the server would ignore.
-	UINT32 i = (mainwads + musicwads), localoffset = 0;
+	UINT32 i = (mainwads + musicwads), localoffset = dubwads;
 	for (; (i - localoffset) <= netwad && i < numwadfiles; i++)
 	{
 		if (wadfiles[i]->important)

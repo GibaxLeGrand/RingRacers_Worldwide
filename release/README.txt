@@ -1,4 +1,4 @@
-RING RACERS WORLDWIDE -- v0.1.1-alpha
+RING RACERS WORLDWIDE -- v0.1.2-alpha
 =====================================
 
 Client-side prediction netcode for Dr. Robotnik's Ring Racers 2.4.
@@ -46,7 +46,7 @@ version 2):
   ...-linux-x64.tar.gz    ringracers_worldwide, and its lib folder
   ....flatpak             a single file, worldwide.pk3 inside
 
-The assets, RingRacersWorldwide-v0.1.1-alpha-assets.zip, for every system:
+The assets, RingRacersWorldwide-v0.1.2-alpha-assets.zip, for every system:
 
   data/worldwide.pk3      WORLDWIDE's title screen (the Flatpak has its own)
   dubs/                   the dub packs, and who made them (CREDITS.txt)
@@ -90,7 +90,7 @@ Linux, the Flatpak
   1. The official Ring Racers, from Flathub, for its data:
        flatpak install --user flathub org.kartkrew.RingRacers
   2. Ring Racers Worldwide:
-       flatpak install --user RingRacersWorldwide-v0.1.1-alpha.flatpak
+       flatpak install --user RingRacersWorldwide-v0.1.2-alpha.flatpak
   3. Start "Ring Racers Worldwide" from your menu once, or:
        flatpak run io.github.ringracers_worldwide.RingRacersWorldwide
   4. The dubs: copy what is in the assets zip's "dubs" folder into
@@ -188,11 +188,14 @@ KNOWN ISSUES
   at once: a short hitch.
 - Only Race has been played in WORLDWIDE mode. Battle, Grand Prix and
   Encore are untested.
-- Replays recorded while you play with prediction are new in this version:
+- Replays recorded while you play with prediction (new in v0.1.1-alpha):
   tested in Race, not yet with mods.
 - On Windows, a crash writes no .rpt report: this build is 64-bit and the
   2.4 folder's crash handler is 32-bit. Send latest-log.txt instead.
-- Character dubs between two machines are not tried yet.
+- Character dubs between two machines are not tried yet. Up to
+  v0.1.1-alpha, dub packs made joining a server with mods crash when
+  the level had scripts ("file empty"), on either side: fixed in
+  v0.1.2-alpha, so update if you play with both.
 - In Legacy GL, fullscreen draws at your desktop's size: 4K there needs a
   4K desktop. The software renderer at 4K is untested.
 
@@ -227,7 +230,7 @@ this version's included, is at
 
   https://github.com/GibaxLeGrand/RingRacers_Worldwide
 
-(this release: the tag v0.1.1-alpha).
+(this release: the tag v0.1.2-alpha).
 
 Dr. Robotnik's Ring Racers is by Kart Krew Dev: https://www.kartkrew.org
 It is a work of fan art made available for free without intent to profit or

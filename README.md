@@ -7,7 +7,7 @@ An unofficial fork by Gibax.
   <img src="docs/RRW_logo.png" width="238" alt="Ring Racers Worldwide logo">
 </p>
 
-> **Alpha.** [v0.1.1-alpha](https://github.com/GibaxLeGrand/RingRacers_Worldwide/releases)
+> **Alpha.** [v0.1.2-alpha](https://github.com/GibaxLeGrand/RingRacers_Worldwide/releases)
 > is the latest public test build: expect bugs, and please
 > [report them](#reporting-a-problem).
 >

@@ -145,6 +145,7 @@ SINT8 startinglivesbalance[maxgameovers+1] = {3, 5, 7, 9, 12, 15, 20, 25, 30, 40
 
 UINT16 mainwads = 0;
 UINT16 musicwads = 0;
+UINT16 dubwads = 0; // WORLDWIDE: the last musicwads, <home>/dubs (WORLDWIDE.md 9.35)
 boolean modifiedgame = false; // Set if homebrew PWAD stuff has been added.
 boolean majormods = false; // Set if Lua/Gameplay SOC/replacement map has been added.
 boolean savemoddata = false;

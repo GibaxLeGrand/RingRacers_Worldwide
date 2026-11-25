@@ -10648,3 +10648,108 @@ restores lost in every run (454 to 748 rewinds); the join in the race; 478
 rebuilds at 428 ms; every replay, host's and client's, played to its end
 with 0 desync lines. Not tagged, nothing published, nothing merged into
 `alpha-2.4`.*
+
+### 9.35 A dub on one side, a mod on the server: the join crashed in the ACS state (`v0.1.2-alpha`)
+
+Seen by Gibax on 2026-11-25 at 00:59 (Paris), `v0.1.1-alpha`: joining
+rrw-eu's modded server crashed twice, a minute apart, right after `Loading
+savegame`: `I_Error(): Uncaught exception: (N5ACSVM9ReadErrorE) file empty`.
+The server's journal: the level was `LSB_DUNGEONMAZE` (from
+`DRB_GarbageCup-v1.5.2.pk3`, a level with a `BEHAVIOR` lump) since 22:03 UTC;
+restarted at 00:01 UTC on RR_ROBOTNIKCOASTER, a stock level, it let the same
+player in.
+
+**The cause, computed on the files, not inferred from the message.** A
+gamestate carries the ACS VM's state, and ACSVM names each module by its lump
+number, through `W_LumpIntoNetSave` / `W_LumpFromNetSave` (upstream,
+`9411ce538`). Those assume the music files (`musicwads`) are the same on both
+sides: the stock ones are. The dubs of `<home>/dubs` (8.142) are loaded as
+music files too, and each machine has its own. Gibax's client had five, the
+server none, so every addon sat five files further on the client (20 + k
+against 15 + k). The server wrote "file 95, lump 138" (GarbageCup, the
+level's map); the client, with nothing to correct, read its own file 95,
+`DRBS_TanukiPack_v1.5.3b.pk3`, whose lump 138 is `Textures/Warp Rift/`, a
+folder entry of 0 bytes: length 0, no `BEHAVIOR`, `Environment::loadModule`
+throws `ReadError("file empty")`, which `ACS_UnArchive` lets through (it
+catches `SerialError` only). Found with `zzz_etc/trouver_carte.py` (the
+client log's file order, the pk3s' directories).
+
+**Why 9.27 missed it.** It read that a pack "is loaded on its machine alone,
+outside the server's file list, as a stock music pack is": true of the file
+list, false of the numbers. The only reader of those numbers is a gamestate's
+ACS state, and a stock level's lumps sit under `mainwads`, where nothing is
+translated: no race of the project ever had an addon level with ACS and a dub
+on one side only. Every player who hosts with the release's packs, or joins a
+modded server with them, could hit it: on either side, a different number of
+dubs is enough.
+
+**Fixed** (`2ca1ba4db`, branch `dubnet-2.4`, in `v0.1.2-alpha`): `dubwads`
+counts the dubs, the last of the music files. Both functions count them as
+local files, ahead of any other, so the network numbers the files as if no
+machine had a dub; a dub's own lumps were already refused (not important). With
+no dub on a machine, it numbers as before: rrw-eu, which has none, needs no
+update, and no packet or command changes (`WORLDWIDE_PROTOCOL` stays 2).
+
+**Checked without the game** (`zzz_etc/banc_dubnet/`): the two functions,
+copied as they are, write a lump of each of 112 addons on one machine and read
+it on the other, in 8 cases -- server without dubs and client with five (the
+crash), neither, the server with dubs and not the client, both with different
+counts, local addons on either side, the reverse direction, one machine
+reading its own. All 8 hold. The functions of `v0.1.1-alpha`, the control,
+fail 6 of the 8: in the crash's case they read addon k as the dub k, then
+addon k - 5, as on Gibax's machine.
+
+**Prediction for the run**, written before it (`dubjoin`, unattended, on the
+measuring machine, `harnais/dubjoin.sh` in the notes): a dedicated server,
+`DRB_GarbageCup-v1.5.2.pk3` added, on `LSB_DUNGEONMAZE`; a client with its
+own home joins it and stays 40 s. Release builds on both sides, as players
+have them: `v0.1.1-alpha`'s from its release, the fix's from the CI's
+package of `v012-release-2.4`.
+
+1. Control, both `v0.1.1-alpha`, the server with no dub and the client with
+   the five packs: the client does not get in -- it stops at the join on an
+   error or a crash. Which one depends on what the shifted number lands on:
+   with one addon on the server, it lands in a dub (a `.wad` of 12 lumps)
+   past its end, not on Gibax's empty folder entry, so not necessarily
+   `file empty`.
+2. Both on the fix, same dubs: the client joins, loads the gamestate and the
+   level, no `I_Error`; the server logs the join and keeps running.
+   And the case of rrw-eu tonight, which keeps `v0.1.1-alpha`: the server
+   `v0.1.1-alpha` with no dub, the client on the fix with the five packs --
+   the client joins.
+3. Both on the fix, the client with no dub: the same.
+4. The reverse: the server on the fix with the five packs, the client
+   `v0.1.1-alpha` with none: the client joins (the server now writes the
+   numbers as if it had no dub). Its control, the server `v0.1.1-alpha` with
+   the packs: the client does not get in, as in 1.
+
+*Annotated at 01:35 (2026-11-25): **all six runs as predicted**, release
+builds on both sides -- `v0.1.1-alpha`'s Windows zip from its release (sha256
+`e0d70ca0...`, as in its `SHA256SUMS.txt`), the fix's from the package of CI
+run 45516723209 (`e925f8cc8`, green, its exe says `v0.1.2-alpha`). Each run
+checks that each side loaded the dubs it was given.*
+- *1, control (server `v0.1.1-alpha` no dub, client `v0.1.1-alpha` five):
+  `Uncaught exception: (N5ACSVM9ReadErrorE) file empty` after `Loading
+  savegame`, Gibax's very line.*
+- *4's control (server `v0.1.1-alpha` five, client `v0.1.1-alpha` none):
+  `Process killed by signal: SIGSEGV` after `Loading savegame`, the level
+  never loaded.*
+- *2 (both on the fix, client five), 2's rrw-eu case (server `v0.1.1-alpha`
+  none, client on the fix five), 3 (both on the fix, none), 4 (server on the
+  fix five, client `v0.1.1-alpha` none): each joined, loaded the gamestate,
+  then `Map is now "LSB_DUNGEONMAZE..."`, stayed and quit by itself; no
+  `I_Error`, no signal. 3 took 136 s instead of about 40: the machine was busy
+  with another session's run.*
+- *The harness lied three times before that, each caught in its log: its
+  first run measured nothing (the client not yet listed a second in); a
+  relative `-home` lands in the data folder (the game moves there at
+  startup), so both instances shared one home and no dub was loaded -- a
+  "control that joined" which was no control; and a SIGSEGV ends the process
+  as a quit does, so 4's control read "joined" until the verdict asked for
+  the level after the gamestate. `harnais/dubjoin.sh` now gives `-home`
+  absolute, reports a run whose dubs are not the ones given as INVALID, and
+  asks for the level.*
+- *Not run: the unattended series of 9.34. With no dub on a machine, both
+  functions take the path they took before (`dubwads` 0; the harness's
+  "neither" case reads identically), and the measuring machine was shared
+  with another session's timed runs that night.*

@@ -10700,8 +10700,11 @@ fail 6 of the 8: in the crash's case they read addon k as the dub k, then
 addon k - 5, as on Gibax's machine.
 
 **Prediction for the run**, written before it (`dubjoin`, unattended, on the
-measuring machine): a dedicated server, `DRB_GarbageCup-v1.5.2.pk3` added, on
-`LSB_DUNGEONMAZE`; a client with its own home joins it and stays 40 s.
+measuring machine, `harnais/dubjoin.sh` in the notes): a dedicated server,
+`DRB_GarbageCup-v1.5.2.pk3` added, on `LSB_DUNGEONMAZE`; a client with its
+own home joins it and stays 40 s. Release builds on both sides, as players
+have them: `v0.1.1-alpha`'s from its release, the fix's from the CI's
+package of `v012-release-2.4`.
 
 1. Control, both `v0.1.1-alpha`, the server with no dub and the client with
    the five packs: the client does not get in -- it stops at the join on an
@@ -10711,8 +10714,42 @@ measuring machine): a dedicated server, `DRB_GarbageCup-v1.5.2.pk3` added, on
    `file empty`.
 2. Both on the fix, same dubs: the client joins, loads the gamestate and the
    level, no `I_Error`; the server logs the join and keeps running.
+   And the case of rrw-eu tonight, which keeps `v0.1.1-alpha`: the server
+   `v0.1.1-alpha` with no dub, the client on the fix with the five packs --
+   the client joins.
 3. Both on the fix, the client with no dub: the same.
 4. The reverse: the server on the fix with the five packs, the client
    `v0.1.1-alpha` with none: the client joins (the server now writes the
    numbers as if it had no dub). Its control, the server `v0.1.1-alpha` with
    the packs: the client does not get in, as in 1.
+
+*Annotated at 01:35 (2026-11-25): **all six runs as predicted**, release
+builds on both sides -- `v0.1.1-alpha`'s Windows zip from its release (sha256
+`e0d70ca0...`, as in its `SHA256SUMS.txt`), the fix's from the package of CI
+run 45516723209 (`e925f8cc8`, green, its exe says `v0.1.2-alpha`). Each run
+checks that each side loaded the dubs it was given.*
+- *1, control (server `v0.1.1-alpha` no dub, client `v0.1.1-alpha` five):
+  `Uncaught exception: (N5ACSVM9ReadErrorE) file empty` after `Loading
+  savegame`, Gibax's very line.*
+- *4's control (server `v0.1.1-alpha` five, client `v0.1.1-alpha` none):
+  `Process killed by signal: SIGSEGV` after `Loading savegame`, the level
+  never loaded.*
+- *2 (both on the fix, client five), 2's rrw-eu case (server `v0.1.1-alpha`
+  none, client on the fix five), 3 (both on the fix, none), 4 (server on the
+  fix five, client `v0.1.1-alpha` none): each joined, loaded the gamestate,
+  then `Map is now "LSB_DUNGEONMAZE..."`, stayed and quit by itself; no
+  `I_Error`, no signal. 3 took 136 s instead of about 40: the machine was busy
+  with another session's run.*
+- *The harness lied three times before that, each caught in its log: its
+  first run measured nothing (the client not yet listed a second in); a
+  relative `-home` lands in the data folder (the game moves there at
+  startup), so both instances shared one home and no dub was loaded -- a
+  "control that joined" which was no control; and a SIGSEGV ends the process
+  as a quit does, so 4's control read "joined" until the verdict asked for
+  the level after the gamestate. `harnais/dubjoin.sh` now gives `-home`
+  absolute, reports a run whose dubs are not the ones given as INVALID, and
+  asks for the level.*
+- *Not run: the unattended series of 9.34. With no dub on a machine, both
+  functions take the path they took before (`dubwads` 0; the harness's
+  "neither" case reads identically), and the measuring machine was shared
+  with another session's timed runs that night.*

@@ -1,36 +1,42 @@
-# Ring Racers Worldwide v0.1.1-alpha
+# Ring Racers Worldwide v0.1.2-alpha
 
-**Your races, recorded; desyncs, seen.** An update of the alpha of Ring
-Racers Worldwide: client-side prediction netcode for Dr. Robotnik's Ring
-Racers 2.4. On a server in WORLDWIDE mode, your kart answers your input at
-once, whatever your ping; the server stays in charge of the race and
-corrects the prediction. On a stock 2.4 server, it plays exactly as a stock
-2.4.
+**Mods and dubs, together.** A fix for the alpha of Ring Racers Worldwide:
+client-side prediction netcode for Dr. Robotnik's Ring Racers 2.4. On a
+server in WORLDWIDE mode, your kart answers your input at once, whatever your
+ping; the server stays in charge of the race and corrects the prediction. On
+a stock 2.4 server, it plays exactly as a stock 2.4.
 
-**Nothing changes on the wire:** v0.1.0-alpha and v0.1.1-alpha players race
-together, on each other's servers. Nobody has to update at once.
+**Nothing changes on the wire:** v0.1.0-alpha, v0.1.1-alpha and v0.1.2-alpha
+players race together, on each other's servers. **Update if you play with
+mods and have dub packs**: that is the case this version fixes.
 
 **This is an alpha.** Please report what you run into (below). An unofficial fork by Gibax, not
 affiliated with or endorsed by Kart Krew Dev: please never report its bugs
 to them. This project is AI-assisted; how and why is in
-[ABOUT-AI.md](https://github.com/GibaxLeGrand/RingRacers_Worldwide/blob/v0.1.1-alpha/ABOUT-AI.md).
+[ABOUT-AI.md](https://github.com/GibaxLeGrand/RingRacers_Worldwide/blob/v0.1.2-alpha/ABOUT-AI.md).
 
-## What's new in v0.1.1-alpha
+## What's new in v0.1.2-alpha
 
-- **Replays, while you play with prediction.** v0.1.0-alpha recorded no
-  replay for a player whose game predicted. Now the replay being recorded
+- **Joining a server with mods no longer crashes because of dubs.** With dub
+  packs in your `dubs` folder, joining a server that runs addons crashed
+  right after the game state loaded (`ReadError ... file empty`) whenever
+  its level had scripts -- and the same happened to players without dubs
+  joining a host who had them. The dub packs, which each player has or not,
+  shifted how the game numbers the addons' files between two machines. They
+  no longer count. A server without dub packs, as ours, needs no update; a
+  v0.1.1-alpha player who has dubs still needs this version for such
+  servers.
+
+## Also since v0.1.0-alpha (in v0.1.1-alpha)
+
+- **Replays, while you play with prediction**: the replay being recorded
   goes back with the world whenever a prediction is corrected, so it holds
-  the race as the server confirmed it. Tested on one machine, unattended:
-  the host's replay and the predicting player's both play back to the end
-  with no desync -- in a race joined from the start, in one joined midway,
-  and at 428 ms of simulated latency.
-- **Desyncs, seen.** A WORLDWIDE server now counts its consistency
-  mismatches per player. One that lasts gets a `desync:` line in the
-  server's log, and every level ends with a `desync summary` line, or "no
-  consistency mismatch". Server logs only: nothing for players to do.
-- **No prediction once you have finished.** Once your kart has crossed the
-  line, or the time is up, your game stops predicting and shows the race as
-  the server confirms it.
+  the race as the server confirmed it.
+- **Desyncs, seen**: a WORLDWIDE server counts its consistency mismatches
+  per player, in its log.
+- **No prediction once you have finished**: once your kart has crossed the
+  line, or the time is up, your game shows the race as the server confirms
+  it.
 
 ## Downloads
 
@@ -38,14 +44,14 @@ You need **Ring Racers 2.4** installed: these carry none of the game's data.
 
 | File | For |
 |---|---|
-| `RingRacersWorldwide-v0.1.1-alpha-windows-x64.zip` | Windows, 64-bit: into your Ring Racers 2.4 folder |
-| `RingRacersWorldwide-v0.1.1-alpha-linux-x64.tar.gz` | Linux x86_64 (glibc 2.35+, the system's SDL2): into a folder with the 2.4 data |
-| `RingRacersWorldwide-v0.1.1-alpha.flatpak` | Linux and the Steam Deck, beside the official Ring Racers from Flathub |
-| `RingRacersWorldwide-v0.1.1-alpha-assets.zip` | every system: WORLDWIDE's title screen (the Flatpak has it already) and the dub packs, with their credits |
+| `RingRacersWorldwide-v0.1.2-alpha-windows-x64.zip` | Windows, 64-bit: into your Ring Racers 2.4 folder |
+| `RingRacersWorldwide-v0.1.2-alpha-linux-x64.tar.gz` | Linux x86_64 (glibc 2.35+, the system's SDL2): into a folder with the 2.4 data |
+| `RingRacersWorldwide-v0.1.2-alpha.flatpak` | Linux and the Steam Deck, beside the official Ring Racers from Flathub |
+| `RingRacersWorldwide-v0.1.2-alpha-assets.zip` | every system: WORLDWIDE's title screen (the Flatpak has it already) and the dub packs, with their credits |
 
 Take your system's download and the assets. Each game download holds a
 `README-Worldwide.txt` with the steps, also
-[in the repository](https://github.com/GibaxLeGrand/RingRacers_Worldwide/blob/v0.1.1-alpha/release/README.txt).
+[in the repository](https://github.com/GibaxLeGrand/RingRacers_Worldwide/blob/v0.1.2-alpha/release/README.txt).
 On Windows, both zips' contents copy into your Ring Racers 2.4 folder
 without replacing anything of the game's. `SHA256SUMS.txt` holds the
 files' checksums.
@@ -80,7 +86,7 @@ of a tic of prediction work.
   by a few tics.
 - On slower machines, a wrong guess can show as a short hitch.
 - Only Race has been played: Battle, Grand Prix and Encore are untested.
-- Replays recorded with prediction are new: tested in Race, not yet with mods.
+- Replays recorded with prediction: tested in Race, not yet with mods.
 - On Windows, a crash writes no `.rpt`: send `latest-log.txt`.
 
 The whole list is in `README-Worldwide.txt`.
@@ -97,6 +103,6 @@ and the `latest-log.txt` of that session (where to find it:
 
 GNU General Public License, version 2 or later. The source of this release
 is the tag
-[`v0.1.1-alpha`](https://github.com/GibaxLeGrand/RingRacers_Worldwide/tree/v0.1.1-alpha),
+[`v0.1.2-alpha`](https://github.com/GibaxLeGrand/RingRacers_Worldwide/tree/v0.1.2-alpha),
 on the Ring Racers 2.4 release. Dr. Robotnik's Ring Racers is by
 [Kart Krew Dev](https://www.kartkrew.org).

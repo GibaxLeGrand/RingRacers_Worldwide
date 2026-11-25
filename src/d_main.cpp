@@ -1727,6 +1727,9 @@ void D_SRB2Main(void)
 	// WORLDWIDE: character dubs (k_dubs.c, WORLDWIDE.md 8.142). The files in
 	// <home>/dubs that hold only sounds and DUBDEFs are loaded with the music:
 	// never sent, never checked against a server's list. Any other is left out.
+	// They come last among the music files and are counted in dubwads too: each
+	// machine has its own, so the lump numbers of a gamestate skip them
+	// (W_LumpIntoNetSave, WORLDWIDE.md 9.35).
 	try
 	{
 		char dubsdir[256];
@@ -1764,6 +1767,7 @@ void D_SRB2Main(void)
 				break;
 			D_AddFile(startupiwads, num_startupiwads++, path, NULL);
 			musicwads++;
+			dubwads++;
 		}
 	}
 	catch (...)

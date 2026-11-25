@@ -211,6 +211,7 @@ extern boolean modifiedgame;
 extern boolean majormods;
 extern UINT16 mainwads;
 extern UINT16 musicwads;
+extern UINT16 dubwads; // WORLDWIDE: the last musicwads, <home>/dubs (WORLDWIDE.md 9.35)
 extern boolean savemoddata; // This mod saves time/emblem data.
 extern boolean usedCheats;
 extern boolean imcontinuing; // Temporary flag while continuing
